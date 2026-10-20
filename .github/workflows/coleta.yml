@@ -55,6 +55,10 @@ jobs:
         shell: bash   # com "shell: bash" o Actions usa pipefail, então o tee não esconde falhas
         run: python -m coletor.pipeline 2>&1 | tee saida_log.txt
 
+      - name: Sondar fontes
+        if: ${{ always() && inputs.diagnostico }}
+        run: mkdir -p saida && python scripts/sondar_fontes.py > saida/sondagem.txt 2>&1 || true
+
       - name: Publicar diagnóstico
         if: ${{ always() && inputs.diagnostico }}
         run: |
