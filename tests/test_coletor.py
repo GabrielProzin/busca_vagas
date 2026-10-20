@@ -49,6 +49,20 @@ def test_experiencia_e_data():
     assert F.filtrar_data(vaga("x", dias=40)) is not None
 
 
+def test_idioma_e_senioridade_na_descricao():
+    en = vaga("Data Analyst", "We are looking for a data analyst to join our team. You will work with the "
+              "product team and our stakeholders. Requirements: experience with SQL, skills in Python, "
+              "and the ability to work with data in a fast-paced environment. This is your chance to grow with us.")
+    assert F.filtrar_idioma(en) == "vaga em inglês"
+    pt = vaga("Analista de Dados", "Buscamos uma pessoa para atuar com dados e conhecimento em SQL e Power BI.")
+    assert F.filtrar_idioma(pt) is None
+    s = vaga("Engenheiro de Dados", "Profissional sênior para liderar o time. Perfil sênior, inglês avançado.")
+    assert F.filtrar_senioridade_descricao(s) == "descrição indica pleno/sênior"
+    j = vaga("Analista de Dados", "Vaga para início de carreira, nível júnior.")
+    assert F.filtrar_senioridade_descricao(j) is None and j.nivel == "junior"
+    assert F.filtrar_titulo(vaga("Arquiteto de Dados")).startswith("senioridade")
+
+
 def test_texto():
     assert limpar_html("<p>A</p><ul><li>B &amp; C</li></ul>") == "A\nB & C"
     assert extrair_emails("Envie para rh@empresa.com.br ou noreply@x.com") == ["rh@empresa.com.br"]

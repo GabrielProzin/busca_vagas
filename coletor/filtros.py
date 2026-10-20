@@ -17,6 +17,13 @@ _ANOS = [
     re.compile(r"experiencia (?:minima |previa |comprovada )?de (?:pelo menos |no minimo )?(\d{1,2})\s*anos?"),
     re.compile(r"(\d{1,2})\+?\s*years? of experience"),
 ]
+_SENIOR_DESC = re.compile(r"\b(senior|pleno|sr\.?|mid[- ]level|especialista|experiencia solida|vasta experiencia)\b")
+_JUNIOR_DESC = re.compile(r"\b(junior|jr\.?|inicio de carreira|primeiro emprego|entry[- ]level|recem[- ]formad)")
+_PALAVRA = re.compile(r"[a-z]+")
+_EN = {"the", "and", "you", "with", "will", "our", "your", "are", "for", "this", "team", "we", "of", "to", "is",
+       "experience", "skills", "work", "working", "data", "requirements", "about"}
+_PT = {"de", "que", "para", "com", "voce", "uma", "dos", "das", "nos", "experiencia", "conhecimento", "dados",
+       "em", "e", "o", "atuar", "sobre", "nossa", "requisitos"}
 
 
 @dataclass
@@ -31,6 +38,8 @@ class Filtros:
     estado: str
     max_anos: int
     max_dias: int
+    aceita_ingles: bool = False
+    min_mencoes_senioridade: int = 2
 
     @classmethod
     def de_config(cls, cfg: dict) -> "Filtros":
@@ -46,6 +55,8 @@ class Filtros:
             estado=normalizar(loc.get("estado", "")),
             max_anos=int(cfg.get("max_anos_experiencia", 2)),
             max_dias=int(cfg.get("max_dias_publicacao", 14)),
+            aceita_ingles=bool(loc.get("aceita_vagas_em_ingles", False)),
+            min_mencoes_senioridade=int(cfg.get("min_mencoes_senioridade_descricao", 2)),
         )
 
     # --- filtros de título (rodam antes de baixar a descrição completa) ---
@@ -97,6 +108,26 @@ class Filtros:
         return "local não informado e não é remoto" if modalidade else "local não informado"
 
     # --- filtros de descrição (rodam depois de baixar a descrição) ---
+
+    def filtrar_idioma(self, v: Vaga) -> str | None:
+        if self.aceita_ingles:
+            return None
+        palavras = _PALAVRA.findall(normalizar(f"{v.titulo} {v.descricao[:3000]}"))
+        en = sum(p in _EN for p in palavras)
+        pt = sum(p in _PT for p in palavras)
+        return "vaga em inglês" if en > 15 and en > 1.5 * pt else None
+
+    def filtrar_senioridade_descricao(self, v: Vaga) -> str | None:
+        if v.nivel == "junior":
+            return None
+        texto = normalizar(v.descricao)
+        senior = len(_SENIOR_DESC.findall(texto))
+        junior = len(_JUNIOR_DESC.findall(texto))
+        if junior == 0 and senior >= self.min_mencoes_senioridade:
+            return "descrição indica pleno/sênior"
+        if junior > 0 and senior == 0:
+            v.nivel = "junior"
+        return None
 
     def filtrar_experiencia(self, v: Vaga) -> str | None:
         texto = normalizar(v.descricao)

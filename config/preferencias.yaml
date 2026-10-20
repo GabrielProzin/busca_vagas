@@ -31,14 +31,17 @@ trilhas:
     padroes: ['\bdados\b', '\bdata\b']
 
 # Senioridade. Vagas com estes termos no TÍTULO são descartadas.
-senioridade_bloqueada: ['senior', 'sênior', '\bsr\.?\b', 'pleno', '\bpl\b', 'especialista', 'lead', 'lider', 'líder', 'coordenador', 'gerente', 'head', 'principal', 'staff', 'estagi', 'trainee', 'aprendiz', '\biii\b', '\bii\b']
+senioridade_bloqueada: ['senior', 'sênior', '\bsr\.?\b', 'pleno', '\bpl\b', 'especialista', 'specialist', 'expert', 'mid[- ]?level', 'lead', 'lider', 'líder', 'coordenador', 'gerente', 'manager', 'head', 'principal', 'staff', 'arquitet', 'architect', 'estagi', 'intern\b', 'trainee', 'aprendiz', '\biii\b', '\bii\b']
+# Vaga sem nível no título: descarta se a descrição falar em pleno/sênior
+# pelo menos este número de vezes e nunca em júnior.
+min_mencoes_senioridade_descricao: 2
 # Termos que marcam a vaga como júnior (sobem a nota).
 senioridade_alvo: ['junior', 'júnior', '\bjr\.?\b', '\bi\b', 'assistente', 'entry']
 # Descarta a vaga se a descrição pedir mais que isso de experiência.
 max_anos_experiencia: 2
 
 # Palavras que eliminam a vaga se aparecerem no título.
-bloqueio_titulo: ['\.net', '\bjava\b', 'desenvolvedor', 'developer', 'programador', 'front[- ]?end', 'back[- ]?end', 'full[- ]?stack', 'mobile', '\bqa\b', 'suporte', 'help ?desk']
+bloqueio_titulo: ['\.net', '\bjava\b', 'security', 'seguranca','desenvolvedor', 'developer', 'programador', 'front[- ]?end', 'back[- ]?end', 'full[- ]?stack', 'mobile', '\bqa\b', 'suporte', 'help ?desk']
 
 # Empresas (nome ou domínio) para nunca enviar.
 empresas_bloqueadas: []
@@ -48,12 +51,14 @@ localizacao:
   aceita_remoto: true
   cidades_presencial_hibrido: ['goiania', 'aparecida de goiania', 'senador canedo', 'trindade']
   estado: GO
+  # Vagas com descrição em inglês (quase sempre empresa estrangeira pedindo inglês fluente).
+  aceita_vagas_em_ingles: false
 
 # Ferramentas que, se forem requisito central e você não tiver, mandam a vaga
 # para a lista "vale tentar" em vez da lista principal.
 requisitos_ausentes_pesados: ['spark', 'databricks', 'aws', 'azure', 'scala', 'kafka', 'snowflake', '\bsas\b', 'rstudio', 'linguagem r\b']
 
 # Corte de nota (0-100). Abaixo disso a vaga não aparece.
-nota_minima: 45
+nota_minima: 50
 # Só considera vagas publicadas nos últimos N dias.
 max_dias_publicacao: 14
