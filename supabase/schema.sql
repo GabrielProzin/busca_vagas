@@ -60,3 +60,10 @@ create table if not exists execucoes (
 alter table vagas        enable row level security;
 alter table candidaturas enable row level security;
 alter table execucoes    enable row level security;
+
+-- Permissões explícitas: funciona mesmo com "Automatically expose new tables" desligado.
+-- Só o service_role (servidor) acessa; anon/authenticated (navegador) não enxergam nada.
+grant usage on schema public to service_role;
+grant select, insert, update, delete on vagas, candidaturas, execucoes to service_role;
+grant usage, select on all sequences in schema public to service_role;
+revoke all on vagas, candidaturas, execucoes from anon, authenticated;
