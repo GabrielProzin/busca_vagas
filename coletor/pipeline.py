@@ -118,7 +118,9 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
                   or filtros.filtrar_experiencia(v) or filtros.filtrar_senioridade_descricao(v))
         if motivo:
             v.lista, v.motivo_descarte = "descartada", motivo
-            descartes[motivo.split(" em ")[0] if " em " in motivo else motivo] += 1
+            # "presencial em Campinas" e "hibrido em Recife" contam como "presencial" / "hibrido"
+            chave = motivo.split(" em ")[0] if motivo.startswith(("presencial em", "hibrido em")) else motivo
+            descartes[chave] += 1
         else:
             restantes.append(v)
 

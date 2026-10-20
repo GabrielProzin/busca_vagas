@@ -11,10 +11,12 @@ envia emails de candidatura personalizados a partir de um site privado.
 ```
 GitHub Actions (todo dia, 07:17)
   └─ coletor/pipeline.py
-       1. Coleta     Gupy (API pública do portal) + issues de repositórios de vagas no GitHub
+       1. Coleta     Gupy (rota do portal) + Remotar (API do site) + issues de repositórios de vagas no GitHub
+                     e deduplica entre fontes (links da Gupy carregam o jobId em base64)
        2. Filtra     título (trilha de dados, senioridade, bloqueios) e data — antes de baixar descrições
        3. Detalha    baixa a descrição completa só das candidatas
-       4. Filtra     local (remoto BR ou Goiânia e região) e anos de experiência exigidos
+       4. Filtra     local (remoto BR ou Goiânia e região), idioma, anos de experiência
+                     e senioridade escrita na descrição
        5. Ranqueia   nota 0–100 com motivos
        6. Grava      Supabase (Postgres) + JSON
 ```
@@ -42,6 +44,12 @@ coletor/                   fontes, filtros, ranking, armazenamento e pipeline
 supabase/schema.sql        tabelas vagas, candidaturas, execucoes (RLS ligado)
 tests/                     testes dos filtros e do ranking
 ```
+
+## Quando uma fonte muda
+
+Sites de vagas mudam de API sem aviso (a Gupy trocou de rota em 2026). `scripts/sondar_fontes.py`
+testa os endpoints conhecidos e varre os bundles JavaScript dos sites atrás de rotas de API.
+Ele roda no workflow com a opção **diagnóstico**, que também publica o log da coleta no branch `diagnostico`.
 
 ## Rodando localmente
 
