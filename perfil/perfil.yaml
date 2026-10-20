@@ -1,0 +1,57 @@
+# Perfil do candidato usado no ranking (e, na fase 3, na geração dos emails).
+# Sem telefone/email aqui: o repositório é público. Contato fica nas variáveis de ambiente.
+
+nome: Gabriel Mendes Alexandrino
+titulo: Cientista de Dados | Python | SQL | Power BI | Apache Airflow
+cidade: Goiânia, GO
+links:
+  github: https://github.com/GabrielProzin
+  linkedin: https://linkedin.com/in/gabrielmendesurl
+  portfolio: https://gmendes.vercel.app
+
+# Habilidades que o candidato TEM, com os sinônimos como aparecem nas vagas
+# (regex, comparado com o texto sem acento e minúsculo).
+# peso: o quanto a habilidade costuma decidir uma vaga júnior de dados.
+habilidades:
+  python:        {peso: 3, padroes: ['python']}
+  sql:           {peso: 3, padroes: ['\bsql\b', 'consultas sql', 'queries']}
+  power_bi:      {peso: 3, padroes: ['power ?bi']}
+  dax:           {peso: 2, padroes: ['\bdax\b']}
+  pandas:        {peso: 2, padroes: ['pandas']}
+  numpy:         {peso: 1, padroes: ['numpy']}
+  scikit_learn:  {peso: 2, padroes: ['scikit', 'sklearn']}
+  machine_learning: {peso: 2, padroes: ['machine learning', 'aprendizado de maquina', 'modelos preditivos', 'modelagem preditiva']}
+  estatistica:   {peso: 1, padroes: ['estatistic', 'statistic']}
+  airflow:       {peso: 3, padroes: ['airflow']}
+  etl:           {peso: 3, padroes: ['\betl\b', '\belt\b', 'pipelines? de dados', 'data pipelines?', 'ingestao']}
+  bigquery:      {peso: 2, padroes: ['bigquery', 'big query', '\bgcp\b', 'google cloud']}
+  mysql:         {peso: 1, padroes: ['mysql', 'heatwave']}
+  postgresql:    {peso: 1, padroes: ['postgres']}
+  sql_server:    {peso: 1, padroes: ['sql server', 'mssql']}
+  mongodb:       {peso: 1, padroes: ['mongo']}
+  looker_studio: {peso: 1, padroes: ['looker', 'data studio']}
+  modelagem:     {peso: 2, padroes: ['modelagem de dados', 'modelagem dimensional', 'data model', 'star schema', 'esquema estrela']}
+  dashboards:    {peso: 2, padroes: ['dashboards?', 'paineis', 'relatorios gerenciais', 'indicadores', '\bkpis?\b']}
+  oracle_cloud:  {peso: 1, padroes: ['oracle cloud', '\boci\b']}
+  docker:        {peso: 1, padroes: ['docker']}
+  git:           {peso: 1, padroes: ['\bgit\b', 'github', 'gitlab']}
+  apis:          {peso: 1, padroes: ['\bapis?\b', '\brest(ful)?\b']}
+  excel:         {peso: 1, padroes: ['excel']}
+  llm:           {peso: 1, padroes: ['\bllms?\b', 'ia generativa', 'genai', 'inteligencia artificial']}
+  qualidade_dados: {peso: 1, padroes: ['qualidade de dados', 'data quality', 'governanca']}
+  negocio:       {peso: 1, padroes: ['regras de negocio', 'levantamento de requisitos', 'stakeholders', 'areas de negocio']}
+
+# Pontos fortes que viram argumento no email (fase 3). Cada um diz em que tipo de vaga usar.
+destaques:
+  - texto: Pipelines ETL/ELT em Python orquestrados com Apache Airflow, integrando APIs (Zendesk, Jira) ao Google BigQuery, escalados para 18 clientes.
+    quando: [airflow, etl, bigquery, python, apis]
+  - texto: Migração de mais de 20 dashboards de KPIs (ativos, churn, faturamento, inadimplência) do Looker Studio para o Power BI, conciliando cada número com a fonte.
+    quando: [power_bi, dashboards, looker_studio, sql]
+  - texto: Medidas DAX e modelagem de um histórico diário de 400 mil+ linhas para acompanhar a situação de alunos, numa base de 3,5 mil unidades e 2 milhões de alunos ativos.
+    quando: [dax, modelagem, power_bi]
+  - texto: Diagnóstico de falhas em produção até a causa raiz, incluindo um bug que inflava a contagem de tickets em dezenas de milhares, com reprocessamento validado contra a origem.
+    quando: [qualidade_dados, sql, etl]
+  - texto: Projeto de detecção de fraude em cartões comparando Logistic Regression e Random Forest (Scikit-learn), além da especialização em Ciência de Dados e do curso de ML de Stanford.
+    quando: [machine_learning, scikit_learn, estatistica, python]
+  - texto: Dois anos de relacionamento com clientes antes de dados, o que facilita traduzir regras de negócio em análises.
+    quando: [negocio]

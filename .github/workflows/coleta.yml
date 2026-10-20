@@ -1,0 +1,58 @@
+name: Coleta diária de vagas
+
+on:
+  schedule:
+    - cron: "17 10 * * *"   # 07:17 em Brasília, todo dia
+  workflow_dispatch:
+    inputs:
+      resumo_detalhado:
+        description: "Mostrar a tabela de vagas no resumo (o repo é público)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coleta
+  cancel-in-progress: false
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FASTEMBED_CACHE_PATH: /home/runner/.cache/fastembed
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cache do modelo de embeddings
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/fastembed
+          key: fastembed-paraphrase-multilingual-minilm-v1
+
+      - run: pip install -r requirements.txt
+
+      - name: Testes
+        run: python -m pytest -q
+
+      - name: Coletar, filtrar e ranquear
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESUMO_DETALHADO: ${{ inputs.resumo_detalhado && '1' || '0' }}
+        run: python -m coletor.pipeline
+
+      - name: Guardar resultado (7 dias)
+        uses: actions/upload-artifact@v4
+        with:
+          name: vagas
+          path: saida/
+          retention-days: 7
