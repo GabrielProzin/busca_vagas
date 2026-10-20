@@ -9,9 +9,13 @@ on:
         description: "Mostrar a tabela de vagas no resumo (o repo é público)"
         type: boolean
         default: false
+      diagnostico:
+        description: "Publicar log e resultado no branch 'diagnostico' (para depurar)"
+        type: boolean
+        default: false
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: coleta
@@ -48,7 +52,19 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESUMO_DETALHADO: ${{ inputs.resumo_detalhado && '1' || '0' }}
-        run: python -m coletor.pipeline
+        shell: bash   # com "shell: bash" o Actions usa pipefail, então o tee não esconde falhas
+        run: python -m coletor.pipeline 2>&1 | tee saida_log.txt
+
+      - name: Publicar diagnóstico
+        if: ${{ always() && inputs.diagnostico }}
+        run: |
+          mkdir -p /tmp/diag && cp -r saida/* /tmp/diag/ 2>/dev/null || true
+          cp saida_log.txt /tmp/diag/log.txt 2>/dev/null || true
+          cd /tmp/diag
+          git init -q && git checkout -q -b diagnostico
+          git config user.name "github-actions" && git config user.email "actions@github.com"
+          git add -A && git commit -q -m "diagnóstico ${{ github.run_id }}"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" diagnostico
 
       - name: Guardar resultado (7 dias)
         uses: actions/upload-artifact@v4
