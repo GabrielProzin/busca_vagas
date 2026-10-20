@@ -15,7 +15,9 @@ from ..texto import extrair_emails, limpar_html
 
 log = logging.getLogger(__name__)
 
-API = "https://portal.api.gupy.io/api/v1/jobs"
+# Rota usada pelo próprio portal (descoberta com scripts/sondar_fontes.py em out/2026;
+# a antiga portal.api.gupy.io/api/v1/jobs passou a responder 404).
+API = "https://portal.gupy.io/api/job-search/jobs"
 POR_PAGINA = 50
 _MODALIDADE = {"remote": "remoto", "hybrid": "hibrido", "on-site": "presencial"}
 _NEXT_DATA = re.compile(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', re.S)
@@ -55,9 +57,10 @@ def _para_vaga(j: dict, termo: str) -> Vaga:
 def coletar(http: Http, termos: list[str], max_paginas: int = 4) -> list[Vaga]:
     vagas: dict[str, Vaga] = {}
     for termo in termos:
+        offset = 0
         for pagina in range(max_paginas):
             try:
-                r = http.get(API, params={"jobName": termo, "limit": POR_PAGINA, "offset": pagina * POR_PAGINA})
+                r = http.get(API, params={"jobName": termo, "limit": POR_PAGINA, "offset": offset})
                 r.raise_for_status()
                 dados = r.json()
             except Exception as e:  # uma fonte fora do ar não pode derrubar a coleta inteira
@@ -68,8 +71,10 @@ def coletar(http: Http, termos: list[str], max_paginas: int = 4) -> list[Vaga]:
                 v = _para_vaga(j, termo)
                 if v.id_origem and v.id_origem not in vagas:
                     vagas[v.id_origem] = v
+            # A API pode devolver menos que o "limit" pedido; avança pelo que veio de fato.
+            offset += len(itens)
             total = (dados.get("pagination") or {}).get("total")
-            if len(itens) < POR_PAGINA or (total is not None and (pagina + 1) * POR_PAGINA >= total):
+            if not itens or (total is not None and offset >= total):
                 break
         log.info("gupy: %r -> acumulado %d vagas", termo, len(vagas))
     return list(vagas.values())

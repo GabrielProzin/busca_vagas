@@ -5,7 +5,10 @@ Uso:  python -m coletor.pipeline [--tfidf] [--sem-github] [--max-paginas N]
 from __future__ import annotations
 
 import argparse
+import base64
+import json
 import logging
+import re
 import os
 import time
 from collections import Counter
@@ -15,7 +18,7 @@ import yaml
 
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
-from .fontes import github_issues, gupy
+from .fontes import github_issues, gupy, remotar
 from .http import Http
 from .modelos import Vaga
 from .ranking import Embedder, Ranker
@@ -25,11 +28,28 @@ log = logging.getLogger("coletor")
 RAIZ = Path(__file__).resolve().parent.parent
 
 
+_GUPY_TOKEN = re.compile(r"gupy\.io/job/([A-Za-z0-9_\-=]+)")
+
+
+def _chave(v: Vaga) -> tuple:
+    """Identidade da vaga entre fontes. Links da Gupy carregam o jobId em base64."""
+    if v.fonte == "gupy":
+        return ("gupy", v.id_origem)
+    if m := _GUPY_TOKEN.search(v.url or ""):
+        try:
+            token = m.group(1)
+            dados = json.loads(base64.urlsafe_b64decode(token + "=" * (-len(token) % 4)))
+            return ("gupy", str(dados["jobId"]))
+        except Exception:
+            pass
+    return (normalizar(v.titulo), normalizar(v.empresa)) if v.empresa else (v.id,)
+
+
 def _deduplicar(vagas: list[Vaga]) -> list[Vaga]:
-    """Mesma vaga em duas fontes: fica a que tem email (ou a primeira)."""
+    """Mesma vaga em duas fontes: fica a que tem email; empate, a primeira (Gupy vem antes)."""
     por_chave: dict[tuple, Vaga] = {}
     for v in vagas:
-        chave = (normalizar(v.titulo), normalizar(v.empresa)) if v.empresa else (v.id,)
+        chave = _chave(v)
         atual = por_chave.get(chave)
         if atual is None or (not atual.emails and v.emails):
             por_chave[chave] = v
@@ -65,6 +85,9 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     coletadas: dict[str, int] = {}
     vagas = gupy.coletar(http, termos, max_paginas=max_paginas)
     coletadas["gupy"] = len(vagas)
+    rem = remotar.coletar(http, termos)
+    coletadas["remotar"] = len(rem)
+    vagas += rem
     if usar_github:
         gh = github_issues.coletar(http, termos, dias=filtros.max_dias)
         coletadas["github"] = len(gh)
@@ -117,6 +140,11 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
 
     # 6. Gravação
     caminho = salvar_json(aprovadas, execucao)
+    # Descartadas na etapa de ranking/local: úteis para calibrar pesos e filtros.
+    (caminho.parent / "descartadas.json").write_text(json.dumps(
+        [{"titulo": v.titulo, "empresa": v.empresa, "fonte": v.fonte, "nota": v.nota, "motivo": v.motivo_descarte,
+          "url": v.url, "componentes": v.componentes} for v in candidatas if v.lista == "descartada"],
+        ensure_ascii=False, indent=1), encoding="utf-8")
     log.info("json: %s", caminho)
     sb = Supabase.do_ambiente()
     if sb:

@@ -54,6 +54,17 @@ def test_texto():
     assert extrair_emails("Envie para rh@empresa.com.br ou noreply@x.com") == ["rh@empresa.com.br"]
 
 
+def test_dedup_gupy_remotar():
+    import base64, json
+    from coletor.pipeline import _deduplicar
+
+    token = base64.urlsafe_b64encode(json.dumps({"jobId": 123, "source": "remotar"}).encode()).decode().rstrip("=")
+    g = Vaga(fonte="gupy", id_origem="123", titulo="Analista de Dados", empresa="X", url="https://x.gupy.io/job/abc")
+    r = Vaga(fonte="remotar", id_origem="9", titulo="Analista de Dados", empresa="Vagas X",
+             url=f"https://x.gupy.io/job/{token}")
+    assert len(_deduplicar([g, r])) == 1
+
+
 def test_ranking_ordena_por_aderencia():
     boa = vaga("Analista de BI Júnior",
                "Requisitos:\n- SQL avançado e Power BI com DAX\n- Python com Pandas para tratamento de dados\n"
