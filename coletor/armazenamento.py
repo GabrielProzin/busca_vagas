@@ -29,7 +29,10 @@ def salvar_json(vagas: list[Vaga], execucao: dict, pasta: str = "saida") -> Path
 class Supabase:
     def __init__(self, url: str, chave: str):
         self.base = url.rstrip("/") + "/rest/v1"
-        self.h = {"apikey": chave, "Authorization": f"Bearer {chave}", "Content-Type": "application/json"}
+        self.h = {"apikey": chave, "Content-Type": "application/json"}
+        # Chaves antigas (JWT "service_role") também vão no Authorization; as novas (sb_secret_...) só no apikey.
+        if not chave.startswith("sb_"):
+            self.h["Authorization"] = f"Bearer {chave}"
 
     @classmethod
     def do_ambiente(cls) -> "Supabase | None":
