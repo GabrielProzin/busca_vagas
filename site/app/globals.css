@@ -523,6 +523,8 @@ select option { background: var(--surface); color: var(--ink); } /* reserva para
 .mensagem-pronta p { flex: 1; }
 .mensagem-pronta .botao { flex: none; }
 
+.email-escondido summary { cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 500; }
+
 /* ------------------------------------------------------------------ painel: coletas */
 .tabela.coletas tr.sem-novas td { color: var(--muted); }
 .destaque-num { color: var(--accent); }

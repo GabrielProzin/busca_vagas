@@ -58,6 +58,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           RESUMO_DETALHADO: ${{ inputs.resumo_detalhado && '1' || '0' }}
           RESUMO_TESTE: ${{ inputs.resumo_teste && '1' || '0' }}
           FOLLOWUP_SEMPRE: ${{ inputs.resumo_teste && '1' || '0' }}

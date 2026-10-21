@@ -98,22 +98,19 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
             </div>
           </section>
 
-          <section className="cartao" aria-label="Email para o recrutador">
-            <div className="cartao-cabecalho">
-              <h2><Icone nome="email" /> {temEmail ? "Email para o recrutador" : "Candidatura por email"}</h2>
-            </div>
-            <div className="cartao-corpo">
-              {v.email_origem === "site_rh" || v.email_origem === "site_contato" ? (
-                <p className="aviso" style={{ marginBottom: 14 }}>
-                  A vaga não trazia email. Este é {v.email_origem === "site_rh" ? "o email de RH" : "o contato geral"} publicado no site da empresa,
-                  não o do recrutador desta vaga. Vale enviar e também se candidatar pelo link.
-                </p>
-              ) : null}
-              {!temEmail ? (
-                <p className="dica" style={{ marginBottom: 14 }}>
-                  Esta vaga não trouxe email: o normal é se candidatar pelo link. Se você achar o email do recrutador, preencha o campo Para e envie por aqui.
-                </p>
-              ) : null}
+          {temEmail ? (
+            <section className="cartao" aria-label="Email para o recrutador">
+              <div className="cartao-cabecalho">
+                <h2><Icone nome="email" /> Email para o recrutador</h2>
+                {v.fonte === "linkedin" ? <span className="etiqueta email">Email do post</span> : null}
+              </div>
+              <div className="cartao-corpo">
+                {v.email_origem === "site_rh" || v.email_origem === "site_contato" ? (
+                  <p className="aviso" style={{ marginBottom: 14 }}>
+                    A vaga não trazia email. Este é {v.email_origem === "site_rh" ? "o email de RH" : "o contato geral"} publicado no site da empresa,
+                    não o do recrutador desta vaga. Vale enviar e também se candidatar pelo link.
+                  </p>
+                ) : null}
               <EmailCandidatura
                 vagaId={v.id}
                 para={c?.email_para ?? v.email_contato ?? ""}
@@ -125,8 +122,32 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
                 gmailPronto={gmailConfigurado()}
                 cvPronto={Boolean(cv)}
               />
-            </div>
-          </section>
+              </div>
+            </section>
+          ) : (
+            <section className="cartao" aria-label="Como se candidatar">
+              <div className="cartao-cabecalho"><h2><Icone nome="externo" /> Como se candidatar</h2></div>
+              <div className="cartao-corpo form-coluna">
+                <p className="dica">Esta vaga não trouxe email de recrutador: a candidatura é pelo link {naFonte(v.fonte)}. Depois de aplicar, marque “Já apliquei”.</p>
+                <details className="email-escondido">
+                  <summary>Achei o email do recrutador por fora</summary>
+                  <div style={{ marginTop: 14 }}>
+                    <EmailCandidatura
+                      vagaId={v.id}
+                      para={c?.email_para ?? v.email_contato ?? ""}
+                      assunto={c?.email_assunto ?? ""}
+                      corpo={c?.email_corpo ?? ""}
+                      jaEnviada={status === "enviada" || Boolean(c?.email_para && c?.enviada_em && status !== "aplicada")}
+                      enviadaEm={c?.enviada_em ?? null}
+                      iaPronta={iaConfigurada()}
+                      gmailPronto={gmailConfigurado()}
+                      cvPronto={Boolean(cv)}
+              />
+                  </div>
+                </details>
+              </div>
+            </section>
+          )}
 
           <section className="cartao" aria-label="Descrição da vaga">
             <div className="cartao-cabecalho"><h2><Icone nome="arquivo" /> Descrição completa</h2></div>

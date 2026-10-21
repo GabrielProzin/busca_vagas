@@ -56,6 +56,19 @@ localizacao:
   estado: GO
   # Vagas com descrição em inglês (quase sempre empresa estrangeira pedindo inglês fluente).
   aceita_vagas_em_ingles: false
+  # Posts do LinkedIn muitas vezes não dizem o local. Ficam na lista com um aviso, em vez de sumir.
+  local_nao_informado_aceito_em: [linkedin]
+
+# Posts de vaga do LinkedIn com email do recrutador (via Apify, sem usar a sua conta).
+# Precisa do secret APIFY_TOKEN. Custo ~US$ 2 por 1.000 posts, pago com o crédito grátis de US$ 5/mês:
+# 2 buscas x 20 posts x 2 coletas por dia = ~2.400 posts/mês. Mude com cuidado.
+linkedin_posts:
+  horas: 13                 # cada coleta olha só as últimas 13 horas (as duas coletas do dia não se repetem)
+  max_posts_por_busca: 20
+  buscas:
+    # Máximo de 5 operadores (AND/OR) por busca, limite do ator.
+    - 'vaga AND (currículo OR curriculo) AND ("analista de dados" OR "analista de BI")'
+    - 'vaga AND (currículo OR curriculo) AND ("cientista de dados" OR "engenheiro de dados")'
 
 # Ferramentas que, se forem requisito central e você não tiver, mandam a vaga
 # para a lista "vale tentar" em vez da lista principal.

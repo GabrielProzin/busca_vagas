@@ -25,7 +25,7 @@ from .aprendizado import Aprendizado
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
 from .contato import buscar_email_empresa
-from .fontes import github_issues, gupy, remotar, solides
+from .fontes import github_issues, gupy, linkedin_posts, remotar, solides
 from .http import Http
 from .modelos import Vaga
 from .ranking import Embedder, Ranker
@@ -83,6 +83,13 @@ def _resumo_md(aprovadas: list[Vaga], execucao: dict, detalhado: bool) -> str:
     return "\n".join(linhas) + "\n"
 
 
+def _anotar(texto: str) -> None:
+    """Linha de resumo que aparece na página da execução do Actions (sem dados pessoais)."""
+    log.info(texto)
+    if os.getenv("GITHUB_ACTIONS") == "true":
+        print(f"::notice title=coleta::{texto}", flush=True)
+
+
 def _followups_pendentes(sb: Supabase) -> list[dict]:
     """Só na coleta da manhã (antes das 15h em Brasília), para o lembrete chegar uma vez por dia."""
     if datetime.now(ZoneInfo("America/Sao_Paulo")).hour >= 15 and os.getenv("FOLLOWUP_SEMPRE") != "1":
@@ -126,8 +133,15 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         gh = github_issues.coletar(http, termos, dias=filtros.max_dias)
         coletadas["github"] = len(gh)
         vagas += gh
+    # Posts do LinkedIn com email (só com APIFY_TOKEN configurado).
+    li, li_info = linkedin_posts.coletar(cfg.get("linkedin_posts", {}), [p for _, _, p in filtros.trilhas])
+    if li_info["erro"] != "sem APIFY_TOKEN":
+        coletadas["linkedin"] = li_info["posts"]
+    vagas += li
     vagas = _deduplicar(vagas)
     log.info("coleta: %s -> %d únicas", coletadas, len(vagas))
+    _anotar(f"LinkedIn: {li_info['posts']} posts, {li_info['vagas']} com email e cargo de dados; "
+            f"descartes {li_info['descartes']}; erro {li_info['erro']}")
 
     # 2. Filtros baratos (título, data) antes de baixar descrições
     descartes: Counter = Counter()
@@ -172,6 +186,13 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         if v.lista == "descartada":
             descartes["nota abaixo do mínimo"] += 1
     aprovadas = sorted([v for v in restantes if v.lista != "descartada"], key=lambda v: -(v.nota or 0))
+    for v in aprovadas:
+        if v.fonte == "linkedin":
+            v.motivos.append(f"Post do LinkedIn com o email de quem está contratando ({v.email_contato})")
+            if not v.modalidade and not v.cidade:
+                v.motivos.append("O post não diz se é remoto nem a cidade: confira antes de enviar")
+    _anotar(f"Aprovadas: {len(aprovadas)} ({sum(v.fonte == 'linkedin' for v in aprovadas)} do LinkedIn); "
+            f"com email: {sum(bool(v.emails) for v in aprovadas)}")
 
     # Vagas aprovadas sem email: procura um email público de RH no site oficial da empresa.
     achados = 0
@@ -227,6 +248,8 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
             log.warning("resumo: falha ao enviar: %s", e)
         problemas = alerta.verificar_saude(execucao, anteriores)
+        if li_info["erro"] and li_info["erro"] != "sem APIFY_TOKEN":
+            problemas.append(f"Posts do LinkedIn: {li_info['erro']}. Confira o crédito em console.apify.com.")
         if problemas:
             log.warning("saúde: %s", problemas)
             try:

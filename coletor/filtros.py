@@ -40,6 +40,7 @@ class Filtros:
     max_dias: int
     aceita_ingles: bool = False
     min_mencoes_senioridade: int = 2
+    local_livre_fontes: tuple[str, ...] = ()
 
     @classmethod
     def de_config(cls, cfg: dict) -> "Filtros":
@@ -57,6 +58,7 @@ class Filtros:
             max_dias=int(cfg.get("max_dias_publicacao", 14)),
             aceita_ingles=bool(loc.get("aceita_vagas_em_ingles", False)),
             min_mencoes_senioridade=int(cfg.get("min_mencoes_senioridade_descricao", 2)),
+            local_livre_fontes=tuple(loc.get("local_nao_informado_aceito_em", [])),
         )
 
     # --- filtros de título (rodam antes de baixar a descrição completa) ---
@@ -105,6 +107,8 @@ class Filtros:
         # Sem cidade estruturada: procura uma das cidades aceitas no texto.
         if any(c in texto for c in self.cidades):
             return None
+        if not modalidade and v.fonte in self.local_livre_fontes:
+            return None  # o pipeline avisa na vaga que o post não diz o local
         return "local não informado e não é remoto" if modalidade else "local não informado"
 
     # --- filtros de descrição (rodam depois de baixar a descrição) ---

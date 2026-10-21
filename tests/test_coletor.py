@@ -203,3 +203,52 @@ def test_resumo_so_com_followup():
     assert m["Subject"] == "busca_vagas: 1 candidatura pede follow-up"
     texto = m.get_body(("plain",)).get_content()
     assert "Email enviado há 9 dias" in texto and "https://site/vaga/gupy%3A1" in texto
+
+
+# ---------------------------------------------------------------- posts do LinkedIn
+from coletor.fontes import linkedin_posts  # noqa: E402
+
+TRILHAS = [p for _, _, p in F.trilhas]
+
+
+def _post(texto, info="Tech Recruiter na Mynd8 | Pessoas", id_="7390"):
+    return {"id": id_, "linkedinUrl": f"https://www.linkedin.com/posts/x-{id_}", "content": texto,
+            "author": {"name": "Ana Souza", "info": info}, "postedAt": {"timestamp": "1761058800000"}}
+
+
+def test_post_de_vaga_com_email_vira_vaga():
+    texto = ("🚀 VAGA ABERTA | Analista de Dados Júnior | 100% Remoto\n\nEstamos contratando para o time de BI. "
+             "Requisitos: SQL, Power BI e Python.\nInteressados, enviem o currículo para vagas@mynd8.com.br "
+             "com o assunto 'Analista de Dados Jr'. #vagas #dados")
+    v, motivo = linkedin_posts.post_para_vaga(_post(texto), TRILHAS, "busca")
+    assert motivo == "" and v.titulo == "Analista de Dados Júnior"
+    assert v.empresa == "Mynd8" and v.emails == ["vagas@mynd8.com.br"] and v.fonte == "linkedin"
+    assert F.filtrar_titulo(v) is None and v.nivel == "junior"
+
+
+def test_post_frase_longa_e_empresa_pelo_email():
+    texto = ("Bom dia, rede! Estamos buscando Analista de BI Jr para atuar em Goiânia no modelo híbrido. "
+             "Mande seu CV para rh@acmelog.com.br até sexta.")
+    v, _ = linkedin_posts.post_para_vaga(_post(texto, info="Gerente de RH"), TRILHAS, "b")
+    assert v.titulo.lower().startswith("analista de bi jr") and v.empresa == "Acmelog"
+
+
+def test_posts_descartados():
+    candidato = "Estou em busca de uma oportunidade como Analista de Dados Júnior! Meu email: joao@gmail.com #opentowork"
+    assert linkedin_posts.post_para_vaga(_post(candidato), TRILHAS, "b") == (None, "post de candidato")
+    sem_email = "Vaga de Analista de Dados Júnior, candidate-se pelo link."
+    assert linkedin_posts.post_para_vaga(_post(sem_email), TRILHAS, "b") == (None, "post sem email")
+    fora = "Vaga: Vendedor externo. Currículo para rh@loja.com.br"
+    assert linkedin_posts.post_para_vaga(_post(fora), TRILHAS, "b") == (None, "cargo fora das trilhas")
+
+
+def test_local_nao_informado_aceito_so_no_linkedin():
+    v = vaga("Analista de Dados", "Envie o currículo para rh@x.com", modalidade=None)
+    assert F.filtrar_local(v) == "local não informado"
+    v.fonte = "linkedin"
+    assert F.filtrar_local(v) is None
+
+
+def test_linkedin_sem_token_nao_roda():
+    vagas, info = linkedin_posts.coletar({"buscas": ["x"]}, TRILHAS, token="")
+    assert vagas == [] and info["erro"] == "sem APIFY_TOKEN"
