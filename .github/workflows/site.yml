@@ -28,7 +28,7 @@ jobs:
           cache-dependency-path: site/package-lock.json
       - run: npm ci
       - name: Tipos e build
-        run: npx tsc --noEmit && npm run build
+        run: node scripts/gerar-perfil.mjs && npx tsc --noEmit && npm run build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
       - name: Navegador dos testes
