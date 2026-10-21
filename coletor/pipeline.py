@@ -192,6 +192,15 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
             v.motivos.append(f"Post do LinkedIn com o email de quem está contratando ({v.email_contato})")
             if not v.modalidade and not v.cidade:
                 v.motivos.append("O post não diz se é remoto nem a cidade: confira antes de enviar")
+    # Funil por fonte: onde as vagas de cada fonte ficam pelo caminho (para calibrar filtros).
+    for fonte in sorted({v.fonte for v in vagas}):
+        da_fonte = [v for v in vagas if v.fonte == fonte]
+        motivos = Counter((v.motivo_descarte or "aprovada").split(":")[0].split(" em ")[0] if v.lista == "descartada" or not v.lista
+                          else "aprovada" for v in da_fonte)
+        _anotar(f"Funil {fonte}: {len(da_fonte)} únicas -> {dict(motivos.most_common(8))}")
+    amostra = [v for v in vagas if v.fonte == "solides" and v.lista == "descartada" and not str(v.motivo_descarte).startswith("título fora")]
+    for v in amostra[:12]:
+        _anotar(f"Sólides → {v.titulo[:70]} | {v.modalidade} {v.cidade or ''} | {v.motivo_descarte}")
     for v in li:  # o que aconteceu com cada post do LinkedIn (título e motivo, sem conteúdo)
         _anotar(f"LinkedIn → {v.titulo[:60]} | nota {v.nota} | {v.lista or 'ok'} | {v.motivo_descarte or ''}")
     _anotar(f"Aprovadas: {len(aprovadas)} ({sum(v.fonte == 'linkedin' for v in aprovadas)} do LinkedIn); "
