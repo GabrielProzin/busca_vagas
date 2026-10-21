@@ -83,4 +83,24 @@ class Supabase:
 
     def registrar_execucao(self, execucao: dict) -> None:
         r = requests.post(f"{self.base}/execucoes", headers=self.h, data=json.dumps(execucao, default=str), timeout=30)
+        if r.status_code == 400 and "aprendizado" in r.text:
+            log.warning("supabase: coluna execucoes.aprendizado ausente; rode o ALTER do supabase/schema.sql")
+            sem = {k: v for k, v in execucao.items() if k != "aprendizado"}
+            r = requests.post(f"{self.base}/execucoes", headers=self.h, data=json.dumps(sem, default=str), timeout=30)
         r.raise_for_status()
+
+    def sinais_de_uso(self, limite: int = 400) -> list[dict]:
+        """O que você fez com as vagas (aplicou, descartou...), com título e descrição, para o ranking aprender."""
+        r = requests.get(f"{self.base}/candidaturas", headers=self.h, timeout=60, params={
+            "select": "status,atualizada_em,vaga:vagas(id,titulo,descricao)",
+            "status": "in.(aplicada,enviada,respondeu,entrevista,proposta,recusada,descartada)",
+            "order": "atualizada_em.desc", "limit": limite})
+        r.raise_for_status()
+        return r.json()
+
+    def candidaturas_abertas(self) -> list[dict]:
+        """Candidaturas ainda sem resposta (para o lembrete de follow-up no resumo)."""
+        r = requests.get(f"{self.base}/candidaturas", headers=self.h, timeout=30, params={
+            "select": "*,vaga:vagas(id,titulo,empresa,url)", "status": "in.(aplicada,enviada)"})
+        r.raise_for_status()
+        return r.json()

@@ -498,6 +498,43 @@ select option { background: var(--surface); color: var(--ink); } /* reserva para
 .kanban-quando { margin-left: auto; color: var(--muted); font-size: 12px; }
 .kanban-vazio { border: 1px dashed var(--line-forte); border-radius: 10px; padding: 18px 10px; text-align: center; color: var(--muted); font-size: 12.5px; }
 .kanban-coluna.alvo .kanban-vazio { border-color: var(--accent); color: var(--accent); }
+.kanban-cartao.pede-followup { border-color: color-mix(in srgb, var(--warm) 45%, var(--line)); }
+.kanban-followup {
+  display: inline-flex; flex-direction: row; align-items: center; gap: 5px; align-self: flex-start; font-size: 12px; font-weight: 500;
+  max-width: 100%; padding: 3px 8px; border-radius: 6px; text-decoration: none; background: var(--warm-soft); color: var(--warm);
+}
+.kanban-followup svg { flex: none; }
+.kanban-followup.fu-encerrar { background: var(--surface-2); color: var(--muted); }
+.kanban-followup:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------------ follow-up (página da vaga) */
+.cartao-followup.followup { border-color: color-mix(in srgb, var(--warm) 40%, var(--line)); }
+.followup { display: flex; flex-direction: column; gap: 14px; }
+.followup-corpo { display: flex; flex-direction: column; gap: 14px; }
+.followup-cedo summary { cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 500; }
+.followup-cedo[open] summary { margin-bottom: 14px; }
+.followup-encerrar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.followup-encerrar .aviso { flex: 1 1 260px; }
+.followup-link { display: flex; flex-direction: column; gap: 10px; }
+.mensagem-pronta {
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-s);
+  background: var(--surface-2); border: 1px solid var(--line); font-size: 14px; line-height: 1.5;
+}
+.mensagem-pronta p { flex: 1; }
+.mensagem-pronta .botao { flex: none; }
+
+/* ------------------------------------------------------------------ painel: aprendizado */
+.cartao.aprendizado { margin-bottom: 16px; }
+.aprendizado-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.aprendizado-numeros > div { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 2px 8px; }
+.aprendizado-numeros strong { font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.aprendizado-numeros span { color: var(--muted); font-size: 13px; }
+.aprendizado-numeros .trilho { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 6px; }
+.aprendizado-numeros .trilho i { display: block; height: 100%; background: var(--seg-2); border-radius: 3px; }
+@media (max-width: 760px) {
+  .aprendizado-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mensagem-pronta { flex-direction: column; }
+}
 
 @media (max-width: 760px) {
   .kanban { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: 1fr; overflow: visible; }

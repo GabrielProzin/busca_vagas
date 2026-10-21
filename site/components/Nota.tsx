@@ -39,6 +39,13 @@ export default function Nota({ vaga, grande = false }: { vaga: Vaga; grande?: bo
             <Linha key={p.chave} cor={`var(--seg-${i + 1})`} rotulo={p.rotulo} pontos={Math.round((c[p.chave] ?? 0) * p.peso)} peso={p.peso} />
           ))}
           {vaga.nivel === "junior" ? <Linha cor="var(--ink)" rotulo="Bônus: vaga júnior" pontos={5} peso={5} /> : null}
+          {c.historico !== undefined && Math.round(c.historico) !== 0 ? (
+            <>
+              <span className="ponto" style={{ background: c.historico > 0 ? "var(--ok)" : "var(--warm)" }} />
+              <span>{c.historico > 0 ? "Parece com as que você aplicou" : "Parece com as que você descartou"}</span>
+              <b>{c.historico > 0 ? "+" : "−"}{Math.abs(Math.round(c.historico))}</b>
+            </>
+          ) : null}
         </div>
       ) : null}
       {grande && ia ? <p className="dica" style={{ marginTop: 10 }}>Nota dada pela IA ao ler o post contra o seu currículo.</p> : null}

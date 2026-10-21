@@ -41,7 +41,8 @@ function emDemo(): Demo | null {
     const agora = new Date().toISOString();
     G.__demoBV = {
       vagas: (j.vagas as Vaga[]).map((v) => ({ ...v, primeira_vez_em: agora, atualizada_em: agora, candidatura: null })),
-      candidaturas: new Map(),
+      // O arquivo de demonstração pode trazer candidaturas prontas (ex.: para ver o follow-up).
+      candidaturas: new Map(((j.candidaturas ?? []) as Candidatura[]).map((c) => [c.vaga_id, c])),
       execucoes: [{ id: 1, iniciada_em: agora, ...j.execucao }],
     };
   }
@@ -159,8 +160,39 @@ export async function gravarVaga(v: Omit<Vaga, "candidatura" | "primeira_vez_em"
   });
 }
 
+async function candidaturaAtual(vagaId: string): Promise<Candidatura | null> {
+  const d = emDemo();
+  if (d) return d.candidaturas.get(vagaId) ?? null;
+  const linhas = await rest<Candidatura[]>(`/candidaturas?select=*&vaga_id=eq.${encodeURIComponent(vagaId)}`);
+  return linhas[0] ?? null;
+}
+
 export async function mudarStatus(vagaId: string, status: Status): Promise<void> {
   const campos: Partial<Candidatura> = { status };
-  if (status === "aplicada" || status === "enviada") campos.enviada_em = new Date().toISOString();
+  if (status === "aplicada" || status === "enviada") {
+    // A data do envio só muda quando a candidatura nasce ou passa de "pelo link" para "por email".
+    // Arrastar de volta no kanban (ex.: de Entrevista para Aplicada) não reinicia a contagem do follow-up.
+    const atual = await candidaturaAtual(vagaId);
+    if (!atual?.enviada_em || (atual.status === "aplicada" && status === "enviada")) campos.enviada_em = new Date().toISOString();
+  }
   await salvarCandidatura(vagaId, campos);
+}
+
+// O Supabase guarda as colunas do follow-up só depois do ALTER de 21/10. Confere uma vez por processo.
+let followupOk = false;
+export async function followupPronto(): Promise<boolean> {
+  if (followupOk || emDemo()) return true;
+  try {
+    await rest(`/candidaturas?select=followup_em,followups,email_message_id&limit=1`);
+    followupOk = true;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+/** Guarda o Message-ID do email enviado (para o follow-up ir na mesma conversa). Sem a coluna, só não guarda. */
+export async function salvarMessageId(vagaId: string, messageId: string): Promise<void> {
+  if (!(await followupPronto())) return;
+  await salvarCandidatura(vagaId, { email_message_id: messageId }).catch(() => undefined);
 }

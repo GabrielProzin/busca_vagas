@@ -8,7 +8,17 @@ export function gmailConfigurado(): boolean {
   return Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
 }
 
-export async function enviarEmail(m: { para: string; assunto: string; corpo: string; anexo: Buffer; nomeAnexo: string }): Promise<string> {
+type Mensagem = {
+  para: string;
+  assunto: string;
+  corpo: string;
+  anexo?: Buffer;
+  nomeAnexo?: string;
+  /** Message-ID do email anterior: a mensagem vai como resposta, na mesma conversa. */
+  emResposta?: string | null;
+};
+
+export async function enviarEmail(m: Mensagem): Promise<string> {
   if (process.env.DEMO_ARQUIVO) return "demo"; // modo demo nunca envia de verdade
   const usuario = process.env.GMAIL_USER;
   const senha = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, ""); // a senha de app vem com espaços
@@ -19,7 +29,8 @@ export async function enviarEmail(m: { para: string; assunto: string; corpo: str
     to: m.para,
     subject: m.assunto,
     text: m.corpo,
-    attachments: [{ filename: m.nomeAnexo, content: m.anexo, contentType: "application/pdf" }],
+    attachments: m.anexo ? [{ filename: m.nomeAnexo ?? "curriculo.pdf", content: m.anexo, contentType: "application/pdf" }] : [],
+    ...(m.emResposta ? { inReplyTo: m.emResposta, references: [m.emResposta] } : {}),
   });
   return info.messageId;
 }

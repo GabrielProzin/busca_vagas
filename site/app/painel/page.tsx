@@ -1,6 +1,7 @@
 import Moldura from "@/components/Moldura";
 import { listarCandidaturas, listarExecucoes } from "@/lib/db";
 import { fonte } from "@/lib/formato";
+import type { Aprendizado } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +44,8 @@ export default async function PaginaPainel() {
         <div className="cartao kpi"><span>Candidaturas feitas</span><strong>{candidaturas.length}</strong><span>{porEmail} por email</span></div>
         <div className="cartao kpi"><span>Responderam ou chamaram</span><strong>{avancaram}</strong></div>
       </div>
+
+      <CartaoAprendizado a={ultima?.aprendizado ?? null} />
 
       <div className="grade-2">
         <section className="cartao">
@@ -89,4 +92,43 @@ export default async function PaginaPainel() {
       </div>
     </Moldura>
   );
+}
+
+// O ranking aprendendo com o que você aplica e descarta (calculado pelo coletor a cada coleta).
+function CartaoAprendizado({ a }: { a: Aprendizado | null }) {
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  return (
+    <section className="cartao aprendizado">
+      <div className="cartao-cabecalho">
+        <h2>O ranking aprendendo com você</h2>
+        {a ? <span className={`etiqueta ${a.ativo ? "ok" : ""}`}>{a.ativo ? "Ligado" : "Juntando exemplos"}</span> : null}
+      </div>
+      <div className="cartao-corpo">
+        {!a ? (
+          <p className="dica">
+            Começa na próxima coleta. Cada vaga em que você aplica ou que descarta vira um exemplo; vagas parecidas com as que você aplicou ganham
+            até 8 pontos, e parecidas com as que descartou perdem até 8.
+          </p>
+        ) : (
+          <>
+            <div className="aprendizado-numeros">
+              <div><strong>{a.positivos}</strong><span>aplicadas</span><Trilho valor={Math.min(1, a.positivos / a.minimo)} /></div>
+              <div><strong>{a.negativos}</strong><span>descartadas</span><Trilho valor={Math.min(1, a.negativos / a.minimo)} /></div>
+              <div><strong>{a.ativo ? pct(a.confianca) : "—"}</strong><span>força do ajuste</span><Trilho valor={a.ativo ? a.confianca : 0} /></div>
+              <div><strong>{a.acerto !== null ? pct(a.acerto) : "—"}</strong><span>acerto no teste</span><Trilho valor={a.acerto ?? 0} /></div>
+            </div>
+            <p className="dica" style={{ marginTop: 14 }}>
+              {a.ativo
+                ? `Vagas parecidas com as que você aplicou ganham até ${a.max_pontos} pontos; parecidas com as que descartou perdem até ${a.max_pontos}. A força cresce até 100% com 30 exemplos. “Acerto no teste” é quantas das suas próprias decisões ele adivinha sem ver a resposta.`
+                : `Liga quando houver pelo menos ${a.minimo} vagas aplicadas e ${a.minimo} descartadas. Descartar o que não serve na lista de vagas também ensina.`}
+            </p>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Trilho({ valor }: { valor: number }) {
+  return <span className="trilho"><i style={{ width: `${Math.max(2, Math.round(valor * 100))}%` }} /></span>;
 }

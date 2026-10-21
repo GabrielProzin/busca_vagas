@@ -3,8 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { buscarVaga, enviadosHoje, mudarStatus, salvarCandidatura } from "@/lib/db";
-import { ErroIA, emailModelo, gerarEmail } from "@/lib/ia";
+import { buscarVaga, enviadosHoje, followupPronto, mudarStatus, salvarCandidatura, salvarMessageId } from "@/lib/db";
+import { ErroIA, emailModelo, followupModelo, gerarEmail, gerarFollowup } from "@/lib/ia";
 import { enviarEmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
 import { capturar } from "@/lib/captura";
@@ -113,12 +113,14 @@ export async function enviarCandidatura(_: EstadoEmail, form: FormData): Promise
 
   // Salva o texto final antes de enviar: se o envio falhar, nada se perde.
   await salvarCandidatura(id, { email_para: para, email_assunto: assunto, email_corpo: corpo });
+  let messageId: string;
   try {
-    await enviarEmail({ para, assunto, corpo, anexo: cv, nomeAnexo: "Gabriel_Mendes_Cientista_de_Dados.pdf" });
+    messageId = await enviarEmail({ para, assunto, corpo, anexo: cv, nomeAnexo: "Gabriel_Mendes_Cientista_de_Dados.pdf" });
   } catch (e) {
     return { ...devolver, erro: `O Gmail recusou o envio: ${(e as Error).message}` };
   }
   await salvarCandidatura(id, { status: "enviada", enviada_em: new Date().toISOString() });
+  if (messageId) await salvarMessageId(id, messageId);
   revalidatePath("/", "layout");
   return { ...devolver, ok: `Email enviado para ${para}.` };
 }
@@ -161,6 +163,65 @@ export async function moverCandidatura(id: string, status: Status): Promise<stri
   if (!id || !STATUS_VALIDOS.includes(status)) return "Etapa inválida.";
   try {
     await mudarStatus(id, status);
+  } catch (e) {
+    return `Não consegui salvar: ${(e as Error).message}`;
+  }
+  revalidatePath("/", "layout");
+  return null;
+}
+
+// ------------------------------------------------------------------ follow-up
+
+const SEM_COLUNAS_FOLLOWUP =
+  "Falta rodar no Supabase o SQL do follow-up (as 4 linhas de 21/10 no fim do supabase/schema.sql).";
+
+/** Rascunho do follow-up (IA ou modelo pronto). Não salva nada: o texto só vale quando você envia. */
+export async function gerarRascunhoFollowup(_: EstadoEmail, form: FormData): Promise<EstadoEmail> {
+  await exigirSessao();
+  const v = await buscarVaga(String(form.get("id") ?? ""));
+  if (!v?.candidatura) return { erro: "Candidatura não encontrada." };
+  if (form.get("modo") === "modelo") return followupModelo(v);
+  try {
+    return { ...(await gerarFollowup(v)), ok: "Rascunho pronto. Revise antes de enviar." };
+  } catch (e) {
+    return { ...followupModelo(v), erro: `${e instanceof ErroIA ? e.message : "A IA falhou."} Usei o modelo pronto no lugar.` };
+  }
+}
+
+/** Envia o follow-up como resposta ao primeiro email (sem anexo: o currículo já está na conversa). */
+export async function enviarFollowup(_: EstadoEmail, form: FormData): Promise<EstadoEmail> {
+  await exigirSessao();
+  const id = String(form.get("id") ?? "");
+  const assunto = String(form.get("assunto") ?? "").trim();
+  const corpo = String(form.get("corpo") ?? "").trim();
+  const devolver = { assunto, corpo };
+  if (form.get("revisado") !== "on") return { ...devolver, erro: "Marque que revisou o follow-up antes de enviar." };
+  if (assunto.length < 5 || corpo.length < 60) return { ...devolver, erro: "Assunto ou mensagem muito curtos." };
+  const v = await buscarVaga(id);
+  const c = v?.candidatura;
+  if (!v || !c || c.status !== "enviada") return { ...devolver, erro: "O follow-up por email vale para candidaturas em “Email enviado”." };
+  const para = (c.email_para ?? "").trim().toLowerCase();
+  if (!EMAIL_RE.test(para)) return { ...devolver, erro: "Esta candidatura não tem o email do destinatário salvo." };
+  if (!(await followupPronto())) return { ...devolver, erro: SEM_COLUNAS_FOLLOWUP };
+  try {
+    await enviarEmail({ para, assunto, corpo, emResposta: c.email_message_id });
+  } catch (e) {
+    return { ...devolver, erro: `O Gmail recusou o envio: ${(e as Error).message}` };
+  }
+  await salvarCandidatura(id, { followup_em: new Date().toISOString(), followups: (c.followups ?? 0) + 1 });
+  revalidatePath("/", "layout");
+  return { ...devolver, ok: `Follow-up enviado para ${para}.` };
+}
+
+/** Você fez o follow-up por fora (LinkedIn, plataforma, telefone): só registra e reinicia a contagem. */
+export async function marcarFollowup(id: string): Promise<string | null> {
+  await exigirSessao();
+  const v = await buscarVaga(id);
+  const c = v?.candidatura;
+  if (!c || (c.status !== "aplicada" && c.status !== "enviada")) return "Esta candidatura não está esperando resposta.";
+  if (!(await followupPronto())) return SEM_COLUNAS_FOLLOWUP;
+  try {
+    await salvarCandidatura(id, { followup_em: new Date().toISOString(), followups: (c.followups ?? 0) + 1 });
   } catch (e) {
     return `Não consegui salvar: ${(e as Error).message}`;
   }

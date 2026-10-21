@@ -4,6 +4,7 @@ import QuadroCandidaturas, { type CartaoKanban } from "@/components/QuadroCandid
 import { listarCandidaturas } from "@/lib/db";
 import { idUrl, quando } from "@/lib/formato";
 import { ETAPAS } from "@/lib/tipos";
+import { situacaoFollowup } from "@/lib/followup";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,9 @@ const COR: Record<string, string> = {
 export default async function PaginaCandidaturas() {
   const vagas = await listarCandidaturas();
   const andamento = vagas.filter((v) => v.candidatura?.status !== "recusada").length;
-  const cartoes: CartaoKanban[] = vagas.map((v) => ({
+  const cartoes: CartaoKanban[] = vagas.map((v) => {
+    const fu = situacaoFollowup(v.candidatura);
+    return {
     id: v.id,
     titulo: v.titulo,
     empresa: v.empresa || "Empresa não informada",
@@ -24,14 +27,25 @@ export default async function PaginaCandidaturas() {
     nota: v.nota,
     porEmail: Boolean(v.candidatura?.email_para && v.candidatura.status !== "aplicada"),
     href: idUrl(v.id),
-  }));
+    followup: fu && fu.estado !== "aguardando" ? fu.estado : null,
+    diasSemResposta: fu?.dias ?? null,
+    };
+  });
+  // Quem pede follow-up sobe para o topo da coluna.
+  const ordem = { followup: 0, encerrar: 1 } as const;
+  cartoes.sort((a, b) => (a.followup ? ordem[a.followup] : 2) - (b.followup ? ordem[b.followup] : 2));
+  const pedem = cartoes.filter((c) => c.followup === "followup").length;
 
   return (
     <Moldura
       atual="/candidaturas"
       larga
       titulo="Candidaturas"
-      subtitulo={vagas.length ? `${andamento} em andamento de ${vagas.length}. Arraste os cartões entre as colunas quando a empresa responder.` : undefined}
+      subtitulo={
+        vagas.length
+          ? `${andamento} em andamento de ${vagas.length}${pedem ? `, ${pedem} ${pedem === 1 ? "pede" : "pedem"} follow-up` : ""}. Arraste os cartões entre as colunas quando a empresa responder.`
+          : undefined
+      }
     >
       {vagas.length === 0 ? (
         <div className="cartao vazio">

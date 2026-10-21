@@ -1,6 +1,7 @@
 """Nota de compatibilidade vaga x currículo, com motivos explicáveis.
 
 nota (0-100) = 45% semântica + 40% habilidades + 15% trilha do cargo (+5 se o título diz júnior)
+               + ajuste do seu histórico (-8 a +8, ver aprendizado.py; só depois de alguns usos)
 
 - Semântica: cada frase da vaga é comparada com cada frase do currículo usando
   embeddings multilíngues (fastembed, roda local, sem API). Para cada frase da vaga
@@ -18,6 +19,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from .aprendizado import Aprendizado
 from .modelos import Vaga
 from .texto import compilar, frases_relevantes, normalizar
 
@@ -99,19 +101,36 @@ class Ranker:
         return score, [h.nome for h in sorted(ok, key=lambda h: -h.peso)], faltando, diferenciais
 
     # ------------------------------------------------------------------ ranking
-    def ranquear(self, vagas: list[Vaga]) -> None:
+    def ranquear(self, vagas: list[Vaga], aprendizado: Aprendizado | None = None) -> None:
         if not vagas:
             return
         frases_por_vaga = [frases_relevantes(f"{v.titulo}.\n{v.descricao}") or [v.titulo] for v in vagas]
-        todas = self.cv_frases + [f for fs in frases_por_vaga for f in fs]
-        log.info("ranking: %d frases (%d do currículo) via %s", len(todas), len(self.cv_frases), self.emb.backend)
+        # Vagas do seu histórico entram no mesmo lote: no TF-IDF o vocabulário precisa ser o mesmo.
+        exemplos = aprendizado.exemplos if aprendizado and aprendizado.pode_treinar else []
+        frases_ex = [frases_relevantes(f"{e.titulo}.\n{e.descricao}") or [e.titulo or "vaga"] for e in exemplos]
+        todas = (self.cv_frases + [f for fs in frases_por_vaga for f in fs] + [v.titulo for v in vagas]
+                 + [f for fs in frases_ex for f in fs] + [e.titulo or "vaga" for e in exemplos])
+        log.info("ranking: %d frases (%d do currículo, %d do histórico) via %s", len(todas), len(self.cv_frases),
+                 sum(map(len, frases_ex)), self.emb.backend)
         matriz = self.emb.codificar(todas)
         cv = matriz[: len(self.cv_frases)]
         lo, hi = self.emb.faixa
         pos = len(self.cv_frases)
-        for v, frases in zip(vagas, frases_por_vaga):
-            jm = matriz[pos: pos + len(frases)]
+        blocos_vagas = []
+        for frases in frases_por_vaga:
+            blocos_vagas.append(matriz[pos: pos + len(frases)])
             pos += len(frases)
+        titulos_vagas = matriz[pos: pos + len(vagas)]
+        pos += len(vagas)
+        blocos_ex = []
+        for frases in frases_ex:
+            blocos_ex.append(matriz[pos: pos + len(frases)])
+            pos += len(frases)
+        titulos_ex = matriz[pos: pos + len(exemplos)]
+        if exemplos:
+            aprendizado.preparar(np.stack([_vetor_vaga(t, b) for t, b in zip(titulos_ex, blocos_ex)]))
+
+        for v, frases, jm, tv in zip(vagas, frases_por_vaga, blocos_vagas, titulos_vagas):
             sims = jm @ cv.T  # (frases_vaga, frases_cv)
             melhor = sims.max(axis=1)
             top = np.sort(melhor)[::-1][:8]
@@ -121,11 +140,14 @@ class Ranker:
             hab, ok, faltando, diferenciais = self._habilidades(v)
             trilha = self.trilha_peso.get(v.trilha or "", 0.6)
             nota = 100 * (0.45 * sem + 0.40 * hab + 0.15 * trilha) + (5 if v.nivel == "junior" else 0)
-            v.nota = round(min(100.0, nota), 1)
+            ajuste, parecida = aprendizado.ajuste(_vetor_vaga(tv, jm), v.id) if aprendizado else (0.0, None)
+            v.nota = round(min(100.0, max(0.0, nota + ajuste)), 1)
             v.habilidades_ok = ok
             v.habilidades_faltando = faltando
             v.componentes = {"semantica": round(sem, 3), "semantica_bruta": round(sem_bruto, 3),
                              "habilidades": round(hab, 3), "trilha": trilha, "backend": self.emb.backend}
+            if aprendizado and aprendizado.ativo:
+                v.componentes["historico"] = ajuste
 
             motivos = []
             if ok:
@@ -139,6 +161,9 @@ class Ranker:
                 motivos.append("Diferencial que você não tem: " + ", ".join(diferenciais))
             if v.nivel == "junior":
                 motivos.append("Título indica júnior")
+            if abs(ajuste) >= 1 and parecida:
+                lado = "aplicou" if ajuste > 0 else "descartou"
+                motivos.append(f"Parecida com vagas que você {lado}, como “{parecida[:90]}” ({ajuste:+.0f} na nota)")
             v.motivos = motivos
 
             if v.nota < self.nota_minima:
@@ -147,3 +172,9 @@ class Ranker:
                 v.lista = "vale_tentar"
             else:
                 v.lista = "principal"
+
+
+def _vetor_vaga(titulo: np.ndarray, frases: np.ndarray) -> np.ndarray:
+    """Um vetor por vaga: metade título, metade média das frases da descrição."""
+    v = titulo + frases.mean(axis=0)
+    return v / max(float(np.linalg.norm(v)), 1e-9)

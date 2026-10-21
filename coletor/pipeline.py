@@ -12,12 +12,16 @@ import re
 import os
 import time
 from collections import Counter
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 import yaml
 
 from . import alerta
+from . import followup
 from . import resumo as resumo_email
+from .aprendizado import Aprendizado
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
 from .contato import buscar_email_empresa
@@ -62,7 +66,11 @@ def _deduplicar(vagas: list[Vaga]) -> list[Vaga]:
 def _resumo_md(aprovadas: list[Vaga], execucao: dict, detalhado: bool) -> str:
     linhas = [f"## Coleta de vagas — {execucao['principal']} principais, {execucao['vale_tentar']} vale tentar",
               "", f"Coletadas por fonte: {execucao['coletadas']} · ranking via `{execucao['backend']}` · "
-              f"{execucao['duracao_s']:.0f}s", "", "**Descartes:**"]
+              f"{execucao['duracao_s']:.0f}s", ""]
+    if ap := execucao.get("aprendizado"):
+        linhas += [f"Aprendizado: {ap['positivos']} aplicadas, {ap['negativos']} descartadas · "
+                   f"{'ligado' if ap['ativo'] else 'ainda desligado'}", ""]
+    linhas += ["**Descartes:**"]
     linhas += [f"- {m}: {n}" for m, n in sorted(execucao["descartes"].items(), key=lambda x: -x[1])[:12]]
     if detalhado and aprovadas:
         linhas += ["", "| Nota | Vaga | Empresa | Local | Lista | Email |", "|---|---|---|---|---|---|"]
@@ -73,6 +81,26 @@ def _resumo_md(aprovadas: list[Vaga], execucao: dict, detalhado: bool) -> str:
             linhas.append(f"| {v.nota} | [{v.titulo}]({v.url}) | {v.empresa} | {local} | {v.lista} | "
                           f"{'sim' if v.emails else ''} |")
     return "\n".join(linhas) + "\n"
+
+
+def _followups_pendentes(sb: Supabase) -> list[dict]:
+    """Só na coleta da manhã (antes das 15h em Brasília), para o lembrete chegar uma vez por dia."""
+    if datetime.now(ZoneInfo("America/Sao_Paulo")).hour >= 15 and os.getenv("FOLLOWUP_SEMPRE") != "1":
+        return []
+    try:
+        linhas = sb.candidaturas_abertas()
+    except Exception as e:
+        log.warning("follow-up: não li as candidaturas: %s", e)
+        return []
+    pendentes = []
+    for c in linhas:
+        s = followup.situacao(c)
+        v = c.get("vaga") or {}
+        if s and v.get("id"):
+            pendentes.append({"id": v["id"], "titulo": v.get("titulo") or "Vaga", "empresa": v.get("empresa"),
+                              "url": v.get("url"), "status": c["status"], "tipo": s[0], "dias": s[1]})
+    log.info("follow-up: %d candidatura(s) pedem atenção", len(pendentes))
+    return pendentes
 
 
 def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: int = 4) -> dict:
@@ -130,9 +158,16 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         else:
             restantes.append(v)
 
-    # 5. Ranking
+    # 5. Ranking (com o ajuste do que você já aplicou/descartou, quando houver banco)
+    sb = Supabase.do_ambiente()
+    aprendizado = None
+    if sb:
+        try:
+            aprendizado = Aprendizado.de_linhas(sb.sinais_de_uso())
+        except Exception as e:  # o aprendizado é um extra: sem ele, a nota é a de sempre
+            log.warning("aprendizado: não li o histórico: %s", e)
     ranker = Ranker(perfil, curriculo, cfg, Embedder(forcar_tfidf=forcar_tfidf))
-    ranker.ranquear(restantes)
+    ranker.ranquear(restantes, aprendizado)
     for v in restantes:
         if v.lista == "descartada":
             descartes["nota abaixo do mínimo"] += 1
@@ -159,6 +194,7 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         "principal": sum(v.lista == "principal" for v in aprovadas),
         "vale_tentar": sum(v.lista == "vale_tentar" for v in aprovadas),
         "backend": ranker.emb.backend,
+        "aprendizado": aprendizado.resumo() if aprendizado else None,
     }
 
     # 6. Gravação
@@ -169,7 +205,6 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
           "url": v.url, "componentes": v.componentes} for v in candidatas if v.lista == "descartada"],
         ensure_ascii=False, indent=1), encoding="utf-8")
     log.info("json: %s", caminho)
-    sb = Supabase.do_ambiente()
     if sb:
         # Novidade = não estava no banco antes desta coleta. Só elas entram no email de resumo.
         try:
@@ -182,8 +217,9 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         para_resumo = [v for v in aprovadas if v.id not in existentes and (v.nota or 0) >= corte]
         sb.upsert_vagas(aprovadas)
         sb.registrar_execucao(execucao)
+        pendentes = _followups_pendentes(sb)
         try:
-            resumo_email.enviar(para_resumo, corte)
+            resumo_email.enviar(para_resumo, corte, pendentes)
         except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
             log.warning("resumo: falha ao enviar: %s", e)
         problemas = alerta.verificar_saude(execucao, anteriores)

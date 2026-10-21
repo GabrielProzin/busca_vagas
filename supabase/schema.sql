@@ -73,3 +73,9 @@ alter table vagas add column if not exists resumo jsonb;
 
 -- 21/10/2026: de onde veio o email do recrutador: vaga (estava no texto) | site_rh | site_contato
 alter table vagas add column if not exists email_origem text;
+
+-- 21/10/2026: follow-up das candidaturas e aprendizado do ranking.
+alter table candidaturas add column if not exists followup_em      timestamptz;          -- último follow-up feito
+alter table candidaturas add column if not exists followups        int not null default 0; -- quantos já foram feitos
+alter table candidaturas add column if not exists email_message_id text;                 -- para o follow-up ir na mesma conversa
+alter table execucoes    add column if not exists aprendizado      jsonb;                -- quantos sinais o ranking usou

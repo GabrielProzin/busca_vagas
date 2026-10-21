@@ -37,6 +37,10 @@ export type Candidatura = {
   enviada_em: string | null;
   notas: string | null;
   atualizada_em: string;
+  // Colunas do follow-up (opcionais: só existem depois do ALTER de 21/10 no Supabase).
+  followup_em?: string | null;
+  followups?: number | null;
+  email_message_id?: string | null;
 };
 
 export type Vaga = {
@@ -62,7 +66,8 @@ export type Vaga = {
   habilidades_ok: string[];
   habilidades_faltando: string[];
   // Vagas da coleta têm os três componentes; vagas capturadas (LinkedIn/colar) têm só a nota da IA.
-  componentes: { semantica?: number; habilidades?: number; trilha?: number; ia?: number };
+  // "historico": pontos (+/-) que o ranking somou por a vaga parecer com as que você aplicou ou descartou.
+  componentes: { semantica?: number; habilidades?: number; trilha?: number; ia?: number; historico?: number };
   primeira_vez_em: string;
   atualizada_em: string;
   // Resumo direto gerado pela IA na primeira vez que a vaga é aberta (coluna opcional no banco).
@@ -78,4 +83,15 @@ export type Execucao = {
   descartes: Record<string, number> | null;
   principal: number | null;
   vale_tentar: number | null;
+  aprendizado?: Aprendizado | null;
+};
+
+export type Aprendizado = {
+  positivos: number;
+  negativos: number;
+  ativo: boolean;
+  minimo: number;
+  confianca: number;
+  acerto: number | null;
+  max_pontos: number;
 };

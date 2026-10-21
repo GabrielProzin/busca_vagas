@@ -5,6 +5,7 @@ import Nota from "@/components/Nota";
 import Icone from "@/components/Icone";
 import EmailCandidatura from "@/components/EmailCandidatura";
 import StatusVaga from "@/components/StatusVaga";
+import Followup from "@/components/Followup";
 import ResumoVaga, { ResumoCarregando } from "@/components/ResumoVaga";
 import { alterarStatus, salvarNotas } from "../../acoes";
 import { buscarVaga } from "@/lib/db";
@@ -12,6 +13,7 @@ import { infoCurriculo } from "@/lib/arquivos";
 import { gmailConfigurado } from "@/lib/email";
 import { iaConfigurada } from "@/lib/ia";
 import { fonte, habilidade, local, naFonte, origemEmail, quando } from "@/lib/formato";
+import { mensagemLinkedin, situacaoFollowup } from "@/lib/followup";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,27 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
   const temEmail = Boolean(v.email_contato || c?.email_para);
   const motivos = v.motivos.filter((m) => !m.startsWith("Pede ")); // "Pede x, y" já aparece nas etiquetas
   const descricaoLonga = (v.descricao ?? "").length > 900;
+  const fu = situacaoFollowup(c);
+  const cartaoFollowup = fu ? (
+    <section className={`cartao cartao-followup ${fu.estado}`} aria-label="Follow-up">
+      <div className="cartao-cabecalho">
+        <h2><Icone nome="sino" /> Follow-up</h2>
+        {fu.estado === "followup" ? <span className="etiqueta falta">Pendente</span> : null}
+      </div>
+      <div className="cartao-corpo">
+        <Followup
+          vagaId={v.id}
+          modo={status === "enviada" && c?.email_para ? "email" : "link"}
+          para={c?.email_para ?? null}
+          situacao={fu}
+          linkedin={mensagemLinkedin(v)}
+          naFonte={naFonte(v.fonte)}
+          iaPronta={iaConfigurada()}
+          gmailPronto={gmailConfigurado()}
+        />
+      </div>
+    </section>
+  ) : null;
 
   return (
     <Moldura
@@ -57,6 +80,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
     >
       <div className="detalhe">
         <div>
+          {cartaoFollowup}
           <Suspense fallback={<ResumoCarregando />}>
             <ResumoVaga vaga={v} />
           </Suspense>
@@ -137,7 +161,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
                 <div className="campo-linha"><span>{origemEmail(v.email_origem)}</span><b>{v.email_contato}</b></div>
               ) : null}
               <label style={{ marginTop: 4 }}>Situação</label>
-              <StatusVaga id={v.id} status={status} />
+              <StatusVaga key={status} id={v.id} status={status} />
               <form action={salvarNotas} className="form-coluna" style={{ marginTop: 8 }}>
                 <input type="hidden" name="id" value={v.id} />
                 <label htmlFor="notas">Anotações</label>

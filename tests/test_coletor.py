@@ -147,3 +147,59 @@ def test_solides_para_vaga():
     assert v.url == "https://acme.vagas.solides.com.br/vaga/1" and v.modalidade == "hibrido" and v.cidade == "Goiânia"
     assert "Pleno" in v.titulo and F.filtrar_titulo(v).startswith("senioridade")  # nível do campo separado é respeitado
     assert "Python" in v.descricao
+
+
+# ---------------------------------------------------------------- aprendizado e follow-up
+from coletor import followup, resumo  # noqa: E402
+from coletor.aprendizado import Aprendizado  # noqa: E402
+
+BI = "Construir dashboards no Power BI, medidas DAX e relatórios gerenciais para a diretoria comercial."
+ENG = "Construir pipelines de dados em Spark e Kafka, orquestrar com Airflow e manter o data lake na AWS."
+
+
+def _linhas(n_bi, n_eng):
+    linhas = [{"status": "aplicada", "vaga": {"id": f"bi{i}", "titulo": f"Analista de BI Júnior {i}", "descricao": BI}} for i in range(n_bi)]
+    linhas += [{"status": "descartada", "vaga": {"id": f"en{i}", "titulo": f"Engenheiro de Dados Júnior {i}", "descricao": ENG}} for i in range(n_eng)]
+    return linhas
+
+
+def test_aprendizado_desligado_com_poucos_exemplos():
+    a = Aprendizado.de_linhas(_linhas(2, 5))
+    assert not a.pode_treinar
+    r = Ranker(PERFIL, CV, CFG, Embedder(forcar_tfidf=True))
+    v = vaga("Analista de BI Júnior", BI)
+    r.ranquear([v], a)
+    assert "historico" not in v.componentes and not a.ativo
+
+
+def test_aprendizado_puxa_para_o_que_voce_aplica():
+    a = Aprendizado.de_linhas(_linhas(6, 6))
+    r = Ranker(PERFIL, CV, CFG, Embedder(forcar_tfidf=True))
+    bi, eng = vaga("Analista de BI Júnior", BI), vaga("Engenheiro de Dados Júnior", ENG)
+    r.ranquear([bi, eng], a)
+    assert a.ativo and a.acerto == 1.0
+    assert bi.componentes["historico"] > 0 > eng.componentes["historico"]
+    assert abs(bi.componentes["historico"]) <= a.max_pontos
+    for v in (bi, eng):  # a nota é a soma de sempre mais o ajuste do histórico
+        c = v.componentes
+        base = 100 * (0.45 * c["semantica"] + 0.40 * c["habilidades"] + 0.15 * c["trilha"]) + (5 if v.nivel == "junior" else 0)
+        assert abs(v.nota - (base + c["historico"])) < 0.2
+    assert any("você aplicou" in m for m in bi.motivos) and any("você descartou" in m for m in eng.motivos)
+
+
+def test_followup():
+    agora = datetime(2026, 10, 21, 12, tzinfo=timezone.utc)
+    antes = lambda d: (agora - timedelta(days=d)).isoformat()  # noqa: E731
+    assert followup.situacao({"status": "enviada", "enviada_em": antes(3)}, agora) is None
+    assert followup.situacao({"status": "enviada", "enviada_em": antes(8)}, agora) == ("followup", 8)
+    assert followup.situacao({"status": "aplicada", "enviada_em": antes(20), "followup_em": antes(2), "followups": 1}, agora) is None
+    assert followup.situacao({"status": "aplicada", "enviada_em": antes(30), "followup_em": antes(9), "followups": 2}, agora) == ("encerrar", 9)
+    assert followup.situacao({"status": "entrevista", "enviada_em": antes(30)}, agora) is None
+
+
+def test_resumo_so_com_followup():
+    m = resumo.montar([], "https://site", 85, [{"id": "gupy:1", "titulo": "Analista de BI", "empresa": "ACME",
+                                                "status": "enviada", "tipo": "followup", "dias": 9}])
+    assert m["Subject"] == "busca_vagas: 1 candidatura pede follow-up"
+    texto = m.get_body(("plain",)).get_content()
+    assert "email há 9 dias" in texto and "https://site/vaga/gupy%3A1" in texto
