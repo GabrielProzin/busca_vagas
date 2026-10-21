@@ -85,6 +85,18 @@ def empresa_do_post(info: str | None, emails: list[str]) -> str:
     return ""
 
 
+_ATIVIDADE = re.compile(r"activity[:\-](\d{12,25})")
+
+
+def id_do_post(p: dict) -> str:
+    """Número do post (urn:li:activity:<n>), o mesmo que a extensão lê na tela: a vaga nunca entra duas vezes."""
+    for campo in (p.get("linkedinUrl"), p.get("entityId"), p.get("id"), (p.get("socialContent") or {}).get("shareUrl")):
+        if campo and (m := _ATIVIDADE.search(str(campo))):
+            return m.group(1)
+    bruto = str(p.get("entityId") or p.get("id") or "")
+    return bruto if bruto.isdigit() else (bruto or str(p.get("linkedinUrl")))
+
+
 def post_para_vaga(p: dict, trilhas: list[re.Pattern], busca: str) -> tuple[Vaga | None, str]:
     """Converte um post em vaga. Devolve (vaga, "") ou (None, motivo do descarte)."""
     texto = (p.get("content") or "").strip()
@@ -112,7 +124,7 @@ def post_para_vaga(p: dict, trilhas: list[re.Pattern], busca: str) -> tuple[Vaga
     descricao = texto + (f"\n\nPublicado por {quem}" + (f" ({autor['info']})" if autor.get("info") else "") if quem else "")
     return Vaga(
         fonte="linkedin",
-        id_origem=str(p.get("id") or p.get("linkedinUrl")),
+        id_origem=id_do_post(p),
         titulo=titulo,
         empresa=empresa_do_post(autor.get("info"), emails),
         url=p.get("linkedinUrl") or "",

@@ -257,3 +257,9 @@ def test_linkedin_sem_token_nao_roda():
 def test_nota_minima_menor_para_posts_do_linkedin():
     r = Ranker(PERFIL, CV, CFG, Embedder(forcar_tfidf=True))
     assert r.minima_por_fonte["linkedin"] == 40 and r.nota_minima == 50
+
+
+def test_id_do_post_igual_ao_da_extensao():
+    assert linkedin_posts.id_do_post({"linkedinUrl": "https://www.linkedin.com/posts/ana_vaga-activity-7390123456789012345-AbCd"}) == "7390123456789012345"
+    assert linkedin_posts.id_do_post({"id": "7390123456789012345"}) == "7390123456789012345"
+    assert linkedin_posts.id_do_post({"entityId": "urn:li:activity:7390123456789012345"}) == "7390123456789012345"
