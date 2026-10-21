@@ -7,7 +7,7 @@
 -- Vagas coletadas e ranqueadas. Reescrita a cada coleta (upsert por id).
 create table if not exists vagas (
   id                  text primary key,          -- "<fonte>:<id na origem>"
-  fonte               text not null,             -- gupy | github
+  fonte               text not null,             -- gupy | remotar | github
   titulo              text not null,
   empresa             text,
   url                 text,
