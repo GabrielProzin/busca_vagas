@@ -149,6 +149,7 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     for v in vagas:
         motivo = filtros.filtrar_titulo(v) or filtros.filtrar_data(v)
         if motivo:
+            v.lista, v.motivo_descarte = "descartada", motivo
             descartes[motivo.split(":")[0]] += 1
         else:
             candidatas.append(v)
@@ -191,6 +192,8 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
             v.motivos.append(f"Post do LinkedIn com o email de quem está contratando ({v.email_contato})")
             if not v.modalidade and not v.cidade:
                 v.motivos.append("O post não diz se é remoto nem a cidade: confira antes de enviar")
+    for v in li:  # o que aconteceu com cada post do LinkedIn (título e motivo, sem conteúdo)
+        _anotar(f"LinkedIn → {v.titulo[:60]} | nota {v.nota} | {v.lista or 'ok'} | {v.motivo_descarte or ''}")
     _anotar(f"Aprovadas: {len(aprovadas)} ({sum(v.fonte == 'linkedin' for v in aprovadas)} do LinkedIn); "
             f"com email: {sum(bool(v.emails) for v in aprovadas)}")
 
