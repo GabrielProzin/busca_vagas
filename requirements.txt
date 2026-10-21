@@ -1,7 +1,7 @@
 requests>=2.31
 cryptography>=42
 PyYAML>=6.0
-numpy>=1.26
+numpy>=2.5.4
 scikit-learn>=1.4
 fastembed>=0.4
 pytest>=8
