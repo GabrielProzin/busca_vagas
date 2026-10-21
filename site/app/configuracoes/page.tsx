@@ -52,6 +52,21 @@ export default async function PaginaConfiguracoes() {
 
         <div className="ajuste">
           <div>
+            <h2>Seus dados e backup</h2>
+            <p className="dica">
+              A cada coleta, o GitHub guarda um backup cifrado do banco por 14 dias (só abre com a BACKUP_SENHA). Aqui você baixa uma
+              cópia legível de todas as suas candidaturas, quando quiser.
+            </p>
+          </div>
+          <div className="form-coluna">
+            <a className="botao" href="/api/exportar" download>
+              <Icone nome="arquivo" tamanho={16} /> Exportar meus dados (JSON)
+            </a>
+          </div>
+        </div>
+
+        <div className="ajuste">
+          <div>
             <h2>Extensão do navegador</h2>
             <p className="dica">Mande posts de vaga do LinkedIn (ou de qualquer site) para cá com o botão direito.</p>
           </div>
@@ -61,7 +76,10 @@ export default async function PaginaConfiguracoes() {
               Modo do desenvolvedor, clique em Carregar sem compactação e escolha a pasta. Nas opções da extensão, informe o endereço
               deste site e o mesmo valor de CAPTURA_TOKEN.
             </p>
-            <p className="dica">Para usar: selecione o texto de um post de vaga, clique com o botão direito e escolha “Enviar para o busca_vagas”.</p>
+            <p className="dica">
+              No LinkedIn, clique no ícone da extensão para mandar de uma vez os posts da tela com email. Em qualquer site, selecione o
+              texto de uma vaga, clique com o botão direito e escolha “Enviar para o busca_vagas”.
+            </p>
           </div>
         </div>
       </section>

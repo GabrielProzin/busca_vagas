@@ -42,7 +42,15 @@ function emDemo(): Demo | null {
     G.__demoBV = {
       vagas: (j.vagas as Vaga[]).map((v) => ({ ...v, primeira_vez_em: agora, atualizada_em: agora, candidatura: null })),
       // O arquivo de demonstração pode trazer candidaturas prontas (ex.: para ver o follow-up).
-      candidaturas: new Map(((j.candidaturas ?? []) as Candidatura[]).map((c) => [c.vaga_id, c])),
+      // Datas relativas ("enviada_em_dias_atras": 16) para o arquivo não envelhecer.
+      candidaturas: new Map(((j.candidaturas ?? []) as Record<string, unknown>[]).map((bruta) => {
+        const c: Record<string, unknown> = {};
+        for (const [k, v] of Object.entries(bruta)) {
+          if (k.endsWith("_dias_atras")) c[k.replace("_dias_atras", "")] = new Date(Date.now() - Number(v) * 864e5).toISOString();
+          else c[k] = v;
+        }
+        return [c.vaga_id as string, c as unknown as Candidatura];
+      })),
       execucoes: [{ id: 1, iniciada_em: agora, ...j.execucao }],
     };
   }
@@ -209,4 +217,63 @@ export async function followupPronto(): Promise<boolean> {
 export async function salvarMessageId(vagaId: string, messageId: string): Promise<void> {
   if (!(await followupPronto())) return;
   await salvarCandidatura(vagaId, { email_message_id: messageId }).catch(() => undefined);
+}
+
+
+/** Tudo o que é seu: candidaturas (inclusive descartes) com a vaga de cada uma. Para "Exportar meus dados". */
+export async function exportarDados(): Promise<{ candidaturas: Candidatura[]; vagas: Vaga[] }> {
+  const d = emDemo();
+  if (d) {
+    const candidaturas = [...d.candidaturas.values()];
+    const ids = new Set(candidaturas.map((c) => c.vaga_id));
+    return { candidaturas, vagas: d.vagas.filter((v) => ids.has(v.id)).map((v) => ({ ...v, candidatura: null })) };
+  }
+  const linhas = await rest<(Candidatura & { vaga: Vaga | null })[]>(`/candidaturas?select=*,vaga:vagas(*)&order=atualizada_em.desc`);
+  return {
+    candidaturas: linhas.map(({ vaga: _v, ...c }) => c as Candidatura),
+    vagas: linhas.map((l) => l.vaga).filter((v): v is Vaga => Boolean(v)),
+  };
+}
+
+
+// ---------------------------------------------------------------- trava contra envio duplo
+// Duas abas clicando "Enviar" ao mesmo tempo: só uma consegue reservar o envio, numa única
+// atualização condicional no banco. Se o Gmail falhar, a reserva é desfeita.
+
+/** Reserva o envio da candidatura. false = já foi enviada (ou outra aba está enviando agora). */
+export async function reservarEnvio(vagaId: string): Promise<{ ok: boolean; anterior: Pick<Candidatura, "status" | "enviada_em"> | null }> {
+  const agora = new Date().toISOString();
+  const d = emDemo();
+  if (d) {
+    const c = d.candidaturas.get(vagaId);
+    if (!c || c.status === "enviada") return { ok: false, anterior: null };
+    d.candidaturas.set(vagaId, { ...c, status: "enviada", enviada_em: agora, atualizada_em: agora });
+    return { ok: true, anterior: { status: c.status, enviada_em: c.enviada_em } };
+  }
+  const antes = await rest<Candidatura[]>(`/candidaturas?select=status,enviada_em&vaga_id=eq.${encodeURIComponent(vagaId)}`);
+  const linhas = await rest<Candidatura[]>(`/candidaturas?vaga_id=eq.${encodeURIComponent(vagaId)}&status=neq.enviada`, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ status: "enviada", enviada_em: agora, atualizada_em: agora }),
+  });
+  return { ok: linhas.length === 1, anterior: antes[0] ? { status: antes[0].status, enviada_em: antes[0].enviada_em } : null };
+}
+
+/** Reserva um follow-up: só passa se ninguém registrou outro follow-up desde que a página foi aberta. */
+export async function reservarFollowup(vagaId: string, feitos: number): Promise<{ ok: boolean; anterior: string | null }> {
+  const agora = new Date().toISOString();
+  const d = emDemo();
+  if (d) {
+    const c = d.candidaturas.get(vagaId);
+    if (!c || (c.followups ?? 0) !== feitos) return { ok: false, anterior: null };
+    d.candidaturas.set(vagaId, { ...c, followups: feitos + 1, followup_em: agora, atualizada_em: agora });
+    return { ok: true, anterior: c.followup_em ?? null };
+  }
+  const antes = await rest<Candidatura[]>(`/candidaturas?select=followup_em&vaga_id=eq.${encodeURIComponent(vagaId)}`);
+  const linhas = await rest<Candidatura[]>(`/candidaturas?vaga_id=eq.${encodeURIComponent(vagaId)}&followups=eq.${feitos}`, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ followups: feitos + 1, followup_em: agora, atualizada_em: agora }),
+  });
+  return { ok: linhas.length === 1, anterior: antes[0]?.followup_em ?? null };
 }

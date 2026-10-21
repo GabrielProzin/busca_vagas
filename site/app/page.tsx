@@ -20,13 +20,13 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
   try {
     vagas = await listarVagas();
   } catch (e) {
+    console.error("listarVagas:", e); // detalhe técnico só no log da Vercel
     return (
       <Moldura atual="/" titulo="Vagas">
         <div className="cartao vazio">
           <Icone nome="alerta" tamanho={32} />
-          <b>Não consegui ler o banco.</b>
-          <p>{(e as Error).message}</p>
-          <p>Confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente da Vercel.</p>
+          <b>Não consegui ler o banco agora.</b>
+          <p>Tente recarregar em instantes. Se continuar, confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel e o log da implantação.</p>
         </div>
       </Moldura>
     );

@@ -34,3 +34,16 @@ export async function enviarEmail(m: Mensagem): Promise<string> {
   });
   return info.messageId;
 }
+
+/** Mensagem clara para os erros mais comuns do Gmail; o detalhe técnico vai para o log. */
+export function erroGmail(e: unknown): string {
+  const msg = String((e as Error)?.message ?? e);
+  console.error("gmail:", msg);
+  if (/535|Username and Password not accepted|Invalid login|BadCredentials/i.test(msg)) {
+    return "O Gmail recusou o login. Confira GMAIL_USER e a senha de app (GMAIL_APP_PASSWORD) na Vercel.";
+  }
+  if (/5\.4\.5|Daily user sending limit|limit exceeded|421/i.test(msg)) return "O Gmail atingiu o limite de envios de hoje. Tente amanhã.";
+  if (/5\.1\.1|does not exist|User unknown|NoSuchUser|550/i.test(msg)) return "O Gmail diz que esse endereço de destino não existe. Confira o email.";
+  if (/ETIMEDOUT|ECONNRESET|ENOTFOUND|timeout/i.test(msg)) return "Não consegui falar com o Gmail agora. Tente de novo em instantes.";
+  return "O Gmail recusou o envio. Tente de novo; se continuar, veja o log da Vercel.";
+}

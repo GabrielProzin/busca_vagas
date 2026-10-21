@@ -1,0 +1,46 @@
+name: Testes do site
+
+# A cada mudança no site (ou no perfil/configuração que ele usa): compila e roda os testes de ponta a ponta
+# em modo demonstração (dados fictícios de site/e2e/demo.json, Gemini falso, Gmail simulado).
+on:
+  push:
+    paths: ["site/**", "perfil/**", "config/**", ".github/workflows/site.yml"]
+  pull_request:
+    paths: ["site/**", "perfil/**", "config/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci
+      - name: Tipos e build
+        run: npx tsc --noEmit && npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - name: Navegador dos testes
+        run: npx playwright install --with-deps chromium
+      - name: Testes de ponta a ponta
+        run: npx playwright test
+        env:
+          CI: "1"
+      - name: Rastro dos testes que falharam
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rastro-dos-testes
+          path: site/test-results/
+          retention-days: 7

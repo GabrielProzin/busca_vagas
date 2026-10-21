@@ -55,7 +55,10 @@ async function gerarJSON<T>(prompt: string, temperatura = 0.4, escrita = false):
       continue;
     }
     if (r.status === 429) throw new ErroIA("Limite diário da IA atingido. Use o modelo pronto ou tente amanhã.", "limite");
-    if (!r.ok) throw new ErroIA(`A IA respondeu ${r.status}: ${(await r.text()).slice(0, 200)}`, "falha");
+    if (!r.ok) {
+      console.error(`gemini ${modelo} ${r.status}:`, (await r.text()).slice(0, 500));
+      throw new ErroIA(`A IA não respondeu agora (erro ${r.status}). Tente de novo em instantes.`, "falha");
+    }
     const j = await r.json();
     const texto: string = j?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
     try {

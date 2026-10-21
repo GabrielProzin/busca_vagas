@@ -272,3 +272,48 @@ def test_solides_aceita_junior_mesmo_listando_outros_niveis():
     assert F.filtrar_titulo(v) is None and v.nivel == "junior"
     v = solides._para_vaga({**base, "seniority": [{"name": "Pleno"}, {"name": "Sênior"}]}, "dados")
     assert F.filtrar_titulo(v).startswith("senioridade")
+
+
+# ---------------------------------------------------------------- backup
+def test_backup_cifra_decifra_e_rejeita_senha_errada():
+    import pytest
+    from coletor import backup
+    dados = b'{"candidaturas": []}'
+    c = backup.cifrar(dados, "uma-senha-bem-comprida-123")
+    assert c.startswith(b"BVBK1") and dados not in c
+    assert backup.decifrar(c, "uma-senha-bem-comprida-123") == dados
+    with pytest.raises(Exception):
+        backup.decifrar(c, "outra-senha-bem-comprida-123")
+    with pytest.raises(ValueError):
+        backup.cifrar(dados, "curta")
+
+
+def test_backup_gera_e_verifica_com_banco_simulado(tmp_path, monkeypatch):
+    from coletor import backup
+    from coletor.armazenamento import Supabase
+    banco = {"candidaturas": [{"vaga_id": "gupy:1", "status": "enviada"}], "vagas": [{"id": "gupy:1", "titulo": "Analista"}],
+             "execucoes": [{"id": 1}]}
+
+    class R:
+        def __init__(self, dados=None, conteudo=b"", ok=True):
+            self._d, self.content, self.ok, self.status_code = dados, conteudo, ok, 200 if ok else 404
+        def json(self): return self._d
+        def raise_for_status(self): pass
+
+    def falso_get(url, **kw):
+        if "/storage/" in url:
+            return R(conteudo=b"%PDF-1.7 teste")
+        return R(dados=banco[url.rsplit("/", 1)[1]])
+
+    monkeypatch.setattr(backup.requests, "get", falso_get)
+    sb = Supabase("https://x.supabase.co", "sb_secret_teste")
+    arq = str(tmp_path / "b.bvbk")
+    senha = "uma-senha-bem-comprida-123"
+    assert backup.gerar(sb, arq, senha) == {"candidaturas": 1, "vagas": 1, "execucoes": 1, "curriculo": True}
+    assert backup.verificar(sb, arq, senha)["candidaturas"] == 1
+    assert backup.restaurar(sb, arq, senha, de_verdade=False)["simulacao"] is True
+    banco["candidaturas"].append({"vaga_id": "gupy:2"})  # banco cresceu depois do backup: verificar acusa
+    banco["vagas"].append({"id": "gupy:2"})
+    import pytest
+    with pytest.raises(SystemExit):
+        backup.verificar(sb, arq, senha)

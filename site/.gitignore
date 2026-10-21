@@ -6,3 +6,8 @@ next-env.d.ts
 *.tsbuildinfo
 .vercel
 lib/gerado/
+
+# Testes de ponta a ponta
+/test-results/
+/playwright-report/
+/blob-report/

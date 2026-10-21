@@ -1,0 +1,150 @@
+import { expect, test, type Page } from "@playwright/test";
+
+// Os fluxos que não podem quebrar. Rodam em ordem (o modo demo guarda o estado em memória).
+// Dados fictícios: e2e/demo.json. Gmail simulado (nada é enviado). Gemini falso: e2e/gemini_falso.py.
+
+const TOKEN = "token-de-teste-com-mais-de-24-caracteres";
+const CRON = "segredo-do-cron-de-teste";
+const PDF = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
+
+async function entrar(page: Page) {
+  await page.goto("/login");
+  await page.fill("#senha", "senha-de-teste");
+  await page.click("button[type=submit]");
+  await page.waitForURL("/");
+}
+
+test.describe.configure({ mode: "serial" });
+
+test("login: senha errada não entra; certa entra", async ({ page }) => {
+  await page.goto("/login");
+  await page.fill("#senha", "errada");
+  await page.click("button[type=submit]");
+  await expect(page.getByText("Senha incorreta.")).toBeVisible();
+  await entrar(page);
+  await expect(page.locator(".tv-item").first()).toBeVisible();
+});
+
+test("sem login: páginas e dados ficam fechados", async ({ request }) => {
+  for (const rota of ["/", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
+    const r = await request.get(rota, { maxRedirects: 0 });
+    expect(r.status(), rota).toBeGreaterThanOrEqual(300);
+    expect(r.status(), rota).toBeLessThan(400);
+    expect(r.headers()["location"] ?? "", rota).toContain("/login");
+  }
+});
+
+test("lista: filtro Com email mostra só vagas com email", async ({ page }) => {
+  await entrar(page);
+  const total = await page.locator(".tv-item").count();
+  expect(total).toBeGreaterThan(2);
+  await page.getByRole("link", { name: /Com email/ }).click();
+  await page.waitForURL(/email=1/);
+  const itens = page.locator(".tv-item");
+  expect(await itens.count()).toBeGreaterThan(0);
+  expect(await itens.count()).toBeLessThan(total);
+  for (const item of await itens.all()) await expect(item.locator(".etiqueta.email")).toBeVisible();
+});
+
+test("email: envia com currículo anexado e não sai duas vezes (duas abas)", async ({ page, context }) => {
+  await entrar(page);
+  await page.goto("/configuracoes");
+  await page.setInputFiles("input[name=pdf]", { name: "cv.pdf", mimeType: "application/pdf", buffer: PDF });
+  await page.getByRole("button", { name: "Salvar currículo" }).click();
+  await expect(page.getByText(/Currículo salvo/)).toBeVisible();
+
+  const abas = [page, await context.newPage()];
+  for (const aba of abas) {
+    await aba.goto("/vaga/linkedin%3A2");
+    await aba.getByRole("button", { name: "Usar modelo pronto" }).first().click();
+    await expect(aba.locator("textarea[name=corpo]")).not.toHaveValue("");
+    await expect(aba.getByRole("textbox", { name: "Para" })).toHaveValue("vagas@ficticia-log.exemplo.com");
+    await aba.check("input[name=revisado]");
+  }
+  await Promise.all(abas.map((aba) => aba.getByRole("button", { name: "Enviar pelo Gmail" }).click()));
+  const resultados = await Promise.all(
+    abas.map((aba) => aba.locator(".aviso.ok, .erro").first().innerText({ timeout: 15000 })),
+  );
+  expect(resultados.filter((t) => t.includes("Email enviado")).length).toBe(1);
+  // A outra aba é recusada: pela trava no banco ("já foi enviado") ou, se chegou depois, pela checagem inicial.
+  expect(resultados.filter((t) => /já foi enviado|já enviou/.test(t)).length, resultados.join(" | ")).toBe(1);
+});
+
+test("kanban: arrastar o cartão salva a nova etapa", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/candidaturas");
+  const cartao = page.locator(".kanban-cartao", { hasText: "Fictícia Log" });
+  await expect(cartao).toBeVisible();
+  await cartao.dragTo(page.locator('.kanban-coluna[aria-label="Respondeu"]'));
+  await page.waitForTimeout(800);
+  await page.reload();
+  await expect(page.locator('.kanban-coluna[aria-label="Respondeu"] .kanban-cartao', { hasText: "Fictícia Log" })).toBeVisible();
+});
+
+test("follow-up: pendente aparece no quadro e é enviado como resposta", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/candidaturas");
+  const aviso = page.locator(".kanban-followup.fu-followup", { hasText: "16 dias" });
+  await expect(aviso).toBeVisible();
+  await aviso.click();
+  const cartao = page.locator(".cartao-followup");
+  await expect(cartao).toBeVisible();
+  await cartao.getByRole("button", { name: "Escrever follow-up com IA" }).click();
+  await expect(cartao.locator("input[name=assunto]")).toHaveValue(/^Re: Candidatura/);
+  await cartao.locator("input[name=revisado]").check();
+  await cartao.getByRole("button", { name: "Enviar follow-up" }).click();
+  await expect(cartao.getByText(/Follow-up enviado/)).toBeVisible();
+  await page.reload();
+  await expect(page.locator(".cartao-followup")).toContainText("Último follow-up");
+});
+
+test("extensão: captura em lote exige token e não repete post", async ({ request }) => {
+  const posts = {
+    posts: [{ id: "7390000000000000099", texto: "VAGA | Analista de Dados Júnior | Remoto. Requisitos: SQL e Power BI. Envie o currículo para vagas@contrata.exemplo.com", url: "https://www.linkedin.com/feed/update/urn:li:activity:7390000000000000099/" }],
+  };
+  expect((await request.post("/api/capturar/lote", { data: posts })).status()).toBe(401);
+  const cab = { Authorization: `Bearer ${TOKEN}` };
+  const r1 = await (await request.post("/api/capturar/lote", { data: posts, headers: cab })).json();
+  expect(r1.novas).toHaveLength(1);
+  const r2 = await (await request.post("/api/capturar/lote", { data: posts, headers: cab })).json();
+  expect(r2.novas).toHaveLength(0);
+  expect(r2.recusadas.repetida).toBe(1);
+});
+
+test("saúde e vigia: público só o mínimo; vigia exige o segredo do cron", async ({ request }) => {
+  const saude = await request.get("/api/saude");
+  expect(saude.status()).toBe(200);
+  expect(Object.keys(await saude.json()).sort()).toEqual(["banco", "ok", "ultima_coleta_horas"]);
+  expect((await request.get("/api/vigia")).status()).toBe(401);
+  const vigia = await request.get("/api/vigia", { headers: { Authorization: `Bearer ${CRON}` } });
+  expect(vigia.status()).toBe(200);
+  expect((await vigia.json()).acao).toBe("nada a fazer"); // a coleta do demo é "agora"
+});
+
+test("exportar meus dados baixa as candidaturas", async ({ page }) => {
+  await entrar(page);
+  const r = await page.request.get("/api/exportar");
+  expect(r.status()).toBe(200);
+  expect(r.headers()["content-disposition"]).toContain("attachment");
+  const dados = await r.json();
+  expect(dados.candidaturas.length).toBeGreaterThanOrEqual(3);
+  expect(dados.vagas.length).toBe(dados.candidaturas.length);
+});
+
+test("vaga inexistente mostra página amigável", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/vaga/nao-existe");
+  await expect(page.getByText("Página não encontrada.")).toBeVisible();
+});
+
+test("celular: nenhuma página principal rola para o lado", async ({ browser }) => {
+  const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await contexto.newPage();
+  await entrar(page);
+  for (const rota of ["/", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+    await page.goto(rota);
+    const largura = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(largura, rota).toBeLessThanOrEqual(390);
+  }
+  await contexto.close();
+});

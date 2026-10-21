@@ -3,7 +3,9 @@ import { COOKIE_SESSAO, sessaoValida } from "./lib/sessao";
 
 // Tudo exige login, menos a página de login e a rota da extensão (que confere o próprio token).
 export default async function proxy(req: NextRequest) {
-  if (req.nextUrl.pathname === "/login" || req.nextUrl.pathname === "/api/capturar" || req.nextUrl.pathname === "/api/capturar/lote") return NextResponse.next();
+  // Rotas com autenticação própria (token da extensão, segredo do cron) ou públicas sem dados (saúde).
+  const livres = ["/login", "/api/capturar", "/api/capturar/lote", "/api/vigia", "/api/saude"];
+  if (livres.includes(req.nextUrl.pathname)) return NextResponse.next();
   if (await sessaoValida(req.cookies.get(COOKIE_SESSAO)?.value)) return NextResponse.next();
   const url = new URL("/login", req.nextUrl);
   return NextResponse.redirect(url);

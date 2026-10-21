@@ -3,9 +3,11 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { buscarVaga, enviadosHoje, followupPronto, mudarStatus, salvarCandidatura, salvarMessageId } from "@/lib/db";
+import {
+  buscarVaga, enviadosHoje, followupPronto, mudarStatus, reservarEnvio, reservarFollowup, salvarCandidatura, salvarMessageId,
+} from "@/lib/db";
 import { ErroIA, emailModelo, followupModelo, gerarEmail, gerarFollowup } from "@/lib/ia";
-import { enviarEmail } from "@/lib/email";
+import { enviarEmail, erroGmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
 import { capturar } from "@/lib/captura";
 import { COOKIE_SESSAO, DURACAO_S, criarSessao, senhaCorreta, sessaoValida } from "@/lib/sessao";
@@ -113,13 +115,17 @@ export async function enviarCandidatura(_: EstadoEmail, form: FormData): Promise
 
   // Salva o texto final antes de enviar: se o envio falhar, nada se perde.
   await salvarCandidatura(id, { email_para: para, email_assunto: assunto, email_corpo: corpo });
+  // Reserva o envio no banco (duas abas clicando juntas: só uma passa).
+  const reserva = await reservarEnvio(id);
+  if (!reserva.ok) return { ...devolver, erro: "Este email já foi enviado (ou está saindo agora em outra aba)." };
   let messageId: string;
   try {
     messageId = await enviarEmail({ para, assunto, corpo, anexo: cv, nomeAnexo: "Gabriel_Mendes_Cientista_de_Dados.pdf" });
   } catch (e) {
-    return { ...devolver, erro: `O Gmail recusou o envio: ${(e as Error).message}` };
+    const a = reserva.anterior;
+    await salvarCandidatura(id, { status: a?.status && a.status !== "enviada" ? a.status : "nova", enviada_em: a?.enviada_em ?? null });
+    return { ...devolver, erro: erroGmail(e) };
   }
-  await salvarCandidatura(id, { status: "enviada", enviada_em: new Date().toISOString() });
   if (messageId) await salvarMessageId(id, messageId);
   revalidatePath("/", "layout");
   return { ...devolver, ok: `Email enviado para ${para}.` };
@@ -164,7 +170,8 @@ export async function moverCandidatura(id: string, status: Status): Promise<stri
   try {
     await mudarStatus(id, status);
   } catch (e) {
-    return `Não consegui salvar: ${(e as Error).message}`;
+    console.error("salvar candidatura:", e);
+    return "Não consegui salvar agora. Tente de novo em instantes.";
   }
   revalidatePath("/", "layout");
   return null;
@@ -203,12 +210,15 @@ export async function enviarFollowup(_: EstadoEmail, form: FormData): Promise<Es
   const para = (c.email_para ?? "").trim().toLowerCase();
   if (!EMAIL_RE.test(para)) return { ...devolver, erro: "Esta candidatura não tem o email do destinatário salvo." };
   if (!(await followupPronto())) return { ...devolver, erro: SEM_COLUNAS_FOLLOWUP };
+  const feitos = c.followups ?? 0;
+  const reserva = await reservarFollowup(id, feitos);
+  if (!reserva.ok) return { ...devolver, erro: "Este follow-up já foi enviado (ou está saindo agora em outra aba)." };
   try {
     await enviarEmail({ para, assunto, corpo, emResposta: c.email_message_id });
   } catch (e) {
-    return { ...devolver, erro: `O Gmail recusou o envio: ${(e as Error).message}` };
+    await salvarCandidatura(id, { followups: feitos, followup_em: reserva.anterior });
+    return { ...devolver, erro: erroGmail(e) };
   }
-  await salvarCandidatura(id, { followup_em: new Date().toISOString(), followups: (c.followups ?? 0) + 1 });
   revalidatePath("/", "layout");
   return { ...devolver, ok: `Follow-up enviado para ${para}.` };
 }
@@ -223,7 +233,8 @@ export async function marcarFollowup(id: string): Promise<string | null> {
   try {
     await salvarCandidatura(id, { followup_em: new Date().toISOString(), followups: (c.followups ?? 0) + 1 });
   } catch (e) {
-    return `Não consegui salvar: ${(e as Error).message}`;
+    console.error("salvar candidatura:", e);
+    return "Não consegui salvar agora. Tente de novo em instantes.";
   }
   revalidatePath("/", "layout");
   return null;

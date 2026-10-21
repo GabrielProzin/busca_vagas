@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/vigia?turno=manha", "schedule": "0 15 * * *" },
+    { "path": "/api/vigia?turno=tarde", "schedule": "0 22 * * *" }
+  ]
+}

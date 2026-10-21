@@ -39,15 +39,15 @@ jobs:
     env:
       FASTEMBED_CACHE_PATH: /home/runner/.cache/fastembed
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Cache do modelo de embeddings
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/fastembed
           key: fastembed-paraphrase-multilingual-minilm-v1
@@ -96,7 +96,8 @@ jobs:
       - name: Publicar diagnóstico
         if: ${{ always() && inputs.diagnostico }}
         run: |
-          mkdir -p /tmp/diag && cp -r saida/* /tmp/diag/ 2>/dev/null || true
+          # Só logs e contagens: os arquivos de vagas (com emails de recrutadores) não vão para o branch público.
+          mkdir -p /tmp/diag && cp saida/sondagem*.txt /tmp/diag/ 2>/dev/null || true
           cp saida_log.txt /tmp/diag/log.txt 2>/dev/null || true
           # A Vercel tenta publicar todo branch como preview. Este branch só tem logs, então
           # desliga o deploy dele (a Vercel lê o vercel.json dentro da pasta "site").
@@ -107,9 +108,22 @@ jobs:
           git add -A && git commit -q -m "diagnóstico ${{ github.run_id }}"
           git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" diagnostico
 
-      - name: Guardar resultado (7 dias)
-        uses: actions/upload-artifact@v4
+      # Backup cifrado (o repositório é público: sem a BACKUP_SENHA o arquivo não abre).
+      # Roda mesmo se a coleta falhar, e confere o arquivo contra o banco antes de guardar.
+      - name: Backup cifrado e teste de restauração
+        if: ${{ always() && !inputs.sondar_linkedin }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BACKUP_SENHA: ${{ secrets.BACKUP_SENHA }}
+        run: |
+          python -m coletor.backup gerar saida_backup/busca_vagas.bvbk
+          if [ -f saida_backup/busca_vagas.bvbk ]; then python -m coletor.backup verificar saida_backup/busca_vagas.bvbk; fi
+
+      - name: Guardar backup (14 dias)
+        if: ${{ always() && hashFiles('saida_backup/busca_vagas.bvbk') != '' }}
+        uses: actions/upload-artifact@v7
         with:
-          name: vagas
-          path: saida/
-          retention-days: 7
+          name: backup-cifrado
+          path: saida_backup/busca_vagas.bvbk
+          retention-days: 14
