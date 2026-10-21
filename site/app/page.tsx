@@ -2,6 +2,7 @@ import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Nota from "@/components/Nota";
 import Icone from "@/components/Icone";
+import FiltroCargo from "@/components/FiltroCargo";
 import { alterarStatus } from "./acoes";
 import { listarVagas } from "@/lib/db";
 import { fonte, habilidade, idUrl, local, normalizarBusca, origemEmail, quando } from "@/lib/formato";
@@ -78,13 +79,14 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
             {Object.entries(busca).filter(([k, v]) => k !== "q" && v).map(([k, v]) => (
               <input key={k} type="hidden" name={k} value={v} />
             ))}
-            <input type="search" name="q" defaultValue={busca.q ?? ""} placeholder="Buscar vaga, empresa ou ferramenta" aria-label="Buscar" />
+            <input type="search" name="q" defaultValue={busca.q ?? ""} placeholder="Buscar vagas" aria-label="Buscar" />
           </form>
           <div className="chips">
-            <Link className="chip" href={link({ trilha: "" })} aria-current={!busca.trilha}>Todos os cargos</Link>
-            {trilhas.map((t) => (
-              <Link key={t} className="chip" href={link({ trilha: busca.trilha === t ? "" : t })} aria-current={busca.trilha === t}>{t}</Link>
-            ))}
+            <FiltroCargo
+              trilhas={trilhas}
+              atual={busca.trilha ?? ""}
+              base={Object.fromEntries(Object.entries(busca).filter(([k, v]) => k !== "trilha" && v)) as Record<string, string>}
+            />
             <Link className="chip" href={link({ email: busca.email ? "" : "1" })} aria-current={Boolean(busca.email)}>
               <Icone nome="email" tamanho={14} /> Com email <span className="n">{daLista.filter((v) => v.email_contato).length}</span>
             </Link>

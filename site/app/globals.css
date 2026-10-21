@@ -191,16 +191,22 @@ code { font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--
 .segmentado b { font-size: 12px; font-weight: 600; color: var(--muted); }
 
 /* barra de ferramentas da lista */
-.ferramentas { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; border-bottom: 1px solid var(--line); }
-.busca { position: relative; flex: 1 1 220px; max-width: 320px; }
+/* busca | filtros (quebram de linha só se não couberem) | total */
+.ferramentas { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.busca { position: relative; }
 .busca svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
 .busca input { padding-left: 34px; height: 34px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line-forte); background: var(--surface); color: var(--ink-2); text-decoration: none; font-size: 13px; font-weight: 500; white-space: nowrap; }
+.chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; }
+.chip svg { flex: none; }
+.filtro-select { display: inline-flex; align-items: center; height: 30px; border: 1px solid var(--line-forte); border-radius: 999px; background: var(--surface); padding-left: 10px; font-size: 12.5px; font-weight: 500; color: var(--muted); flex: none; }
+.filtro-select:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.filtro-select select { height: 28px; border: 0; background: transparent; box-shadow: none !important; font-size: 12.5px; font-weight: 600; color: var(--ink); padding: 0 26px 0 6px; width: auto; field-sizing: content; }
+.chip { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 9px; border-radius: 999px; border: 1px solid var(--line-forte); background: var(--surface); color: var(--ink-2); text-decoration: none; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
 .chip:hover { border-color: var(--muted); }
 .chip[aria-current="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight: 600; }
 .chip .n { font-size: 12px; color: var(--muted); }
 .chip[aria-current="true"] .n { color: var(--accent); }
-.ferramentas .espaco { flex: 1; }
+.ferramentas .espaco { display: none; }
 .ferramentas .total { color: var(--muted); font-size: 13px; }
 
 /* =========================================================================
@@ -389,9 +395,9 @@ code { font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--
   .nav-baixo a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 48px; text-decoration: none; color: var(--muted); font-size: 11px; font-weight: 500; }
   .nav-baixo a[aria-current="page"] { color: var(--accent); font-weight: 650; }
 
-  .ferramentas { padding: 10px; }
-  .busca { max-width: none; flex-basis: 100%; }
-  .ferramentas .chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; width: 100%; padding-bottom: 2px; }
+  .ferramentas { padding: 10px; grid-template-columns: minmax(0, 1fr); }
+
+  .ferramentas .chips { flex-wrap: nowrap; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
   .ferramentas .chips::-webkit-scrollbar { display: none; }
   .ferramentas .espaco, .ferramentas .total { display: none; }
 
