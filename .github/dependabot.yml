@@ -1,14 +1,19 @@
-# Avisa (com um pull request) quando sai versão nova com correção de segurança.
+# Uma vez por mês, um pull request por tipo (site, coletor, ações do GitHub) com as atualizações juntas.
+# Correções de segurança urgentes chegam à parte (alertas do Dependabot nas configurações do repositório).
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /site
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule: { interval: monthly }
+    groups:
+      site: { patterns: ["*"] }
   - package-ecosystem: pip
     directory: /
-    schedule: { interval: weekly }
-    open-pull-requests-limit: 5
+    schedule: { interval: monthly }
+    groups:
+      coletor: { patterns: ["*"] }
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      acoes: { patterns: ["*"] }
