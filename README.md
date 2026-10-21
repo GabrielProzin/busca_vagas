@@ -103,7 +103,7 @@ em vez de cair na mesma fila de centenas de candidatos de um formulário. Só qu
 
 - As plataformas de vagas (Gupy, Sólides, Remotar…) quase nunca mostram email: a candidatura é pelo formulário delas.
 - Os emails de recrutador aparecem quase só em **posts do LinkedIn** ("estamos contratando… envie o CV para
-  fulana@empresa.com"). É daí que vem o diferencial de serviços como o DevScout.
+  fulana@empresa.com").
 - O LinkedIn não tem uma forma oficial de buscar posts, e automatizar a sua própria conta (um robô logado rolando o
   feed) é proibido pelas regras dele e pode **restringir ou bloquear a sua conta**. Não fazemos isso.
 - Os buscadores (Google etc.) quase não mostram esses posts, e a busca automática que usamos (um serviço que lê
