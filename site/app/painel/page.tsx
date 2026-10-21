@@ -43,14 +43,14 @@ export default async function PaginaPainel() {
         {ultima?.descartes ? (
           <>
             <h2>Por que as vagas ficaram de fora na última coleta</h2>
-            <table className="tabela">
+            <div className="rolagem"><table className="tabela">
               <thead><tr><th>Motivo</th><th className="num">Vagas</th></tr></thead>
               <tbody>
                 {Object.entries(ultima.descartes).sort((a, b) => b[1] - a[1]).map(([motivo, n]) => (
                   <tr key={motivo}><td>{MOTIVO[motivo] ?? motivo.charAt(0).toUpperCase() + motivo.slice(1)}</td><td className="num">{n}</td></tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </>
         ) : null}
 
@@ -58,7 +58,7 @@ export default async function PaginaPainel() {
         {execucoes.length === 0 ? (
           <div className="vazio"><p>Nenhuma coleta registrada ainda.</p></div>
         ) : (
-          <table className="tabela">
+          <div className="rolagem"><table className="tabela">
             <thead>
               <tr><th>Quando</th><th>Lidas por fonte</th><th className="num">Principal</th><th className="num">Vale tentar</th></tr>
             </thead>
@@ -72,7 +72,7 @@ export default async function PaginaPainel() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </main>
     </>

@@ -164,16 +164,6 @@ textarea { width: 100%; min-height: 90px; resize: vertical; }
 .login .marca { font-size: 30px; margin-bottom: 8px; }
 .erro { color: var(--danger); font-size: 14px; margin: 0; }
 
-@media (max-width: 760px) {
-  .topo { gap: 12px; padding: 12px 16px; flex-wrap: wrap; }
-  .conteudo { padding: 20px 16px 48px; }
-  .lista > li { grid-template-columns: 64px 1fr; gap: 14px; padding: 16px; }
-  .lista .acoes { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
-  .nota-numero { font-size: 28px; }
-  .detalhe { grid-template-columns: 1fr; }
-  .painel-lateral { position: static; }
-  .descricao { padding: 18px; }
-}
 
 /* ---------- email, configurações, adicionar ---------- */
 .email-caixa { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; max-width: 75ch; }
@@ -200,3 +190,110 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .situacao .nao { color: var(--warm); font-weight: 700; }
 .formulario textarea { min-height: 280px; }
 code { font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+
+/* ---------- barra de navegação de baixo (só celular) ---------- */
+.nav-baixo { display: none; }
+.rolagem { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--radius); }
+.anotacoes summary { padding: 2px 0; }
+.anotacoes[open] summary { margin-bottom: 8px; }
+.so-celular { display: none; }
+
+/* =================================================================== celular */
+@media (max-width: 760px) {
+  body { font-size: 15.5px; padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+
+  /* topo enxuto: só a marca e Sair; as seções vão para a barra de baixo */
+  .topo { padding: 10px 16px; gap: 12px; justify-content: space-between; }
+  .topo .nav-topo { display: none; }
+  .marca { font-size: 18px; }
+  .nav-baixo {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .nav-baixo a {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    text-decoration: none; color: var(--muted); font-size: 11px; font-weight: 500; padding: 4px 0; border-radius: 8px;
+    min-height: 48px; justify-content: center;
+  }
+  .nav-baixo a[aria-current="page"] { color: var(--accent); font-weight: 650; }
+  .nav-baixo a[aria-current="page"] svg { stroke-width: 2.3; }
+
+  .conteudo { padding: 18px 16px 28px; }
+  h1 { font-size: 24px; }
+  h2 { font-size: 17px; margin: 26px 0 10px; }
+  .sub { font-size: 14.5px; }
+  .cabecalho { margin-bottom: 16px; gap: 12px; }
+  .cabecalho > div { width: 100%; }
+
+  /* abas ocupam a largura toda; filtros viram uma faixa que rola de lado */
+  .abas { width: 100%; }
+  .abas a { flex: 1; text-align: center; padding: 9px 10px; }
+  .filtros { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px 14px; padding: 0 16px 4px; scrollbar-width: none; }
+  .filtros::-webkit-scrollbar { display: none; }
+  .filtros a { flex: none; font-size: 13.5px; padding: 6px 12px; }
+
+  /* item de vaga: nota e título lado a lado, ações em três botões iguais embaixo */
+  .lista { border-radius: 12px; }
+  .lista > li { grid-template-columns: 56px 1fr; gap: 6px 14px; padding: 16px; }
+  .nota-numero { font-size: 28px; }
+  .nota-numero small { display: none; }
+  .nota .barra { height: 6px; }
+  .legenda { font-size: 11px; }
+  .vaga-titulo { font-size: 16px; }
+  .meta { font-size: 13px; gap: 2px 10px; margin-bottom: 6px; }
+  .motivo { font-size: 13.5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .etiquetas { gap: 5px; }
+  .etiqueta { font-size: 12px; }
+  .lista .acoes { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; margin-top: 10px; }
+  .lista .acoes form { display: contents; }
+  .lista .acoes .botao { justify-content: center; min-height: 44px; }
+
+  /* vaga: nota, situação e o botão principal sobem para o topo */
+  .detalhe { display: flex; flex-direction: column; gap: 0; }
+  .detalhe > aside { order: -1; margin: 4px 0 6px; }
+  .painel-lateral { position: static; padding: 16px; gap: 12px; }
+  .nota-grande { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; }
+  .nota-grande .nota-numero { font-size: 44px; grid-row: span 2; }
+  .nota-grande .barra { align-self: end; }
+  .nota-grande .composicao { grid-column: 1 / -1; margin-top: 8px; font-size: 13px; }
+  .nota-grande .legenda { align-self: start; }
+  .painel-lateral .botao { min-height: 44px; justify-content: center; }
+  .painel-lateral form { flex-wrap: wrap; }
+  .painel-lateral select { flex: 1; min-height: 44px; }
+  .so-celular { display: block; }
+  h1.titulo-vaga { font-size: 22px; }
+  .descricao { padding: 16px; font-size: 14.5px; }
+  .email-caixa { padding: 14px; }
+  .email-form textarea { min-height: 320px; }
+  .email-form .botao.primario { align-self: stretch; justify-content: center; min-height: 48px; }
+  .linha-botoes .botao { flex: 1; justify-content: center; min-height: 44px; }
+
+  /* iOS dá zoom em campos com fonte menor que 16px */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* candidaturas: colunas vazias somem no celular */
+  .quadro { grid-template-columns: 1fr; }
+  .coluna.vazia { display: none; }
+  .cartao select { min-height: 40px; }
+
+  .numeros { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .numero { padding: 12px 14px; }
+  .numero strong { font-size: 26px; }
+  .numero span { font-size: 12.5px; }
+  .tabela { font-size: 13.5px; min-width: 100%; }
+  .tabela th, .tabela td { padding: 8px 10px; }
+  .secao { padding: 16px; }
+  .formulario .botao.primario { align-self: stretch !important; justify-content: center; min-height: 48px; }
+}
+
+/* título da vaga fica acima das duas colunas */
+.meta-vaga { font-size: 15px; margin: 8px 0 22px; }
+.detalhe h2.primeiro { margin-top: 0; }
+.status-atual { margin: 0; }
+@media (max-width: 760px) {
+  .detalhe { align-items: stretch; }
+  .meta-vaga { font-size: 13.5px; margin-bottom: 14px; }
+  .detalhe h2.primeiro { margin-top: 26px; }
+}

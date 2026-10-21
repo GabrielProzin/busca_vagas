@@ -27,16 +27,16 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
       <Topo atual="" />
       <main className="conteudo">
         <Link href="/" className="voltar">← Voltar para as vagas</Link>
+        <h1 className="titulo-vaga">{v.titulo}</h1>
+        <div className="meta meta-vaga">
+          <span>{v.empresa || "Empresa não informada"}</span>
+          <span>{local(v)}</span>
+          <span>{fonte(v.fonte)}, publicada {quando(v.publicada_em)}</span>
+        </div>
         <div className="detalhe">
           <div>
-            <h1>{v.titulo}</h1>
-            <div className="meta" style={{ fontSize: 15, marginTop: 8 }}>
-              <span>{v.empresa || "Empresa não informada"}</span>
-              <span>{local(v)}</span>
-              <span>{fonte(v.fonte)}, publicada {quando(v.publicada_em)}</span>
-            </div>
 
-            <h2>Por que essa nota</h2>
+            <h2 className="primeiro">Por que essa nota</h2>
             <ul className="motivos">
               {/* "Pede x, y — está no seu currículo" já aparece nas etiquetas logo abaixo */}
               {v.motivos.filter((m) => !m.startsWith("Pede ")).map((m) => <li key={m}>{m}</li>)}
@@ -88,12 +88,14 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
               </select>
               <button className="botao" type="submit">Salvar</button>
             </form>
-            <form action={salvarNotas} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <input type="hidden" name="id" value={v.id} />
-              <label htmlFor="notas" className="status-atual">Anotações</label>
-              <textarea id="notas" name="notas" defaultValue={c?.notas ?? ""} placeholder="Contato, data da entrevista, salário combinado…" />
-              <button className="botao" type="submit">Salvar anotações</button>
-            </form>
+            <details className="anotacoes" open={Boolean(c?.notas)}>
+              <summary className="status-atual">Anotações{c?.notas ? "" : " (nenhuma)"}</summary>
+              <form action={salvarNotas} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <input type="hidden" name="id" value={v.id} />
+                <textarea id="notas" name="notas" aria-label="Anotações" defaultValue={c?.notas ?? ""} placeholder="Contato, data da entrevista, salário combinado…" />
+                <button className="botao" type="submit">Salvar anotações</button>
+              </form>
+            </details>
           </aside>
         </div>
       </main>

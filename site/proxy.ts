@@ -10,5 +10,6 @@ export default async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.svg|robots.txt).*)"],
+  // Ícones e o manifesto ficam públicos para o celular conseguir instalar o atalho.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|icone-192.png|icone-512.png|manifest.webmanifest|robots.txt).*)"],
 };

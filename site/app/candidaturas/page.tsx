@@ -29,7 +29,7 @@ export default async function PaginaCandidaturas() {
             {ETAPAS.map((etapa) => {
               const daEtapa = vagas.filter((v) => v.candidatura?.status === etapa.status);
               return (
-                <section key={etapa.status} className="coluna" aria-label={etapa.rotulo}>
+                <section key={etapa.status} className={`coluna${daEtapa.length ? "" : " vazia"}`} aria-label={etapa.rotulo}>
                   <h3>{etapa.rotulo} <span>{daEtapa.length}</span></h3>
                   {daEtapa.map((v) => (
                     <div key={v.id} className="cartao">
