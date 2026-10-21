@@ -38,7 +38,7 @@ def _data(texto: str | None) -> datetime | None:
             return None
 
 
-def classificar(mensagens: list[dict], candidaturas: list[dict]) -> tuple[dict[str, datetime], dict[str, datetime]]:
+def classificar(mensagens: list[dict], candidaturas: list[dict], proprio: str | None = None) -> tuple[dict[str, datetime], dict[str, datetime]]:
     """Função pura: devolve ({vaga_id: data da resposta}, {vaga_id: data da devolução}).
 
     mensagens: [{"from", "date", "message_id", "in_reply_to", "references", "failed", "corpo"}]
@@ -75,6 +75,8 @@ def classificar(mensagens: list[dict], candidaturas: list[dict]) -> tuple[dict[s
         if alvo:
             respostas.setdefault(alvo["vaga_id"], quando)
             continue
+        if proprio and remetente == proprio.lower():
+            continue  # email seu (ex.: um teste para você mesmo): só conta como resposta pela conversa, acima
         candidatas = [c for c in por_endereco.get(remetente, []) if (_data(c.get("enviada_em")) or quando) <= quando]
         if candidatas:
             mais_recente = max(candidatas, key=lambda c: _data(c.get("enviada_em")))
@@ -82,7 +84,7 @@ def classificar(mensagens: list[dict], candidaturas: list[dict]) -> tuple[dict[s
     return respostas, devolvidos
 
 
-def ler_caixa(usuario: str, senha: str, dias: int = 21, limite: int = 400) -> list[dict]:
+def ler_caixa(usuario: str, senha: str, dias: int = 21, limite: int = 2000) -> list[dict]:
     """Cabeçalhos das mensagens recentes da caixa de entrada (só leitura)."""
     desde = datetime.now(timezone.utc) - timedelta(days=dias)
     imap = imaplib.IMAP4_SSL("imap.gmail.com", 993, timeout=60)
@@ -127,7 +129,7 @@ def verificar(sb, usuario: str, senha: str, dias: int = 21) -> dict:
     if not candidaturas:
         return {"mensagens": 0, "respostas": 0, "devolvidos": 0}
     mensagens = ler_caixa(usuario, senha, dias)
-    respostas, devolvidos = classificar(mensagens, candidaturas)
+    respostas, devolvidos = classificar(mensagens, candidaturas, proprio=usuario)
     atual = {c["vaga_id"]: c for c in candidaturas}
     n_resp = n_dev = 0
     for vaga_id, quando in respostas.items():

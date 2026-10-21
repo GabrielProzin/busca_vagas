@@ -148,6 +148,14 @@ def test_devolucao_pelo_cabecalho_e_pelo_texto():
     assert set(dev) == {"c"} and resp == {}
 
 
+def test_email_seu_so_conta_como_resposta_pela_conversa():
+    cands = [{"vaga_id": "eu", "status": "enviada", "email_para": "eu@exemplo.com", "email_message_id": "<x@exemplo.com>", "enviada_em": ENVIADA}]
+    solto = [{"from": "Eu <eu@exemplo.com>", "date": DATA, "in_reply_to": "", "references": ""}]
+    assert respostas.classificar(solto, cands, proprio="eu@exemplo.com") == ({}, {})
+    conversa = [{"from": "eu@exemplo.com", "date": DATA, "in_reply_to": "<x@exemplo.com>"}]
+    assert set(respostas.classificar(conversa, cands, proprio="eu@exemplo.com")[0]) == {"eu"}
+
+
 def test_mensagem_antes_do_envio_nao_conta_como_resposta():
     msgs = [{"from": "rh@alfa.exemplo.com", "date": "Mon, 12 Oct 2026 09:00:00 -0300", "in_reply_to": "", "references": ""}]
     assert respostas.classificar(msgs, CANDS) == ({}, {})

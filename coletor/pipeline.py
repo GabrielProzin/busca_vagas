@@ -89,10 +89,11 @@ def _resumo_md(aprovadas: list[Vaga], execucao: dict, detalhado: bool) -> str:
     return "\n".join(linhas) + "\n"
 
 
-def _anotar(texto: str) -> None:
-    """Linha de resumo que aparece na página da execução do Actions (sem dados pessoais)."""
+def _anotar(texto: str, destaque: bool = True) -> None:
+    """Linha de resumo que aparece na página da execução do Actions (sem dados pessoais).
+    O GitHub mostra só 10 por passo: detalhes de calibração (destaque=False) ficam só no log."""
     log.info(texto)
-    if os.getenv("GITHUB_ACTIONS") == "true":
+    if destaque and os.getenv("GITHUB_ACTIONS") == "true":
         print(f"::notice title=coleta::{texto}", flush=True)
 
 
@@ -259,18 +260,18 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         da_fonte = [v for v in vagas if v.fonte == fonte]
         motivos = Counter((v.motivo_descarte or "aprovada").split(":")[0].split(" em ")[0] if v.lista == "descartada" or not v.lista
                           else "aprovada" for v in da_fonte)
-        _anotar(f"Funil {fonte}: {len(da_fonte)} únicas -> {dict(motivos.most_common(8))}")
+        _anotar(f"Funil {fonte}: {len(da_fonte)} únicas -> {dict(motivos.most_common(8))}", destaque=False)
     # Sólides: só as de cargo de dados (a busca da Sólides é frouxa e traz de tudo).
     trilhas = [p for _, _, p in filtros.trilhas]
     dados_sol = [v for v in vagas if v.fonte == "solides" and any(p.search(normalizar(v.titulo)) for p in trilhas)]
     _anotar(f"Sólides, só cargos de dados: {len(dados_sol)} -> "
-            f"{dict(Counter((v.motivo_descarte or 'aprovada').split(':')[0].split(' em ')[0] for v in dados_sol).most_common(6))}")
+            f"{dict(Counter((v.motivo_descarte or 'aprovada').split(':')[0].split(' em ')[0] for v in dados_sol).most_common(6))}", destaque=False)
     # Amostra: vagas da Sólides com cargo de dados que ficaram de fora (o Actions mostra só 10 anotações por passo).
     amostra = [v for v in vagas if v.fonte == "solides" and v.trilha and v.lista == "descartada"]
     for v in amostra[:4]:
-        _anotar(f"Sólides → {v.titulo[:70]} | {v.modalidade} {v.cidade or ''} | {v.motivo_descarte}")
+        _anotar(f"Sólides → {v.titulo[:70]} | {v.modalidade} {v.cidade or ''} | {v.motivo_descarte}", destaque=False)
     for v in li:  # o que aconteceu com cada post do LinkedIn (título e motivo, sem conteúdo)
-        _anotar(f"LinkedIn → {v.titulo[:60]} | nota {v.nota} | {v.lista or 'ok'} | {v.motivo_descarte or ''}")
+        _anotar(f"LinkedIn → {v.titulo[:60]} | nota {v.nota} | {v.lista or 'ok'} | {v.motivo_descarte or ''}", destaque=False)
     _anotar(f"Aprovadas: {len(aprovadas)} ({sum(v.fonte == 'linkedin' for v in aprovadas)} do LinkedIn); "
             f"com email: {sum(bool(v.emails) for v in aprovadas)}")
 
