@@ -45,3 +45,32 @@ export function origemEmail(origem: string | null | undefined): string {
 export function normalizarBusca(s: string): string {
   return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
 }
+
+const SIGLAS = new Set(["BI", "TI", "RH", "SQL", "ETL", "CRM", "ERP", "API", "APIs", "AI", "IA", "ML", "PJ", "CLT", "SAP", "AWS", "GCP", "KPI", "KPIs", "BA", "UX"]);
+const MINUSCULAS = new Set(["de", "da", "do", "das", "dos", "e", "em", "para", "a", "o", "com"]);
+
+/** Título da vaga apresentável num texto: sem prefixos de anúncio e sem CAIXA ALTA. */
+export function tituloLimpo(titulo: string): string {
+  let t = titulo.replace(/^\s*(trabalhe de casa|home ?office|vaga|oportunidade)\s*[:\-–|]?\s*/i, "").trim() || titulo.trim();
+  const letras = t.replace(/[^A-Za-zÀ-ÿ]/g, "");
+  if (letras && letras === letras.toUpperCase() && letras.length > 4) {
+    t = t
+      .toLowerCase()
+      .split(/(\s+|[()/&-])/)
+      .map((p, i) => {
+        const sigla = [...SIGLAS].find((s) => s.toLowerCase() === p);
+        if (sigla) return sigla;
+        if (i > 0 && MINUSCULAS.has(p)) return p;
+        return p.charAt(0).toUpperCase() + p.slice(1);
+      })
+      .join("");
+  }
+  return t;
+}
+
+const MASCULINAS = /^(grupo|banco|instituto|hospital|laborat[oó]rio|escrit[oó]rio|col[eé]gio|centro|sistema|clube|portal|supermercado|atacad[aã]o|sicoob|sicredi|servi[cç]o|sindicato|hotel|shopping|minist[eé]rio|tribunal|governo|conselho)\b/i;
+
+/** "do" ou "da" antes do nome da empresa ("do Grupo Piracanjuba", "da Digix"). */
+export function deEmpresa(empresa: string): string {
+  return `${MASCULINAS.test(empresa.trim()) ? "do" : "da"} ${empresa.trim()}`;
+}

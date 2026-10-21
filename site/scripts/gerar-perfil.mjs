@@ -9,6 +9,7 @@ const aqui = dirname(fileURLToPath(import.meta.url));
 const raiz = join(aqui, "..", "..");
 const perfil = parse(readFileSync(join(raiz, "perfil", "perfil.yaml"), "utf-8"));
 const curriculo = readFileSync(join(raiz, "perfil", "curriculo.md"), "utf-8");
+const preferencias = parse(readFileSync(join(raiz, "config", "preferencias.yaml"), "utf-8"));
 
 const dados = {
   nome: perfil.nome,
@@ -18,6 +19,8 @@ const dados = {
   destaques: perfil.destaques,
   habilidades: Object.keys(perfil.habilidades),
   curriculo,
+  // Nota mínima das vagas que entram no email de resumo (o painel mostra quantas chegaram).
+  resumoNotaMinima: Number(preferencias?.resumo?.nota_minima ?? 85),
 };
 
 mkdirSync(join(aqui, "..", "lib", "gerado"), { recursive: true });

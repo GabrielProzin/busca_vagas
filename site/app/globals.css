@@ -523,6 +523,11 @@ select option { background: var(--surface); color: var(--ink); } /* reserva para
 .mensagem-pronta p { flex: 1; }
 .mensagem-pronta .botao { flex: none; }
 
+/* ------------------------------------------------------------------ painel: coletas */
+.tabela.coletas tr.sem-novas td { color: var(--muted); }
+.destaque-num { color: var(--accent); }
+.rodape-cartao { padding: 12px 18px 16px; border-top: 1px solid var(--line); }
+
 /* ------------------------------------------------------------------ painel: aprendizado */
 .cartao.aprendizado { margin-bottom: 16px; }
 .aprendizado-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }

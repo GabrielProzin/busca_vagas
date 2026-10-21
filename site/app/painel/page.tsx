@@ -1,7 +1,8 @@
 import Moldura from "@/components/Moldura";
-import { listarCandidaturas, listarExecucoes } from "@/lib/db";
+import { listarCandidaturas, listarChegadas, listarExecucoes, type Chegada } from "@/lib/db";
+import { PERFIL } from "@/lib/gerado/perfil";
 import { fonte } from "@/lib/formato";
-import type { Aprendizado } from "@/lib/tipos";
+import type { Aprendizado, Execucao } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,8 @@ const MOTIVO: Record<string, string> = {
 const fmtData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
 export default async function PaginaPainel() {
-  const [execucoes, candidaturas] = await Promise.all([listarExecucoes(30), listarCandidaturas()]);
+  const [execucoes, candidaturas, chegadas] = await Promise.all([listarExecucoes(30), listarCandidaturas(), listarChegadas(30)]);
+  const novasPorColeta = novasDeCadaColeta(execucoes, chegadas);
   const ultima = execucoes[0];
   const total = (o: Record<string, number> | null) => Object.values(o ?? {}).reduce((a, b) => a + b, 0);
   const avancaram = candidaturas.filter((v) => ["respondeu", "entrevista", "proposta"].includes(v.candidatura?.status ?? "")).length;
@@ -66,27 +68,37 @@ export default async function PaginaPainel() {
         </section>
 
         <section className="cartao">
-          <div className="cartao-cabecalho"><h2>Coletas recentes</h2></div>
+          <div className="cartao-cabecalho"><h2>Vagas novas por coleta</h2></div>
           {execucoes.length === 0 ? (
             <div className="cartao-corpo dica">Nenhuma coleta registrada ainda.</div>
           ) : (
-            <div className="rolagem">
-              <table className="tabela">
-                <thead>
-                  <tr><th>Quando</th><th>Lidas por fonte</th><th className="num">Principal</th><th className="num">Vale tentar</th></tr>
-                </thead>
-                <tbody>
-                  {execucoes.slice(0, 12).map((e) => (
-                    <tr key={e.id}>
-                      <td>{fmtData.format(new Date(e.iniciada_em))}</td>
-                      <td>{Object.entries(e.coletadas ?? {}).map(([f, n]) => `${fonte(f)} ${n}`).join(", ")}</td>
-                      <td className="num">{e.principal ?? 0}</td>
-                      <td className="num">{e.vale_tentar ?? 0}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <>
+              <div className="rolagem">
+                <table className="tabela coletas">
+                  <thead>
+                    <tr><th>Quando</th><th>Novas por fonte</th><th className="num">Principal</th><th className="num">Vale tentar</th><th className="num">{PERFIL.resumoNotaMinima}+</th></tr>
+                  </thead>
+                  <tbody>
+                    {execucoes.slice(0, 12).map((e) => {
+                      const n = novasPorColeta.get(e.id)!;
+                      return (
+                        <tr key={e.id} className={n.total ? "" : "sem-novas"}>
+                          <td>{fmtData.format(new Date(e.iniciada_em))}</td>
+                          <td>{n.total ? Object.entries(n.porFonte).sort((a, b) => b[1] - a[1]).map(([f, q]) => `${fonte(f)} ${q}`).join(", ") : "Nenhuma vaga nova"}</td>
+                          <td className="num">{n.total ? n.principal : "–"}</td>
+                          <td className="num">{n.total ? n.valeTentar : "–"}</td>
+                          <td className="num">{n.total ? <b className={n.altas ? "destaque-num" : ""}>{n.altas}</b> : "–"}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <p className="dica rodape-cartao">
+                Só as vagas que apareceram pela primeira vez em cada coleta. O email de resumo sai quando a coluna {PERFIL.resumoNotaMinima}+ passa de zero
+                (ou, na coleta da manhã, quando alguma candidatura pede follow-up).
+              </p>
+            </>
           )}
         </section>
       </div>
@@ -131,4 +143,28 @@ function CartaoAprendizado({ a }: { a: Aprendizado | null }) {
 
 function Trilho({ valor }: { valor: number }) {
   return <span className="trilho"><i style={{ width: `${Math.max(2, Math.round(valor * 100))}%` }} /></span>;
+}
+
+type Novas = { total: number; principal: number; valeTentar: number; altas: number; porFonte: Record<string, number> };
+
+/** Vagas que entraram no banco entre a coleta anterior e esta (a coleta grava as vagas antes de se registrar). */
+function novasDeCadaColeta(execucoes: Execucao[], chegadas: Chegada[]): Map<number, Novas> {
+  const ordem = [...execucoes].sort((a, b) => Date.parse(a.iniciada_em) - Date.parse(b.iniciada_em));
+  const mapa = new Map<number, Novas>();
+  ordem.forEach((e, i) => {
+    const ate = Date.parse(e.iniciada_em);
+    const desde = i > 0 ? Date.parse(ordem[i - 1].iniciada_em) : -Infinity;
+    const n: Novas = { total: 0, principal: 0, valeTentar: 0, altas: 0, porFonte: {} };
+    for (const v of chegadas) {
+      const t = Date.parse(v.primeira_vez_em);
+      if (t <= desde || t > ate) continue;
+      n.total++;
+      if (v.lista === "principal") n.principal++;
+      if (v.lista === "vale_tentar") n.valeTentar++;
+      if ((v.nota ?? 0) >= PERFIL.resumoNotaMinima) n.altas++;
+      n.porFonte[v.fonte] = (n.porFonte[v.fonte] ?? 0) + 1;
+    }
+    mapa.set(e.id, n);
+  });
+  return mapa;
 }

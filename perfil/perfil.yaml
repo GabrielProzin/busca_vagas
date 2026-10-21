@@ -45,13 +45,19 @@ habilidades:
 destaques:
   - texto: Pipelines ETL/ELT em Python orquestrados com Apache Airflow, integrando APIs (Zendesk, Jira) ao Google BigQuery, escalados para 18 clientes.
     quando: [airflow, etl, bigquery, python, apis]
+    frase: Na Pacto Soluções, montei pipelines em Python com Airflow que levavam dados do Zendesk e do Jira para o BigQuery, e eles chegaram a rodar para 18 clientes.
   - texto: Migração de mais de 20 dashboards de KPIs (ativos, churn, faturamento, inadimplência) do Looker Studio para o Power BI, conciliando cada número com a fonte.
     quando: [power_bi, dashboards, looker_studio, sql]
+    frase: Migrei mais de 20 dashboards de KPIs do Looker Studio para o Power BI, conferindo cada número com a fonte antes de entregar.
   - texto: Medidas DAX e modelagem de um histórico diário de 400 mil+ linhas para acompanhar a situação de alunos, numa base de 3,5 mil unidades e 2 milhões de alunos ativos.
     quando: [dax, modelagem, power_bi]
+    frase: Modelei um histórico diário de mais de 400 mil linhas e escrevi as medidas DAX usadas para acompanhar 2 milhões de alunos em 3,5 mil unidades.
   - texto: Diagnóstico de falhas em produção até a causa raiz, incluindo um bug que inflava a contagem de tickets em dezenas de milhares, com reprocessamento validado contra a origem.
     quando: [qualidade_dados, sql, etl]
+    frase: Já rastreei falha em produção até a causa raiz, como um bug que inflava a contagem de tickets em dezenas de milhares, e validei o reprocessamento contra a origem.
   - texto: Projeto de detecção de fraude em cartões comparando Logistic Regression e Random Forest (Scikit-learn), além da especialização em Ciência de Dados e do curso de ML de Stanford.
     quando: [machine_learning, scikit_learn, estatistica, python]
+    frase: Na especialização em Ciência de Dados, comparei Regressão Logística e Random Forest num projeto de detecção de fraude em cartões.
   - texto: Dois anos de relacionamento com clientes antes de dados, o que facilita traduzir regras de negócio em análises.
     quando: [negocio]
+    frase: Antes de dados, passei dois anos no relacionamento com clientes, e isso me ajuda a entender a regra de negócio por trás dos números.

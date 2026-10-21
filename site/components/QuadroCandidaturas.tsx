@@ -6,6 +6,7 @@ import Icone from "./Icone";
 import Seletor from "./Seletor";
 import { moverCandidatura } from "@/app/acoes";
 import type { Status } from "@/lib/tipos";
+import { FOLLOWUP_DIAS } from "@/lib/followup";
 
 export type CartaoKanban = {
   id: string;
@@ -16,7 +17,7 @@ export type CartaoKanban = {
   nota: number | null;
   porEmail: boolean;
   href: string;
-  // "followup": passou de 7 dias sem resposta; "encerrar": já teve 2 follow-ups e segue sem resposta.
+  // "followup": passou de FOLLOWUP_DIAS dias sem resposta; "encerrar": já teve 2 follow-ups e segue sem resposta.
   followup: "followup" | "encerrar" | null;
   diasSemResposta: number | null;
 };
@@ -107,7 +108,7 @@ export default function QuadroCandidaturas({ iniciais, etapas }: { iniciais: Car
                         href={c.href}
                         className={`kanban-followup fu-${c.followup}`}
                         draggable={false}
-                        title={c.followup === "followup" ? "Passou de 7 dias sem resposta: abra para fazer o follow-up" : "Já teve 2 follow-ups e segue sem resposta"}
+                        title={c.followup === "followup" ? `Passou de ${FOLLOWUP_DIAS} dias sem resposta: abra para fazer o follow-up` : "Já teve 2 follow-ups e segue sem resposta"}
                       >
                         <Icone nome="sino" tamanho={13} />
                         {c.followup === "followup" ? `Follow-up · ${c.diasSemResposta} dias` : `Sem resposta · ${c.diasSemResposta} dias`}

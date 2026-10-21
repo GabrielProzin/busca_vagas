@@ -1,12 +1,12 @@
 import type { Candidatura, Vaga } from "./tipos";
-import { habilidade } from "./formato";
+import { deEmpresa, habilidade, tituloLimpo } from "./formato";
 
 // Quando uma candidatura pede follow-up. A mesma regra está em coletor/followup.py (email de resumo).
 // - Só para "Aplicada" e "Email enviado" (ninguém respondeu ainda).
-// - 7 dias depois do envio (ou do último follow-up) sem resposta: pede follow-up.
-// - Depois de 2 follow-ups sem resposta, 7 dias depois sugere mover para "Não seguiu".
+// - 15 dias depois do envio (ou do último follow-up) sem resposta: pede follow-up.
+// - Depois de 2 follow-ups sem resposta, 15 dias depois sugere mover para "Não seguiu".
 
-export const FOLLOWUP_DIAS = 7;
+export const FOLLOWUP_DIAS = 15;
 export const FOLLOWUP_MAXIMO = 2;
 
 export type Followup = {
@@ -34,12 +34,14 @@ export function situacaoFollowup(c: Candidatura | null | undefined, agora = Date
 
 /** Mensagem curta para o recrutador no LinkedIn (cabe no limite de 300 caracteres do convite). */
 export function mensagemLinkedin(v: Pick<Vaga, "titulo" | "empresa" | "habilidades_ok">): string {
-  const titulo = v.titulo.length > 60 ? v.titulo.slice(0, 57) + "…" : v.titulo;
+  const limpo = tituloLimpo(v.titulo);
+  const titulo = limpo.length > 60 ? limpo.slice(0, 57) + "…" : limpo;
   const hab = v.habilidades_ok.slice(0, 3).map(habilidade);
   const lista = hab.length > 1 ? `${hab.slice(0, -1).join(", ")} e ${hab.at(-1)}` : hab[0];
+  const empresa = v.empresa ? ` ${deEmpresa(v.empresa)}` : "";
   const texto =
-    `Olá! Me candidatei à vaga de ${titulo}${v.empresa ? ` na ${v.empresa}` : ""} e queria reforçar meu interesse.` +
-    (lista ? ` Trabalho com ${lista} e` : " Eu") +
-    ` adoraria contribuir com o time. Fico à disposição para conversar. Obrigado!`;
-  return texto.length <= 300 ? texto : texto.replace(/ Fico à disposição para conversar\./, "");
+    `Olá, tudo bem? Me candidatei à vaga de ${titulo}${empresa} e quis passar aqui para me apresentar.` +
+    (lista ? ` Trabalho com ${lista} e acho que meu perfil conversa com o que vocês procuram.` : "") +
+    ` Se fizer sentido, gostaria de conversar.`;
+  return texto.length <= 300 ? texto : texto.replace(/ Se fizer sentido, gostaria de conversar\./, "");
 }

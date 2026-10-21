@@ -111,7 +111,7 @@ def test_resumo_email():
     assert texto.index("Analista de BI") < texto.index("Engenheiro")  # ordenado pela nota
     assert "https://exemplo.vercel.app/vaga/teste%3AAnalista%20de%20BI%20J%C3%BAnior" in texto
     html = msg.get_body(("html",)).get_content()
-    assert "Tem email do recrutador" in html and "power bi" in html
+    assert "Tem email do recrutador" in html and "Power BI" in html
 
 
 def test_saude_da_coleta():
@@ -190,10 +190,10 @@ def test_aprendizado_puxa_para_o_que_voce_aplica():
 def test_followup():
     agora = datetime(2026, 10, 21, 12, tzinfo=timezone.utc)
     antes = lambda d: (agora - timedelta(days=d)).isoformat()  # noqa: E731
-    assert followup.situacao({"status": "enviada", "enviada_em": antes(3)}, agora) is None
-    assert followup.situacao({"status": "enviada", "enviada_em": antes(8)}, agora) == ("followup", 8)
-    assert followup.situacao({"status": "aplicada", "enviada_em": antes(20), "followup_em": antes(2), "followups": 1}, agora) is None
-    assert followup.situacao({"status": "aplicada", "enviada_em": antes(30), "followup_em": antes(9), "followups": 2}, agora) == ("encerrar", 9)
+    assert followup.situacao({"status": "enviada", "enviada_em": antes(9)}, agora) is None
+    assert followup.situacao({"status": "enviada", "enviada_em": antes(16)}, agora) == ("followup", 16)
+    assert followup.situacao({"status": "aplicada", "enviada_em": antes(40), "followup_em": antes(5), "followups": 1}, agora) is None
+    assert followup.situacao({"status": "aplicada", "enviada_em": antes(60), "followup_em": antes(17), "followups": 2}, agora) == ("encerrar", 17)
     assert followup.situacao({"status": "entrevista", "enviada_em": antes(30)}, agora) is None
 
 
@@ -202,4 +202,4 @@ def test_resumo_so_com_followup():
                                                 "status": "enviada", "tipo": "followup", "dias": 9}])
     assert m["Subject"] == "busca_vagas: 1 candidatura pede follow-up"
     texto = m.get_body(("plain",)).get_content()
-    assert "email há 9 dias" in texto and "https://site/vaga/gupy%3A1" in texto
+    assert "Email enviado há 9 dias" in texto and "https://site/vaga/gupy%3A1" in texto

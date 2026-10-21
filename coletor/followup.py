@@ -1,14 +1,14 @@
 """Quando uma candidatura pede follow-up. A mesma regra está em site/lib/followup.ts.
 
 - Só vale para quem está em "Aplicada" ou "Email enviado" (ninguém respondeu ainda).
-- 7 dias depois do envio (ou do último follow-up) sem resposta -> pede follow-up.
-- Depois de 2 follow-ups sem resposta, 7 dias depois sugere mover para "Não seguiu".
+- 15 dias depois do envio (ou do último follow-up) sem resposta -> pede follow-up.
+- Depois de 2 follow-ups sem resposta, 15 dias depois sugere mover para "Não seguiu".
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-DIAS = 7
+DIAS = 15
 MAXIMO = 2
 ABERTOS = ("aplicada", "enviada")
 

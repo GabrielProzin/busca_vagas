@@ -215,11 +215,15 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         existentes = sb.ids_existentes([v.id for v in aprovadas])
         corte = float(cfg.get("resumo", {}).get("nota_minima", 85))
         para_resumo = [v for v in aprovadas if v.id not in existentes and (v.nota or 0) >= corte]
+        teste = os.getenv("RESUMO_TESTE") == "1"
+        if teste and not para_resumo:
+            # Resumo de teste (pedido no Actions): mostra o formato com as 3 melhores vagas atuais.
+            para_resumo = [v for v in aprovadas if (v.nota or 0) >= corte][:3] or aprovadas[:3]
         sb.upsert_vagas(aprovadas)
         sb.registrar_execucao(execucao)
         pendentes = _followups_pendentes(sb)
         try:
-            resumo_email.enviar(para_resumo, corte, pendentes)
+            resumo_email.enviar(para_resumo, corte, pendentes, teste=teste)
         except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
             log.warning("resumo: falha ao enviar: %s", e)
         problemas = alerta.verificar_saude(execucao, anteriores)

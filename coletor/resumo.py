@@ -25,6 +25,14 @@ def _local(v: Vaga) -> str:
     return m if v.modalidade == "remoto" or not v.cidade else f"{m} em {v.cidade}"
 
 
+_SIGLAS = {"sql": "SQL", "power bi": "Power BI", "etl": "ETL", "dax": "DAX", "apis": "APIs", "llm": "LLM", "bigquery": "BigQuery"}
+
+
+def _hab(h: str) -> str:
+    t = h.replace("_", " ")
+    return _SIGLAS.get(t, t[:1].upper() + t[1:])
+
+
 def _plural(n: int, um: str, varios: str) -> str:
     return f"{n} {um if n == 1 else varios}"
 
@@ -32,7 +40,8 @@ def _plural(n: int, um: str, varios: str) -> str:
 def montar(vagas: list[Vaga], site: str | None, nota_minima: float, followups: list[dict] | None = None) -> EmailMessage:
     """followups: [{"id","titulo","empresa","status","tipo": "followup"|"encerrar","dias"}]"""
     vagas = sorted(vagas, key=lambda v: -(v.nota or 0))
-    followups = sorted(followups or [], key=lambda f: -f["dias"])
+    # Primeiro quem pede follow-up; depois as que só sugerem encerrar.
+    followups = sorted(followups or [], key=lambda f: (f["tipo"] != "followup", -f["dias"]))
     n, nf = len(vagas), len(followups)
     partes = []
     if n:
@@ -48,9 +57,9 @@ def montar(vagas: list[Vaga], site: str | None, nota_minima: float, followups: l
 
     def acao(f: dict) -> str:
         if f["tipo"] == "encerrar":
-            return f"{f['dias']} dias sem resposta depois de 2 follow-ups: talvez mover para Não seguiu"
-        meio = "email" if f["status"] == "enviada" else "candidatura pelo link"
-        return f"{meio} há {f['dias']} dias sem resposta"
+            return f"{f['dias']} dias sem resposta depois de 2 follow-ups. Talvez seja hora de mover para Não seguiu"
+        meio = "Email enviado" if f["status"] == "enviada" else "Candidatura pelo link"
+        return f"{meio} há {f['dias']} dias, sem resposta"
 
     # Texto puro (para quem lê sem HTML)
     linhas = []
@@ -72,7 +81,7 @@ def montar(vagas: list[Vaga], site: str | None, nota_minima: float, followups: l
     if n:
         itens = []
         for v in vagas:
-            ok = ", ".join(h.replace("_", " ") for h in v.habilidades_ok[:5])
+            ok = ", ".join(_hab(h) for h in v.habilidades_ok[:5])
             itens.append(
                 f'<tr><td style="padding:14px 16px 14px 0;vertical-align:top;font:700 26px/1 Arial,sans-serif;color:#1f6f78">{round(v.nota or 0)}</td>'
                 f'<td style="padding:14px 0;border-bottom:1px solid #e3e7ec;{fonte}">'
@@ -108,7 +117,7 @@ def montar(vagas: list[Vaga], site: str | None, nota_minima: float, followups: l
     return msg
 
 
-def enviar(vagas: list[Vaga], nota_minima: float, followups: list[dict] | None = None) -> bool:
+def enviar(vagas: list[Vaga], nota_minima: float, followups: list[dict] | None = None, teste: bool = False) -> bool:
     usuario = os.getenv("GMAIL_USER")
     senha = (os.getenv("GMAIL_APP_PASSWORD") or "").replace(" ", "")
     if not vagas and not followups:
@@ -118,6 +127,10 @@ def enviar(vagas: list[Vaga], nota_minima: float, followups: list[dict] | None =
         log.warning("resumo: GMAIL_USER/GMAIL_APP_PASSWORD não configurados nos Secrets, resumo não enviado")
         return False
     msg = montar(vagas, os.getenv("SITE_URL"), nota_minima, followups)
+    if teste:
+        assunto = msg["Subject"]
+        del msg["Subject"]
+        msg["Subject"] = f"[teste] {assunto}"
     msg["From"] = f"busca_vagas <{usuario}>"
     msg["To"] = os.getenv("RESUMO_PARA") or usuario
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30) as s:

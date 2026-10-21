@@ -90,6 +90,20 @@ export const listarCandidaturas = cache(async function listarCandidaturas(): Pro
   return linhas.map(comCandidatura);
 });
 
+export type Chegada = { fonte: string; nota: number | null; lista: string | null; primeira_vez_em: string };
+
+/** Quando cada vaga apareceu pela primeira vez (para contar as novas de cada coleta). */
+export const listarChegadas = cache(async function listarChegadas(dias = 30): Promise<Chegada[]> {
+  const d = emDemo();
+  const manual = (f: string) => f === "linkedin" || f === "manual";
+  if (d) return d.vagas.filter((v) => !manual(v.fonte)).map(({ fonte, nota, lista, primeira_vez_em }) => ({ fonte, nota, lista, primeira_vez_em }));
+  const desde = new Date(Date.now() - dias * 864e5).toISOString();
+  const linhas = await rest<Chegada[]>(
+    `/vagas?select=fonte,nota,lista,primeira_vez_em&primeira_vez_em=gte.${encodeURIComponent(desde)}&order=primeira_vez_em.desc&limit=5000`,
+  );
+  return linhas.filter((v) => !manual(v.fonte));
+});
+
 export const listarExecucoes = cache(async function listarExecucoes(limite = 30): Promise<Execucao[]> {
   const d = emDemo();
   if (d) return d.execucoes;
