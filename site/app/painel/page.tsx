@@ -1,90 +1,92 @@
-import Topo from "@/components/Topo";
+import Moldura from "@/components/Moldura";
 import { listarCandidaturas, listarExecucoes } from "@/lib/db";
+import { fonte } from "@/lib/formato";
 
 export const dynamic = "force-dynamic";
 
 const MOTIVO: Record<string, string> = {
-  senioridade: "Pleno, sênior, estágio ou liderança no título",
-  bloqueio: "Palavra bloqueada no título (.NET, Java, desenvolvedor…)",
+  senioridade: "Pleno, sênior, estágio ou liderança",
+  bloqueio: "Palavra bloqueada no título",
   "título fora das trilhas de dados": "Cargo fora da área de dados",
+  "publicada há mais de 14 dias": "Publicada há mais de 14 dias",
   hibrido: "Híbrido fora de Goiânia",
   presencial: "Presencial fora de Goiânia",
   "vaga em inglês": "Descrição em inglês",
   vaga: "Descrição em inglês",
+  "descrição indica pleno/sênior": "Descrição pede pleno/sênior",
   "nota abaixo do mínimo": "Pouco a ver com o seu currículo",
+  "local não informado": "Local não informado",
 };
 
-const fmtData =new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
-
-function horasDesde(iso: string): number {
-  return (Date.now() - new Date(iso).getTime()) / 36e5;
-}
+const fmtData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
 export default async function PaginaPainel() {
   const [execucoes, candidaturas] = await Promise.all([listarExecucoes(30), listarCandidaturas()]);
   const ultima = execucoes[0];
   const total = (o: Record<string, number> | null) => Object.values(o ?? {}).reduce((a, b) => a + b, 0);
   const avancaram = candidaturas.filter((v) => ["respondeu", "entrevista", "proposta"].includes(v.candidatura?.status ?? "")).length;
+  const porEmail = candidaturas.filter((v) => v.candidatura?.email_para && v.candidatura.status !== "aplicada").length;
+  const descartes = Object.entries(ultima?.descartes ?? {})
+    .map(([m, n]) => [MOTIVO[m] ?? m.charAt(0).toUpperCase() + m.slice(1), n] as const)
+    .sort((a, b) => b[1] - a[1]);
+  const maior = descartes[0]?.[1] ?? 1;
 
   return (
-    <>
-      <Topo atual="/painel" />
-      <main className="conteudo">
-        <div className="cabecalho">
-          <div>
-            <h1>Painel</h1>
-            <p className="sub">Como a coleta e as suas candidaturas estão indo.</p>
-          </div>
-        </div>
+    <Moldura
+      atual="/painel"
+      titulo="Painel"
+      subtitulo={ultima ? `Última coleta em ${fmtData.format(new Date(ultima.iniciada_em))}. As próximas rodam por volta das 11:00 e das 18:30.` : "Nenhuma coleta registrada ainda."}
+    >
+      <div className="kpis">
+        <div className="cartao kpi"><span>Vagas lidas na última coleta</span><strong>{ultima ? total(ultima.coletadas) : 0}</strong></div>
+        <div className="cartao kpi"><span>Na lista principal</span><strong>{ultima?.principal ?? 0}</strong></div>
+        <div className="cartao kpi"><span>Candidaturas feitas</span><strong>{candidaturas.length}</strong><span>{porEmail} por email</span></div>
+        <div className="cartao kpi"><span>Responderam ou chamaram</span><strong>{avancaram}</strong></div>
+      </div>
 
-        {ultima ? (
-          <p className={horasDesde(ultima.iniciada_em) > 20 ? "aviso" : "aviso ok"} style={{ marginBottom: 14 }}>
-            Última coleta: {fmtData.format(new Date(ultima.iniciada_em))} (há {Math.floor(horasDesde(ultima.iniciada_em))}h).
-            {horasDesde(ultima.iniciada_em) > 20 ? " Está atrasada: confira em GitHub → Actions." : " A próxima roda por volta das 11:00 ou 18:30."}
-          </p>
-        ) : null}
-        <div className="numeros">
-          <div className="numero"><strong>{ultima ? total(ultima.coletadas) : 0}</strong><span>vagas lidas na última coleta</span></div>
-          <div className="numero"><strong>{ultima?.principal ?? 0}</strong><span>entraram na lista principal</span></div>
-          <div className="numero"><strong>{candidaturas.length}</strong><span>candidaturas feitas</span></div>
-          <div className="numero"><strong>{avancaram}</strong><span>responderam ou chamaram para entrevista</span></div>
-        </div>
-
-        {ultima?.descartes ? (
-          <>
-            <h2>Por que as vagas ficaram de fora na última coleta</h2>
-            <div className="rolagem"><table className="tabela">
-              <thead><tr><th>Motivo</th><th className="num">Vagas</th></tr></thead>
-              <tbody>
-                {Object.entries(ultima.descartes).sort((a, b) => b[1] - a[1]).map(([motivo, n]) => (
-                  <tr key={motivo}><td>{MOTIVO[motivo] ?? motivo.charAt(0).toUpperCase() + motivo.slice(1)}</td><td className="num">{n}</td></tr>
+      <div className="grade-2">
+        <section className="cartao">
+          <div className="cartao-cabecalho"><h2>Por que as vagas ficaram de fora</h2><span className="dica">última coleta</span></div>
+          <div className="cartao-corpo">
+            {descartes.length ? (
+              <div className="barras-h">
+                {descartes.map(([motivo, n]) => (
+                  <div key={motivo} className="linha">
+                    <span>{motivo}</span>
+                    <span className="n">{n}</span>
+                    <span className="trilho"><i style={{ width: `${Math.max(2, (n / maior) * 100)}%` }} /></span>
+                  </div>
                 ))}
-              </tbody>
-            </table></div>
-          </>
-        ) : null}
+              </div>
+            ) : <p className="dica">Sem dados ainda.</p>}
+          </div>
+        </section>
 
-        <h2>Coletas recentes</h2>
-        {execucoes.length === 0 ? (
-          <div className="vazio"><p>Nenhuma coleta registrada ainda.</p></div>
-        ) : (
-          <div className="rolagem"><table className="tabela">
-            <thead>
-              <tr><th>Quando</th><th>Lidas por fonte</th><th className="num">Principal</th><th className="num">Vale tentar</th></tr>
-            </thead>
-            <tbody>
-              {execucoes.map((e) => (
-                <tr key={e.id}>
-                  <td>{fmtData.format(new Date(e.iniciada_em))}</td>
-                  <td>{Object.entries(e.coletadas ?? {}).map(([f, n]) => `${f} ${n}`).join(", ")}</td>
-                  <td className="num">{e.principal ?? 0}</td>
-                  <td className="num">{e.vale_tentar ?? 0}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table></div>
-        )}
-      </main>
-    </>
+        <section className="cartao">
+          <div className="cartao-cabecalho"><h2>Coletas recentes</h2></div>
+          {execucoes.length === 0 ? (
+            <div className="cartao-corpo dica">Nenhuma coleta registrada ainda.</div>
+          ) : (
+            <div className="rolagem">
+              <table className="tabela">
+                <thead>
+                  <tr><th>Quando</th><th>Lidas por fonte</th><th className="num">Principal</th><th className="num">Vale tentar</th></tr>
+                </thead>
+                <tbody>
+                  {execucoes.slice(0, 12).map((e) => (
+                    <tr key={e.id}>
+                      <td>{fmtData.format(new Date(e.iniciada_em))}</td>
+                      <td>{Object.entries(e.coletadas ?? {}).map(([f, n]) => `${fonte(f)} ${n}`).join(", ")}</td>
+                      <td className="num">{e.principal ?? 0}</td>
+                      <td className="num">{e.vale_tentar ?? 0}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+    </Moldura>
   );
 }

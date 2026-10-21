@@ -40,3 +40,8 @@ export function origemEmail(origem: string | null | undefined): string {
   if (origem === "site_contato") return "Contato geral do site da empresa";
   return "Email do recrutador";
 }
+
+/** Minúsculo e sem acento, para a busca da lista. */
+export function normalizarBusca(s: string): string {
+  return s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}

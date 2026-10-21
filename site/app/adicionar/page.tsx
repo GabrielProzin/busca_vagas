@@ -1,4 +1,5 @@
-import Topo from "@/components/Topo";
+import Moldura from "@/components/Moldura";
+import Icone from "@/components/Icone";
 import FormAdicionar from "@/components/FormAdicionar";
 
 // Buscas prontas de POSTS no LinkedIn (onde ficam as vagas com email do recrutador), das últimas 24h.
@@ -18,31 +19,36 @@ function urlLinkedIn(q: string): string {
 
 export default function PaginaAdicionar() {
   return (
-    <>
-      <Topo atual="/adicionar" />
-      <main className="conteudo">
-        <div className="cabecalho">
-          <div>
-            <h1>Adicionar vaga</h1>
-            <p className="sub">Cole o texto de um post ou anúncio. A IA separa cargo, empresa e email e dá a nota contra o seu currículo.</p>
-          </div>
-        </div>
-
-        <section className="secao" style={{ marginBottom: 18 }}>
-          <h2>Posts de vaga com email no LinkedIn</h2>
-          <p className="dica">
-            Buscas prontas das últimas 24 horas. Abra, leia e, nos posts que interessarem, selecione o texto e use
-            “Enviar para o busca_vagas” (extensão) ou cole aqui embaixo.
-          </p>
-          <div className="filtros" style={{ margin: 0, flexWrap: "wrap" }}>
-            {BUSCAS.map((b) => (
-              <a key={b.rotulo} href={urlLinkedIn(b.q)} target="_blank" rel="noopener noreferrer">{b.rotulo} ↗</a>
-            ))}
-          </div>
+    <Moldura
+      atual="/adicionar"
+      titulo="Adicionar vaga"
+      subtitulo="Cole o texto de um post ou anúncio. A IA separa cargo, empresa e email e dá a nota contra o seu currículo."
+    >
+      <div className="detalhe">
+        <section className="cartao">
+          <div className="cartao-cabecalho"><h2><Icone nome="arquivo" /> Texto da vaga</h2></div>
+          <div className="cartao-corpo"><FormAdicionar /></div>
         </section>
 
-        <FormAdicionar />
-      </main>
-    </>
+        <aside className="lado">
+          <section className="cartao">
+            <div className="cartao-cabecalho"><h2><Icone nome="linkedin" /> Posts com email no LinkedIn</h2></div>
+            <div className="cartao-corpo form-coluna">
+              <p className="dica">
+                Buscas prontas das últimas 24 horas. Abra, leia e, nos posts que interessarem, selecione o texto e use
+                “Enviar para o busca_vagas” (extensão) ou cole ao lado.
+              </p>
+              <div className="form-coluna" style={{ gap: 6, marginTop: 4 }}>
+                {BUSCAS.map((b) => (
+                  <a key={b.rotulo} className="botao" style={{ justifyContent: "space-between" }} href={urlLinkedIn(b.q)} target="_blank" rel="noopener noreferrer">
+                    {b.rotulo} <Icone nome="externo" tamanho={15} />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </Moldura>
   );
 }

@@ -8,12 +8,14 @@ export default function EnviarPdf() {
   return (
     <form action={acao} className="formulario">
       <label>
-        Currículo em PDF (até 3,8 MB)
+        Arquivo PDF (até 3,8 MB)
         <input type="file" name="pdf" accept="application/pdf,.pdf" required />
       </label>
-      <button className="botao primario" type="submit" disabled={enviando} style={{ alignSelf: "flex-start" }}>
-        {enviando ? "Enviando…" : "Salvar currículo"}
-      </button>
+      <div>
+        <button className="botao primario" type="submit" disabled={enviando}>
+          {enviando ? "Enviando…" : "Salvar currículo"}
+        </button>
+      </div>
       {estado?.ok ? <p className="aviso ok">{estado.ok}</p> : null}
       {estado?.erro ? <p className="erro" role="alert">{estado.erro}</p> : null}
     </form>

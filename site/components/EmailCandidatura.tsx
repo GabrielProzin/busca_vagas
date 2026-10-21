@@ -43,8 +43,8 @@ export default function EmailCandidatura(p: Props) {
         </p>
         <details>
           <summary>Ver o que foi enviado</summary>
-          <p><b>{assunto}</b></p>
-          <div className="descricao" style={{ marginTop: 8 }}>{corpo}</div>
+          <p style={{ margin: "10px 0 6px" }}><b>{assunto}</b></p>
+          <div className="descricao">{corpo}</div>
         </details>
       </div>
     );
@@ -58,7 +58,7 @@ export default function EmailCandidatura(p: Props) {
         <button className="botao" name="modo" value="ia" disabled={gerando}>
           {gerando ? "Escrevendo…" : corpo ? "Reescrever com IA" : "Escrever com IA"}
         </button>
-        <button className="botao discreto" name="modo" value="modelo" disabled={gerando}>Usar modelo pronto</button>
+        <button className="botao fantasma" name="modo" value="modelo" disabled={gerando}>Usar modelo pronto</button>
         {!p.iaPronta ? <span className="dica">Sem GEMINI_API_KEY: só o modelo pronto funciona.</span> : null}
       </form>
       {gerado?.erro ? <p className="aviso">{gerado.erro}</p> : null}
@@ -75,16 +75,17 @@ export default function EmailCandidatura(p: Props) {
         </label>
         <label>
           Mensagem
-          <textarea name="corpo" value={corpo} onChange={(e) => setCorpo(e.target.value)} rows={14} required />
+          <textarea name="corpo" value={corpo} onChange={(e) => setCorpo(e.target.value)} rows={14} required placeholder="Use “Escrever com IA” ou escreva aqui." />
         </label>
-        <p className="dica">O currículo em PDF vai anexado.</p>
         {pendencias.length ? <p className="aviso">Para enviar: {pendencias.join(" e ")}.</p> : null}
-        <label className="confirmar">
-          <input type="checkbox" name="revisado" /> Revisei o email e quero enviar pelo meu Gmail
-        </label>
-        <button className="botao primario" type="submit" disabled={enviando || pendencias.length > 0 || !corpo}>
-          {enviando ? "Enviando…" : "Enviar email"}
-        </button>
+        <div className="email-rodape">
+          <label className="confirmar">
+            <input type="checkbox" name="revisado" /> Revisei o email (o currículo em PDF vai anexado)
+          </label>
+          <button className="botao primario" type="submit" disabled={enviando || pendencias.length > 0 || !corpo}>
+            {enviando ? "Enviando…" : "Enviar pelo Gmail"}
+          </button>
+        </div>
         {envio?.erro ? <p className="erro" role="alert">{envio.erro}</p> : null}
       </form>
     </div>

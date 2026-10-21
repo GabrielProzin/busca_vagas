@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { readFileSync } from "node:fs";
 import type { Candidatura, Execucao, Status, Vaga } from "./tipos";
 
@@ -58,7 +59,7 @@ function comCandidatura(v: Vaga & { candidatura?: Candidatura | Candidatura[] | 
 const CAMPOS_LISTA = "*";
 
 /** Vagas vistas pela coleta nos últimos `dias` dias (as outras provavelmente fecharam). */
-export async function listarVagas(dias = 3): Promise<Vaga[]> {
+export const listarVagas = cache(async function listarVagas(dias = 3): Promise<Vaga[]> {
   const d = emDemo();
   if (d) return d.vagas.map((v) => ({ ...v, candidatura: d.candidaturas.get(v.id) ?? null }));
   const desde = new Date(Date.now() - dias * 864e5).toISOString();
@@ -66,7 +67,7 @@ export async function listarVagas(dias = 3): Promise<Vaga[]> {
     `/vagas?select=${CAMPOS_LISTA},candidatura:candidaturas(*)&atualizada_em=gte.${encodeURIComponent(desde)}&order=nota.desc`,
   );
   return linhas.map(comCandidatura);
-}
+});
 
 export async function buscarVaga(id: string): Promise<Vaga | null> {
   const d = emDemo();
@@ -79,20 +80,20 @@ export async function buscarVaga(id: string): Promise<Vaga | null> {
 }
 
 /** Vagas com alguma ação sua (aplicada, enviada, entrevista...), de qualquer data. */
-export async function listarCandidaturas(): Promise<Vaga[]> {
+export const listarCandidaturas = cache(async function listarCandidaturas(): Promise<Vaga[]> {
   const d = emDemo();
   if (d) return d.vagas.filter((v) => d.candidaturas.has(v.id)).map((v) => ({ ...v, candidatura: d.candidaturas.get(v.id)! }));
   const linhas = await rest<Vaga[]>(
     `/vagas?select=${CAMPOS_LISTA},candidatura:candidaturas!inner(*)&candidatura.status=not.in.(nova,descartada)&order=atualizada_em.desc`,
   );
   return linhas.map(comCandidatura);
-}
+});
 
-export async function listarExecucoes(limite = 30): Promise<Execucao[]> {
+export const listarExecucoes = cache(async function listarExecucoes(limite = 30): Promise<Execucao[]> {
   const d = emDemo();
   if (d) return d.execucoes;
   return rest<Execucao[]>(`/execucoes?select=*&order=iniciada_em.desc&limit=${limite}`);
-}
+});
 
 // ---------------------------------------------------------------- escrita
 export async function salvarCandidatura(vagaId: string, campos: Partial<Omit<Candidatura, "vaga_id">>): Promise<void> {

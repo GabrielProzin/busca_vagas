@@ -1,30 +1,36 @@
 import Link from "next/link";
-import Topo from "@/components/Topo";
+import Moldura from "@/components/Moldura";
 import Nota from "@/components/Nota";
+import Icone from "@/components/Icone";
 import { alterarStatus } from "./acoes";
-import { listarExecucoes, listarVagas } from "@/lib/db";
-import { fonte, habilidade, idUrl, local, origemEmail, quando } from "@/lib/formato";
+import { listarVagas } from "@/lib/db";
+import { fonte, habilidade, idUrl, local, normalizarBusca, origemEmail, quando } from "@/lib/formato";
 import type { Vaga } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
-type Busca = { lista?: string; trilha?: string; modalidade?: string; email?: string };
+type Busca = { lista?: string; trilha?: string; modalidade?: string; email?: string; q?: string };
 
 export default async function PaginaVagas({ searchParams }: { searchParams: Promise<Busca> }) {
   const busca = await searchParams;
   const lista = busca.lista === "vale_tentar" ? "vale_tentar" : "principal";
 
   let vagas: Vaga[];
-  let ultimaColeta: string | null = null;
   try {
-    const [v, ex] = await Promise.all([listarVagas(), listarExecucoes(1)]);
-    vagas = v;
-    ultimaColeta = ex[0]?.iniciada_em ?? null;
+    vagas = await listarVagas();
   } catch (e) {
-    return <ErroBanco erro={e as Error} />;
+    return (
+      <Moldura atual="/" titulo="Vagas">
+        <div className="cartao vazio">
+          <Icone nome="alerta" tamanho={32} />
+          <b>Não consegui ler o banco.</b>
+          <p>{(e as Error).message}</p>
+          <p>Confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente da Vercel.</p>
+        </div>
+      </Moldura>
+    );
   }
-  // Coleta roda ~11:00 e ~18:30; o maior intervalo normal é ~16h30. Passou de 20h, algo travou.
-  const horasSemColeta = ultimaColeta ? (Date.now() - new Date(ultimaColeta).getTime()) / 36e5 : null;
+
   // "Novas" = sem nenhuma ação sua ainda. Aplicadas e descartadas saem desta lista.
   const novas = vagas.filter((v) => !v.candidatura || v.candidatura.status === "nova");
   const contagem = {
@@ -33,11 +39,13 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
   };
   const daLista = novas.filter((v) => v.lista === lista);
   const trilhas = [...new Set(daLista.map((v) => v.trilha).filter(Boolean))] as string[];
+  const termo = normalizarBusca(busca.q ?? "");
   const visiveis = daLista.filter(
     (v) =>
       (!busca.trilha || v.trilha === busca.trilha) &&
       (!busca.modalidade || v.modalidade === busca.modalidade) &&
-      (!busca.email || Boolean(v.email_contato)),
+      (!busca.email || Boolean(v.email_contato)) &&
+      (!termo || normalizarBusca(`${v.titulo} ${v.empresa ?? ""} ${v.habilidades_ok.join(" ")}`).includes(termo)),
   );
 
   const link = (mudar: Partial<Busca>) => {
@@ -48,116 +56,119 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
   };
 
   return (
-    <>
-      <Topo atual="/" />
-      <main className="conteudo">
-        <div className="cabecalho">
-          <div>
-            <h1>Vagas para você hoje</h1>
-            <p className="sub">Júnior de dados, remotas ou em Goiânia, ordenadas pela nota contra o seu currículo.</p>
-          </div>
-          <nav className="abas" aria-label="Listas">
-            <Link href={link({ lista: "", trilha: "", modalidade: "" })} aria-current={lista === "principal"}>
-              Principal<b>{contagem.principal}</b>
-            </Link>
-            <Link href={link({ lista: "vale_tentar", trilha: "", modalidade: "" })} aria-current={lista === "vale_tentar"}>
-              Vale tentar<b>{contagem.vale_tentar}</b>
-            </Link>
-          </nav>
-        </div>
-
-        {horasSemColeta !== null && horasSemColeta > 20 ? (
-          <p className="aviso alerta-coleta" role="status">
-            A última coleta foi há {Math.floor(horasSemColeta)} horas. Confira em GitHub → Actions se ela falhou.
-          </p>
-        ) : null}
-
-        {daLista.length > 0 ? (
-          <div className="filtros" aria-label="Filtros">
-            <Link href={link({ trilha: "" })} aria-current={!busca.trilha}>Todos os cargos</Link>
-            {trilhas.map((t) => (
-              <Link key={t} href={link({ trilha: t })} aria-current={busca.trilha === t}>{t}</Link>
+    <Moldura
+      atual="/"
+      titulo="Vagas"
+      subtitulo="Júnior de dados, remotas ou em Goiânia, ordenadas pela nota contra o seu currículo."
+      acoes={
+        <nav className="segmentado" aria-label="Listas">
+          <Link href={link({ lista: "", trilha: "", modalidade: "", email: "" })} aria-current={lista === "principal"}>
+            Principal <b>{contagem.principal}</b>
+          </Link>
+          <Link href={link({ lista: "vale_tentar", trilha: "", modalidade: "", email: "" })} aria-current={lista === "vale_tentar"}>
+            Vale tentar <b>{contagem.vale_tentar}</b>
+          </Link>
+        </nav>
+      }
+    >
+      <section className="cartao tabela-vagas">
+        <div className="ferramentas">
+          <form className="busca" action="/" role="search">
+            <Icone nome="busca" tamanho={16} />
+            {Object.entries(busca).filter(([k, v]) => k !== "q" && v).map(([k, v]) => (
+              <input key={k} type="hidden" name={k} value={v} />
             ))}
-            <Link href={link({ email: busca.email ? "" : "1" })} aria-current={Boolean(busca.email)}>
-              Só com email ({daLista.filter((v) => v.email_contato).length})
+            <input type="search" name="q" defaultValue={busca.q ?? ""} placeholder="Buscar vaga, empresa ou ferramenta" aria-label="Buscar" />
+          </form>
+          <div className="chips">
+            <Link className="chip" href={link({ trilha: "" })} aria-current={!busca.trilha}>Todos os cargos</Link>
+            {trilhas.map((t) => (
+              <Link key={t} className="chip" href={link({ trilha: busca.trilha === t ? "" : t })} aria-current={busca.trilha === t}>{t}</Link>
+            ))}
+            <Link className="chip" href={link({ email: busca.email ? "" : "1" })} aria-current={Boolean(busca.email)}>
+              <Icone nome="email" tamanho={14} /> Com email <span className="n">{daLista.filter((v) => v.email_contato).length}</span>
             </Link>
-            <Link href={link({ modalidade: busca.modalidade === "remoto" ? "" : "remoto" })} aria-current={busca.modalidade === "remoto"}>
-              Só remoto
+            <Link className="chip" href={link({ modalidade: busca.modalidade === "remoto" ? "" : "remoto" })} aria-current={busca.modalidade === "remoto"}>
+              Remoto
             </Link>
           </div>
-        ) : null}
+          <span className="espaco" />
+          <span className="total">{visiveis.length} {visiveis.length === 1 ? "vaga" : "vagas"}</span>
+        </div>
 
         {visiveis.length === 0 ? (
           <div className="vazio">
-            {novas.length === 0 && vagas.length === 0 ? (
+            <Icone nome="vagas" tamanho={36} />
+            {vagas.length === 0 ? (
               <>
-                <p><b>Nenhuma vaga coletada ainda.</b></p>
-                <p>A coleta roda todo dia por volta das 11:00 e das 18:30. Para rodar agora: GitHub → Actions → Coleta de vagas → Run workflow.</p>
+                <b>Nenhuma vaga coletada ainda</b>
+                <p>A coleta roda por volta das 11:00 e das 18:30. Para rodar agora: GitHub → Actions → Coleta de vagas → Run workflow.</p>
               </>
             ) : (
-              <p>Nada novo nesta lista. Veja a outra aba ou o que você já aplicou em Candidaturas.</p>
+              <>
+                <b>Nada por aqui com esses filtros</b>
+                <p>Tente a outra lista, limpe os filtros ou veja o que você já aplicou em Candidaturas.</p>
+              </>
             )}
           </div>
         ) : (
-          <ul className="lista">
-            {visiveis.map((v) => (
-              <ItemVaga key={v.id} vaga={v} />
-            ))}
-          </ul>
+          <div role="table" aria-label="Vagas">
+            <div className="tv-linha tv-cabecalho" role="row">
+              <span role="columnheader">Nota</span>
+              <span role="columnheader">Vaga</span>
+              <span role="columnheader" className="tv-requisitos">Pede e você tem</span>
+              <span role="columnheader">Publicada</span>
+              <span role="columnheader" style={{ textAlign: "right" }}>Ações</span>
+            </div>
+            {visiveis.map((v) => <LinhaVaga key={v.id} vaga={v} />)}
+          </div>
         )}
-      </main>
-    </>
+      </section>
+    </Moldura>
   );
 }
 
-function ItemVaga({ vaga: v }: { vaga: Vaga }) {
-  const resumo = v.motivos.find((m) => m.startsWith("Trecho")) ?? v.motivos[0];
+function LinhaVaga({ vaga: v }: { vaga: Vaga }) {
+  const ok = v.habilidades_ok.slice(0, 3);
+  const resto = v.habilidades_ok.length - ok.length;
   return (
-    <li>
-      <Nota vaga={v} />
-      <div>
-        <Link href={idUrl(v.id)} className="vaga-titulo">{v.titulo}</Link>
-        <div className="meta">
-          <span>{v.empresa || "Empresa não informada"}</span>
-          <span>{local(v)}</span>
-          <span>{fonte(v.fonte)}, {quando(v.publicada_em)}</span>
+    <div className="tv-linha tv-item" role="row">
+      <div role="cell"><Nota vaga={v} /></div>
+      <div role="cell" style={{ minWidth: 0 }}>
+        <Link href={idUrl(v.id)} className="tv-titulo">{v.titulo}</Link>
+        <div className="tv-meta">
+          <span className="item"><Icone nome="empresa" tamanho={14} />{v.empresa || "Empresa não informada"}</span>
+          <span className="item"><Icone nome="local" tamanho={14} />{local(v)}</span>
+          <span className="item"><Icone nome="fonte" tamanho={14} />{fonte(v.fonte)}</span>
         </div>
-        {resumo ? <p className="motivo">{resumo}</p> : null}
-        <div className="etiquetas">
-          {v.email_contato ? <span className="etiqueta email">{origemEmail(v.email_origem)}</span> : null}
-          {v.habilidades_ok.slice(0, 5).map((h) => (
-            <span key={h} className="etiqueta">{habilidade(h)}</span>
-          ))}
-          {v.habilidades_faltando.map((h) => (
-            <span key={h} className="etiqueta falta">Falta {h}</span>
-          ))}
-        </div>
+        {v.email_contato ? (
+          <div className="etiquetas" style={{ marginTop: 6 }}>
+            <span className="etiqueta email"><Icone nome="email" tamanho={12} />{origemEmail(v.email_origem)}</span>
+          </div>
+        ) : null}
       </div>
-      <div className="acoes">
+      <div role="cell" className="tv-requisitos etiquetas">
+        {ok.map((h) => <span key={h} className="etiqueta ok">{habilidade(h)}</span>)}
+        {resto > 0 ? <span className="mais">+{resto}</span> : null}
+        {v.habilidades_faltando.slice(0, 1).map((h) => <span key={h} className="etiqueta falta">Falta {h}</span>)}
+      </div>
+      <div role="cell" className="tv-data">{quando(v.publicada_em)}</div>
+      <div role="cell" className="tv-acoes">
         {v.url ? (
-          <a className="botao primario" href={v.url} target="_blank" rel="noopener noreferrer">Abrir vaga</a>
+          <a className="icone-botao" href={v.url} target="_blank" rel="noopener noreferrer" title="Abrir vaga" aria-label={`Abrir a vaga ${v.titulo}`}>
+            <Icone nome="externo" />
+          </a>
         ) : null}
         <form action={alterarStatus}>
           <input type="hidden" name="id" value={v.id} />
-          <button className="botao" name="status" value="aplicada">Já apliquei</button>
-          <button className="botao discreto" name="status" value="descartada">Descartar</button>
+          <button className="icone-botao ok" name="status" value="aplicada" title="Já apliquei" aria-label={`Marcar ${v.titulo} como aplicada`}>
+            <Icone nome="check" />
+          </button>
+          <button className="icone-botao perigo" name="status" value="descartada" title="Descartar" aria-label={`Descartar ${v.titulo}`}>
+            <Icone nome="x" />
+          </button>
         </form>
       </div>
-    </li>
-  );
-}
-
-function ErroBanco({ erro }: { erro: Error }) {
-  return (
-    <>
-      <Topo atual="/" />
-      <main className="conteudo">
-        <div className="vazio">
-          <p><b>Não consegui ler o banco.</b></p>
-          <p>{erro.message}</p>
-          <p>Confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY nas variáveis de ambiente da Vercel.</p>
-        </div>
-      </main>
-    </>
+    </div>
   );
 }
