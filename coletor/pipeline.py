@@ -198,8 +198,9 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         motivos = Counter((v.motivo_descarte or "aprovada").split(":")[0].split(" em ")[0] if v.lista == "descartada" or not v.lista
                           else "aprovada" for v in da_fonte)
         _anotar(f"Funil {fonte}: {len(da_fonte)} únicas -> {dict(motivos.most_common(8))}")
-    amostra = [v for v in vagas if v.fonte == "solides" and v.lista == "descartada" and not str(v.motivo_descarte).startswith("título fora")]
-    for v in amostra[:12]:
+    # Amostra: vagas da Sólides com cargo de dados que ficaram de fora (o Actions mostra só 10 anotações por passo).
+    amostra = [v for v in vagas if v.fonte == "solides" and v.trilha and v.lista == "descartada"]
+    for v in amostra[:4]:
         _anotar(f"Sólides → {v.titulo[:70]} | {v.modalidade} {v.cidade or ''} | {v.motivo_descarte}")
     for v in li:  # o que aconteceu com cada post do LinkedIn (título e motivo, sem conteúdo)
         _anotar(f"LinkedIn → {v.titulo[:60]} | nota {v.nota} | {v.lista or 'ok'} | {v.motivo_descarte or ''}")

@@ -6,6 +6,7 @@ curtas e específicas ("dados", "bi") e deixamos os filtros do pipeline separare
 from __future__ import annotations
 
 import logging
+import re
 from datetime import datetime, timezone
 
 from ..http import Http
@@ -42,8 +43,13 @@ def _para_vaga(j: dict, termo: str) -> Vaga:
     descricao = "\n".join(p for p in partes if p)
     senioridade = [x.get("name", "") for x in j.get("seniority") or [] if isinstance(x, dict)]
     titulo = (j.get("title") or "").strip()
-    # O nível vem num campo separado; colocamos no título só para o filtro de senioridade enxergar.
-    if senioridade and not any(n.lower() in titulo.lower() for n in senioridade):
+    # O nível vem num campo separado e costuma listar TODOS os níveis aceitos ("Júnior, Pleno, Sênior").
+    # Se aceita júnior (ou trainee), a vaga conta como júnior; senão, os níveis vão para o título
+    # só para o filtro de senioridade enxergar.
+    aceita_junior = any(re.search(r"j[uú]nior|\bjr\b|trainee", n, re.I) for n in senioridade)
+    if aceita_junior and not re.search(r"j[uú]nior|\bjr\b", titulo, re.I):
+        titulo_filtro = f"{titulo} (Júnior)"
+    elif senioridade and not aceita_junior and not any(n.lower() in titulo.lower() for n in senioridade):
         titulo_filtro = f"{titulo} ({', '.join(senioridade)})"
     else:
         titulo_filtro = titulo

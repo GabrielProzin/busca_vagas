@@ -263,3 +263,12 @@ def test_id_do_post_igual_ao_da_extensao():
     assert linkedin_posts.id_do_post({"linkedinUrl": "https://www.linkedin.com/posts/ana_vaga-activity-7390123456789012345-AbCd"}) == "7390123456789012345"
     assert linkedin_posts.id_do_post({"id": "7390123456789012345"}) == "7390123456789012345"
     assert linkedin_posts.id_do_post({"entityId": "urn:li:activity:7390123456789012345"}) == "7390123456789012345"
+
+
+def test_solides_aceita_junior_mesmo_listando_outros_niveis():
+    from coletor.fontes import solides
+    base = {"id": 1, "title": "Analista de Dados", "companyName": "X", "description": "SQL", "slug": "x"}
+    v = solides._para_vaga({**base, "seniority": [{"name": "Júnior"}, {"name": "Pleno"}, {"name": "Sênior"}]}, "dados")
+    assert F.filtrar_titulo(v) is None and v.nivel == "junior"
+    v = solides._para_vaga({**base, "seniority": [{"name": "Pleno"}, {"name": "Sênior"}]}, "dados")
+    assert F.filtrar_titulo(v).startswith("senioridade")
