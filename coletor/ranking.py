@@ -73,6 +73,7 @@ class Ranker:
                             for k, v in perfil["habilidades"].items()]
         self.pesadas = [(p, compilar([p])) for p in cfg.get("requisitos_ausentes_pesados", [])]
         self.nota_minima = float(cfg.get("nota_minima", 45))
+        self.minima_por_fonte = {"linkedin": float(cfg.get("linkedin_posts", {}).get("nota_minima", self.nota_minima))}
         self.trilha_peso = {t["nome"]: float(t["peso"]) for t in cfg["trilhas"]}
         self.emb = embedder or Embedder()
         # Frases do currículo: bullets e linhas de resumo/projetos (títulos de seção ficam de fora).
@@ -166,8 +167,9 @@ class Ranker:
                 motivos.append(f"Parecida com vagas que você {lado}, como “{parecida[:90]}” ({ajuste:+.0f} na nota)")
             v.motivos = motivos
 
-            if v.nota < self.nota_minima:
-                v.lista, v.motivo_descarte = "descartada", f"nota {v.nota} < {self.nota_minima}"
+            minima = self.minima_por_fonte.get(v.fonte, self.nota_minima)
+            if v.nota < minima:
+                v.lista, v.motivo_descarte = "descartada", f"nota {v.nota} < {minima}"
             elif faltando:
                 v.lista = "vale_tentar"
             else:

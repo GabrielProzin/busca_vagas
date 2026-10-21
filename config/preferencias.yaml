@@ -65,6 +65,8 @@ localizacao:
 linkedin_posts:
   horas: 13                 # cada coleta olha só as últimas 13 horas (as duas coletas do dia não se repetem)
   max_posts_por_busca: 15
+  # Post é texto curto: pontua menos em "parecido com o currículo" mesmo quando serve. E já vem com email.
+  nota_minima: 40
   # Buscas curtas e simples: as booleanas (AND/OR) e as longas voltaram vazias no teste de 21/10.
   # Rendimento medido numa semana de posts: "currículo + cargo" ~40% com email (poucos posts, baratos);
   # "vaga engenheiro de dados" 15%; "vaga analista de dados/BI" ~5%. Sem email: "vaga power bi",

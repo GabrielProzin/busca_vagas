@@ -252,3 +252,8 @@ def test_local_nao_informado_aceito_so_no_linkedin():
 def test_linkedin_sem_token_nao_roda():
     vagas, info = linkedin_posts.coletar({"buscas": ["x"]}, TRILHAS, token="")
     assert vagas == [] and info["erro"] == "sem APIFY_TOKEN"
+
+
+def test_nota_minima_menor_para_posts_do_linkedin():
+    r = Ranker(PERFIL, CV, CFG, Embedder(forcar_tfidf=True))
+    assert r.minima_por_fonte["linkedin"] == 40 and r.nota_minima == 50
