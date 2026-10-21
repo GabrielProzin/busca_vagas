@@ -64,7 +64,7 @@ def montar(vagas: list[Vaga], site: str | None, nota_minima: float, followups: l
     # Texto puro (para quem lê sem HTML)
     linhas = []
     if n:
-        linhas += [f"{n} vaga(s) nova(s) com nota {nota_minima:g} ou mais nesta coleta:", ""]
+        linhas += [f"{n} vaga(s) nova(s) com nota {nota_minima:g} ou mais desde o último resumo:", ""]
         for v in vagas:
             linhas += [f"{round(v.nota or 0)}  {v.titulo}", f"    {v.empresa or 'Empresa não informada'} · {_local(v)}",
                        *([f"    Email do recrutador: {v.email_contato}"] if v.email_contato else []),
@@ -93,7 +93,7 @@ def montar(vagas: list[Vaga], site: str | None, nota_minima: float, followups: l
             )
         blocos.append(
             f'<p style="font:15px/1.5 Arial,sans-serif;color:#172033">{_plural(n, "vaga nova", "vagas novas")} '
-            f'com nota {nota_minima:g} ou mais nesta coleta.</p>'
+            f'com nota {nota_minima:g} ou mais desde o último resumo.</p>'
             f'<table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse">{"".join(itens)}</table>')
     if nf:
         itens = "".join(
@@ -136,5 +136,16 @@ def enviar(vagas: list[Vaga], nota_minima: float, followups: list[dict] | None =
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30) as s:
         s.login(usuario, senha)
         s.send_message(msg)
+    _contar_email("gmail:resumo")
     log.info("resumo: enviado com %d vaga(s) e %d follow-up(s)", len(vagas), len(followups or []))
     return True
+
+
+def _contar_email(chave: str) -> None:
+    """Soma no contador de emails do dia (página Uso dos serviços). Sem banco, só não conta."""
+    from .armazenamento import Supabase
+
+    sb = Supabase.do_ambiente()
+    if sb:
+        sb.somar_uso(chave)
+

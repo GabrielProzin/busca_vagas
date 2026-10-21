@@ -179,3 +179,39 @@ class Supabase:
             "primeira_vez_em": f"gte.{desde_iso}", "nota": f"gte.{nota_minima}", "order": "nota.desc", "limit": 50})
         r.raise_for_status()
         return r.json()
+
+    # ------------------------------------------------------------------ uso dos serviços
+    def rpc(self, funcao: str, args: dict | None = None):
+        r = requests.post(f"{self.base}/rpc/{funcao}", headers=self.h, data=json.dumps(args or {}, default=str), timeout=30)
+        r.raise_for_status()
+        return r.json() if r.text else None
+
+    def somar_uso(self, chave: str, n: int = 1, dia: str | None = None) -> None:
+        """Contador do dia (ex.: emails enviados). Nunca derruba quem chamou: o monitor é um extra."""
+        from zoneinfo import ZoneInfo
+        try:
+            dia = dia or datetime.now(ZoneInfo("America/Sao_Paulo")).date().isoformat()
+            self.rpc("somar_uso", {"p_dia": dia, "p_chave": chave, "p_n": n})
+        except Exception as e:
+            log.info("uso: contador %s não somado (%s)", chave, type(e).__name__)
+
+    def ler_uso(self, servico: str) -> dict | None:
+        r = requests.get(f"{self.base}/uso_servicos", headers=self.h, timeout=30,
+                         params={"select": "dados,atualizado_em", "servico": f"eq.{servico}"})
+        r.raise_for_status()
+        linhas = r.json()
+        return linhas[0]["dados"] if linhas else None
+
+    def registrar_uso(self, servico: str, dados: dict) -> None:
+        r = requests.post(f"{self.base}/uso_servicos", headers={**self.h, "Prefer": "resolution=merge-duplicates"},
+                          params={"on_conflict": "servico"}, timeout=30, data=json.dumps(
+                              {"servico": servico, "dados": dados, "atualizado_em": datetime.now(timezone.utc).isoformat()}, default=str))
+        r.raise_for_status()
+
+    def tamanho_arquivos(self) -> int:
+        """Bytes guardados no Storage (o PDF do currículo)."""
+        raiz = self.base[: -len("/rest/v1")]
+        r = requests.post(f"{raiz}/storage/v1/object/list/privado", headers=self.h, timeout=30,
+                          data=json.dumps({"prefix": "", "limit": 1000}))
+        r.raise_for_status()
+        return sum(int((o.get("metadata") or {}).get("size") or 0) for o in r.json())

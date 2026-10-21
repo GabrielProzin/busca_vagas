@@ -17,6 +17,8 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
 - **Email de resumo**: duas vezes por dia, as vagas novas com nota alta e os follow-ups do dia.
 - **Posts do LinkedIn com email do recrutador**: busca automática (sem usar a sua conta) e uma extensão do
   Chrome que manda os posts que você está vendo.
+- **Uso dos serviços**: quanto de cada plano grátis já foi usado (GitHub, Supabase, Apify, Gemini, Gmail), com
+  aviso por email ao passar de 80%.
 - **Ranking que aprende**: vagas parecidas com as que você aplica sobem; com as que descarta, descem.
 
 > Como o sistema funciona por dentro, com as regras: [`docs/spec.md`](docs/spec.md).
@@ -35,6 +37,9 @@ Nada, se você ficar nos planos grátis. Nenhum serviço abaixo pede cartão par
 | Google AI Studio (Gemini) | Escrever emails e resumir vagas | Cota diária grátis; acabou, o site usa um modelo pronto |
 | Gmail | Enviar os emails | Senha de app |
 | Apify (opcional) | Posts do LinkedIn com email | US$ 5/mês de crédito grátis, sem cartão |
+
+A página **Uso dos serviços** do site mostra o consumo de cada um contra o limite grátis e manda um email se algum
+passar de 80%. A Vercel não dá para medir sem dar ao site um token da sua conta; para uma pessoa, o plano Hobby sobra.
 
 **Minutos do GitHub num repositório privado (estimativa):** coletas e rodadas de envio usam uns 1.300 min/mês. Cada
 email enviado pela fila soma ~1,5 min, porque a pausa entre emails conta como tempo de Actions: uns 15 emails por dia

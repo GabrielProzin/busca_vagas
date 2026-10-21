@@ -37,6 +37,7 @@ on:
 
 permissions:
   contents: write
+  actions: read   # para somar os minutos de Actions do mês (página Uso dos serviços)
 
 concurrency:
   group: coleta
@@ -103,6 +104,19 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
         run: python -m coletor.envio --so-respostas
+
+      - name: Medir o uso dos serviços grátis
+        if: ${{ !inputs.sondar_linkedin }}
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RESUMO_PARA: ${{ secrets.RESUMO_PARA }}
+        run: python -m coletor.uso
 
       - name: Avisar por email se algo falhou
         if: ${{ failure() }}

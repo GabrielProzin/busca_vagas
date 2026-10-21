@@ -27,6 +27,7 @@ const CAMINHOS = {
   triagem: <><rect x="5" y="4" width="14" height="16" rx="2.5" /><path d="M9 9h6M9 13h4" /><path d="m14.5 16.5 1.5 1.5 3-3" /></>,
   copiar: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></>,
   lote: <><rect x="3" y="8" width="15" height="12" rx="2" /><path d="m3.5 10 7 5 7-5M7 5h12a2 2 0 0 1 2 2v9" /></>,
+  medidor: <><path d="M4 18a8 8 0 1 1 16 0" /><path d="m12 18 4-5M7 18h0M17 18h0" /></>,
   sino: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0" />,
 } as const;
 

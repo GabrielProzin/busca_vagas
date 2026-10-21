@@ -42,6 +42,7 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 | Envio em lote (`/lote`) | Vagas novas com email acima de uma nota, cada uma com o email pronto; a fila (esperando, com erro); emails enviados hoje / limite | Marcar/desmarcar, ver e editar o email, colocar na fila, tirar da fila |
 | Candidaturas | Quadro (kanban) por etapa, avisos de follow-up | Arrastar cartão, menu "Mover para" |
 | Adicionar vaga | Colar texto de um post; buscas prontas de posts no LinkedIn | Enviar para a IA ler |
+| Uso dos serviços (`/uso`) | Cada serviço grátis contra o limite: GitHub Actions (minutos no mês), Supabase (banco e arquivos), Apify (crédito do mês), Gemini (pedidos do dia), Gmail (emails do dia), Vercel (só os limites) | Abrir o painel de cada serviço |
 | Painel | Números da última coleta, por que as vagas ficaram de fora, vagas novas por coleta, aprendizado do ranking | — |
 | Configurações | Primeiros passos (o que está pronto e o que falta, com o link do passo no README), currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
 
@@ -117,6 +118,12 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - Coleta completa por volta das 11:00 e das 18:30 (com posts do LinkedIn, resumo por email e follow-ups na da manhã).
 - Coletas rápidas entre elas (por volta das 8:00, 14:00 e 22:00): só as plataformas, sem LinkedIn e sem email.
 - O resumo lista as vagas com nota ≥ `resumo.nota_minima` que chegaram desde a coleta completa anterior.
+
+**Uso dos serviços** (`coletor/uso.py`, `site/lib/uso.ts`)
+- A cada coleta: minutos de Actions no mês (privado: 2.000; público: sem limite), tamanho do banco e dos arquivos do
+  Supabase, crédito usado no Apify. Gemini (por dia do Pacífico, quando a cota zera) e Gmail (por dia de Brasília) são
+  contados a cada uso, em `uso_diario`.
+- 60% = atenção, 80% = perto do limite. Ao cruzar 80%, um email de alerta (uma vez) e um aviso na tela Hoje.
 
 **Segurança e dados**
 - Tudo exige login, menos: `/login`, `/api/capturar` e `/api/capturar/lote` (token da extensão), `/api/vigia`

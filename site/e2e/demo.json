@@ -503,5 +503,59 @@
    "followup_em": null,
    "email_message_id": "<devolvida@exemplo.com>"
   }
- ]
+ ],
+ "uso": {
+  "servicos": [
+   {
+    "servico": "github",
+    "dados": {
+     "privado": true,
+     "minutos": 1240,
+     "limite": 2000,
+     "execucoes": 412,
+     "por_workflow": {
+      "Coleta de vagas": 790,
+      "Envio da fila de emails": 330,
+      "Testes do site": 120
+     },
+     "mes": "2026-10"
+    }
+   },
+   {
+    "servico": "supabase",
+    "dados": {
+     "banco_bytes": 39845888,
+     "banco_limite": 524288000,
+     "arquivos_bytes": 184320,
+     "arquivos_limite": 1073741824
+    }
+   },
+   {
+    "servico": "apify",
+    "dados": {
+     "usado_usd": 4.27,
+     "limite_usd": 5,
+     "ciclo_inicio": null,
+     "ciclo_fim": null
+    }
+   }
+  ],
+  "diario": [
+   {
+    "dias_atras": 1,
+    "chave": "gemini:flash",
+    "n": 12
+   },
+   {
+    "dias_atras": 1,
+    "chave": "gemini:lite",
+    "n": 64
+   },
+   {
+    "dias_atras": 0,
+    "chave": "gmail:resumo",
+    "n": 1
+   }
+  ]
+ }
 }

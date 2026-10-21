@@ -26,7 +26,7 @@ test("login: senha errada não entra; certa entra", async ({ page }) => {
 });
 
 test("sem login: páginas e dados ficam fechados", async ({ request }) => {
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
     const r = await request.get(rota, { maxRedirects: 0 });
     expect(r.status(), rota).toBeGreaterThanOrEqual(300);
     expect(r.status(), rota).toBeLessThan(400);
@@ -254,11 +254,29 @@ test("vaga inexistente mostra página amigável", async ({ page }) => {
   await expect(page.getByText("Página não encontrada.")).toBeVisible();
 });
 
+test("uso dos serviços: mostra cada plano grátis e conta Gmail e IA usados pelo site", async ({ page }) => {
+  await entrar(page);
+  await expect(page.locator("a.faixa", { hasText: "Apify em 85%" })).toBeVisible(); // aviso em Hoje: passou de 80%
+  await page.goto("/uso");
+  await expect(page.getByRole("region", { name: "GitHub Actions" })).toContainText("1240 de 2000 min");
+  await expect(page.getByRole("region", { name: "Supabase" })).toContainText("MB de 500,0 MB");
+  const apify = page.getByRole("region", { name: "Apify" });
+  await expect(apify).toContainText("US$ 4,27 de US$ 5,00");
+  await expect(apify).toContainText("Perto do limite");
+  // os testes anteriores enviaram 1 candidatura e 1 follow-up pelo site, e pediram o follow-up à IA
+  await expect(page.getByRole("region", { name: "Gmail" })).toContainText("2 pelo site, 0 pela fila, 1 resumo(s)");
+  // o Gemini falso responde "sem cota" no Flash: o site conta a falta de cota e o pedido que caiu no Flash-Lite
+  const gemini = page.getByRole("region", { name: "Gemini (IA)" });
+  await expect(gemini).toContainText(/Flash-Lite hoje[1-9]\d* de ~500 pedidos/);
+  await expect(gemini).toContainText(/A cota acabou [1-9]\d* vez/);
+  await expect(page.getByRole("region", { name: "Vercel" })).toContainText("Sem medição");
+});
+
 test("celular: nenhuma página principal rola para o lado", async ({ browser }) => {
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);

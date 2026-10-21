@@ -1,6 +1,7 @@
 import "server-only";
 import nodemailer from "nodemailer";
 import { PERFIL } from "./gerado/perfil";
+import { contarUso } from "./db";
 
 // Envio pelo Gmail do próprio usuário (SMTP + senha de app). Sai da conta dele
 // e fica na pasta Enviados, como um email escrito à mão.
@@ -20,7 +21,10 @@ type Mensagem = {
 };
 
 export async function enviarEmail(m: Mensagem): Promise<string> {
-  if (process.env.DEMO_ARQUIVO) return "demo"; // modo demo nunca envia de verdade
+  if (process.env.DEMO_ARQUIVO) {
+    await contarUso("gmail:site");
+    return "demo"; // modo demo nunca envia de verdade
+  }
   const usuario = process.env.GMAIL_USER;
   const senha = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, ""); // a senha de app vem com espaços
   if (!usuario || !senha) throw new Error("GMAIL_USER e GMAIL_APP_PASSWORD não configurados na Vercel.");
@@ -33,6 +37,7 @@ export async function enviarEmail(m: Mensagem): Promise<string> {
     attachments: m.anexo ? [{ filename: m.nomeAnexo ?? "curriculo.pdf", content: m.anexo, contentType: "application/pdf" }] : [],
     ...(m.emResposta ? { inReplyTo: m.emResposta, references: [m.emResposta] } : {}),
   });
+  await contarUso("gmail:site");
   return info.messageId;
 }
 

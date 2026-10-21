@@ -98,6 +98,9 @@ export type Execucao = {
   tipo?: "completa" | "rapida" | null;
 };
 
+export type UsoServico = { servico: "github" | "supabase" | "apify" | string; atualizado_em: string; dados: Record<string, unknown> };
+export type UsoDiario = { dia: string; chave: string; n: number };
+
 export type Aprendizado = {
   positivos: number;
   negativos: number;

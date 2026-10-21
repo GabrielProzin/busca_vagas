@@ -146,6 +146,8 @@ def enviar_fila(sb, envio: dict, excluidos: list[str], usuario: str, senha: str,
                 break  # login recusado, limite do Gmail ou rede: para a rodada e tenta na próxima
             continue
         sb.atualizar_candidatura(vaga_id, {"fila_em": None, "fila_erro": None, "email_message_id": msg["Message-ID"]})
+        if hasattr(sb, "somar_uso"):
+            sb.somar_uso("gmail:fila")
         destinos_hoje.add(para)
         r["enviados"] += 1
         r["hoje"] += 1

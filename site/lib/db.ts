@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { readFileSync } from "node:fs";
-import type { Candidatura, Execucao, Status, Vaga } from "./tipos";
+import type { Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
 
 // Acesso ao Supabase pela API REST (PostgREST), sempre no servidor, com a chave secreta.
 // Com DEMO_ARQUIVO definido, usa um JSON local em memória (para desenvolver sem banco).
@@ -30,7 +30,7 @@ async function rest<T>(caminho: string, init: RequestInit = {}): Promise<T> {
 }
 
 // ---------------------------------------------------------------- modo demo
-type Demo = { vagas: Vaga[]; candidaturas: Map<string, Candidatura>; execucoes: Execucao[] };
+type Demo = { vagas: Vaga[]; candidaturas: Map<string, Candidatura>; execucoes: Execucao[]; servicos: UsoServico[]; diario: Map<string, number> };
 // globalThis: rotas de API e páginas podem carregar cópias separadas deste módulo.
 const G = globalThis as unknown as { __demoBV?: Demo };
 function emDemo(): Demo | null {
@@ -52,6 +52,11 @@ function emDemo(): Demo | null {
         return [c.vaga_id as string, c as unknown as Candidatura];
       })),
       execucoes: [{ id: 1, iniciada_em: agora, ...j.execucao }],
+      // Uso dos serviços: medições prontas; contadores do dia como "dias_atras|chave" -> n.
+      servicos: ((j.uso?.servicos ?? []) as UsoServico[]).map((s) => ({ ...s, atualizado_em: agora })),
+      diario: new Map(((j.uso?.diario ?? []) as { dias_atras: number; chave: string; n: number }[]).map((d) => [
+        `${new Date(Date.now() - d.dias_atras * 864e5).toISOString().slice(0, 10)}|${d.chave}`, d.n,
+      ])),
     };
   }
   return G.__demoBV;
@@ -393,5 +398,55 @@ export async function schemaCompleto(): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+
+// ---------------------------------------------------------------- uso dos serviços
+// Medições da coleta (GitHub, Supabase, Apify) e contadores do dia (Gemini, Gmail). Tudo opcional:
+// sem as tabelas do SQL novo, o site funciona igual e a página Uso só avisa que falta rodar o SQL.
+
+/** Dia de hoje (AAAA-MM-DD) num fuso. O Gemini zera a cota à meia-noite do Pacífico; o resto, no horário de Brasília. */
+export function diaEm(fuso: string, quando = new Date()): string {
+  return quando.toLocaleDateString("en-CA", { timeZone: fuso });
+}
+
+/** Soma 1 (ou n) no contador do dia. Nunca falha para quem chamou: o monitor é um extra. */
+export async function contarUso(chave: string, n = 1, fuso = "America/Sao_Paulo"): Promise<void> {
+  const dia = diaEm(fuso);
+  const d = emDemo();
+  if (d) {
+    const k = `${dia}|${chave}`;
+    d.diario.set(k, (d.diario.get(k) ?? 0) + n);
+    return;
+  }
+  try {
+    await rest(`/rpc/somar_uso`, { method: "POST", body: JSON.stringify({ p_dia: dia, p_chave: chave, p_n: n }) });
+  } catch (e) {
+    console.info("uso: contador não somado:", chave, String(e).slice(0, 120));
+  }
+}
+
+/** Últimas medições e os contadores dos últimos 8 dias. null = tabelas ainda não criadas. */
+export async function lerUso(): Promise<{ servicos: UsoServico[]; diario: UsoDiario[] } | null> {
+  const d = emDemo();
+  if (d) {
+    return {
+      servicos: d.servicos,
+      diario: [...d.diario.entries()].map(([k, n]) => {
+        const [dia, chave] = k.split("|");
+        return { dia, chave, n };
+      }),
+    };
+  }
+  try {
+    const desde = new Date(Date.now() - 8 * 864e5).toISOString().slice(0, 10);
+    const [servicos, diario] = await Promise.all([
+      rest<UsoServico[]>(`/uso_servicos?select=*`),
+      rest<UsoDiario[]>(`/uso_diario?select=*&dia=gte.${desde}&order=dia.asc`),
+    ]);
+    return { servicos, diario };
+  } catch {
+    return null;
   }
 }

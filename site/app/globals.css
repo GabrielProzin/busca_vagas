@@ -723,3 +723,26 @@ a.faixa:hover { filter: brightness(0.97); }
 @media (max-width: 760px) {
   .lote-numeros > .contador-envio { grid-column: 1 / -1; }
 }
+
+/* ------------------------------------------------------------------ Uso dos serviços */
+.uso-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.uso-cartao .cartao-cabecalho { align-items: flex-start; }
+.uso-cartao .cartao-cabecalho h2 { font-size: 16px; }
+.uso-cartao.atencao { border-color: color-mix(in srgb, var(--warm) 45%, var(--line)); }
+.uso-cartao.critico { border-color: color-mix(in srgb, var(--danger) 50%, var(--line)); }
+.uso-estado { font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); white-space: nowrap; }
+.uso-estado.atencao { background: var(--warm-soft); color: var(--warm); }
+.uso-estado.critico { background: var(--danger-soft); color: var(--danger); }
+.uso-estado.sem { background: var(--surface-2); color: var(--muted); }
+.uso-barra { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; color: var(--accent); }
+.uso-barra.atencao { color: var(--warm); }
+.uso-barra.critico { color: var(--danger); }
+.uso-barra-topo { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--ink-2); }
+.uso-barra-topo b { font-size: 15px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.uso-barra-topo small { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+.uso-trilho { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; border: 1px solid var(--line); }
+.uso-trilho i { display: block; height: 100%; border-radius: 5px; background: currentColor; }
+.uso-linha { margin: 6px 0 0; }
+.uso-rodape { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: center; }
+.uso-rodape a { display: inline-flex; gap: 4px; align-items: center; }
+@media (max-width: 900px) { .uso-grade { grid-template-columns: minmax(0, 1fr); } }

@@ -2,6 +2,9 @@ import "server-only";
 import { PERFIL } from "./gerado/perfil";
 import type { Vaga } from "./tipos";
 import { deEmpresa, tituloLimpo } from "./formato";
+import { contarUso } from "./db";
+
+const PACIFICO = "America/Los_Angeles"; // a cota grátis do Gemini zera à meia-noite do Pacífico
 
 // Gemini via REST. O texto de vagas e posts é tratado como dado: o resultado é sempre um rascunho que você revisa.
 // Dois níveis no plano grátis:
@@ -49,6 +52,8 @@ async function gerarJSON<T>(prompt: string, temperatura = 0.4, escrita = false):
       ultimo = `modelo ${modelo} indisponível`;
       continue; // tenta o próximo da lista
     }
+    const nivel = ehFlash ? "flash" : "lite";
+    if (r.status === 429) await contarUso(`gemini:${nivel}:limite`, 1, PACIFICO);
     if ((r.status === 429 || r.status === 503) && ehFlash && escrita) {
       flashEsgotado = true; // limite do Flash (ou sobrecarga): segue com o Flash-Lite
       ultimo = `${modelo} sem cota`;
@@ -60,6 +65,9 @@ async function gerarJSON<T>(prompt: string, temperatura = 0.4, escrita = false):
       throw new ErroIA(`A IA não respondeu agora (erro ${r.status}). Tente de novo em instantes.`, "falha");
     }
     const j = await r.json();
+    await contarUso(`gemini:${nivel}`, 1, PACIFICO);
+    const tokens = Number(j?.usageMetadata?.totalTokenCount ?? 0);
+    if (tokens) await contarUso("gemini:tokens", tokens, PACIFICO);
     const texto: string = j?.candidates?.[0]?.content?.parts?.map((p: { text?: string }) => p.text ?? "").join("") ?? "";
     try {
       return JSON.parse(texto.replace(/^```(json)?|```$/g, "").trim()) as T;

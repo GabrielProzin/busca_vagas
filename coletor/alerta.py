@@ -62,6 +62,8 @@ def enviar(titulo: str, linhas: list[str]) -> bool:
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=30) as s:
         s.login(usuario, senha)
         s.send_message(msg)
+    from .resumo import _contar_email
+    _contar_email("gmail:alerta")
     MARCADOR.parent.mkdir(exist_ok=True)
     MARCADOR.touch()
     log.info("alerta enviado: %s", titulo)

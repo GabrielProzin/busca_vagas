@@ -2,7 +2,8 @@ import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
 import ContadorEnvio from "@/components/ContadorEnvio";
-import { enviadosHoje, listarCandidaturas, listarVagas } from "@/lib/db";
+import { enviadosHoje, lerUso, listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
+import { montarUso } from "@/lib/uso";
 import { idUrl, origemEmail } from "@/lib/formato";
 import { situacaoFollowup } from "@/lib/followup";
 import { passosConfiguracao } from "@/lib/configuracao";
@@ -43,7 +44,12 @@ export default async function PaginaHoje() {
     console.error("hoje:", e);
     falhou = true;
   }
-  const [passos, hoje] = await Promise.all([passosConfiguracao().catch(() => []), enviadosHoje().catch(() => 0)]);
+  const [passos, hoje, uso, ultimas] = await Promise.all([
+    passosConfiguracao().catch(() => []), enviadosHoje().catch(() => 0), lerUso(), listarExecucoes(1).catch(() => []),
+  ]);
+  // Algum plano grátis passou de 80%: avisa no topo (o detalhe fica em Uso dos serviços).
+  const apertados = montarUso({ servicos: uso?.servicos ?? [], diario: uso?.diario ?? [], ultimaColeta: ultimas[0]?.iniciada_em ?? null, emailsCandidaturaHoje: hoje })
+    .filter((c) => (c.fracao ?? 0) >= 0.8);
   const essenciais = passos.filter((p) => p.essencial && !p.ok);
 
   const novas = vagas.filter(ehNova);
@@ -88,6 +94,11 @@ export default async function PaginaHoje() {
         <Link href="/configuracoes" className="faixa aviso">
           <Icone nome="alerta" /> {essenciais.length === 1 ? "Falta 1 passo" : `Faltam ${essenciais.length} passos`} para o sistema ficar completo:{" "}
           {essenciais.map((p) => p.rotulo.charAt(0).toLowerCase() + p.rotulo.slice(1)).join(", ")}. Ver em Configurações →
+        </Link>
+      ) : null}
+      {apertados.length ? (
+        <Link href="/uso" className="faixa aviso">
+          <Icone nome="medidor" /> {apertados.map((c) => `${c.nome} em ${Math.round((c.fracao ?? 0) * 100)}%`).join(", ")} do plano grátis. Ver Uso dos serviços →
         </Link>
       ) : null}
       {falhou ? (

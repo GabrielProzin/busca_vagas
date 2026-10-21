@@ -87,3 +87,35 @@ alter table candidaturas add column if not exists resposta_em  timestamptz;  -- 
 alter table candidaturas add column if not exists devolvido_em timestamptz;  -- quando o email voltou (endereço não existe)
 create index if not exists candidaturas_fila on candidaturas (fila_em) where fila_em is not null;
 alter table execucoes    add column if not exists tipo         text;         -- completa | rapida
+
+-- 21/10/2026 (noite): monitor de uso dos serviços grátis (página "Uso dos serviços").
+-- uso_servicos: última medição de cada serviço (feita pela coleta). uso_diario: contadores do dia (IA, emails).
+create table if not exists uso_servicos (
+  servico        text primary key,                    -- github | supabase | apify
+  atualizado_em  timestamptz not null default now(),
+  dados          jsonb not null default '{}'
+);
+create table if not exists uso_diario (
+  dia    date   not null,
+  chave  text   not null,                             -- ex.: gemini:flash, gemini:lite:limite, gmail
+  n      bigint not null default 0,
+  primary key (dia, chave)
+);
+alter table uso_servicos enable row level security;
+alter table uso_diario   enable row level security;
+grant select, insert, update, delete on uso_servicos, uso_diario to service_role;
+revoke all on uso_servicos, uso_diario from anon, authenticated;
+
+-- Soma no contador do dia numa operação só (duas abas ou o coletor ao mesmo tempo não perdem contagem).
+create or replace function somar_uso(p_dia date, p_chave text, p_n bigint default 1) returns void
+language sql security definer set search_path = public as $$
+  insert into uso_diario (dia, chave, n) values (p_dia, p_chave, p_n)
+  on conflict (dia, chave) do update set n = uso_diario.n + excluded.n;
+$$;
+-- Tamanho do banco (o plano grátis do Supabase vai até 500 MB).
+create or replace function tamanho_banco() returns bigint
+language sql security definer set search_path = public as $$
+  select pg_database_size(current_database());
+$$;
+revoke execute on function somar_uso(date, text, bigint), tamanho_banco() from public, anon, authenticated;
+grant execute on function somar_uso(date, text, bigint), tamanho_banco() to service_role;

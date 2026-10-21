@@ -16,6 +16,7 @@ const SECOES: Secao[] = [
   { href: "/adicionar", rotulo: "Adicionar vaga", curto: "Adicionar", icone: "adicionar", baixo: false },
   { href: "/candidaturas", rotulo: "Candidaturas", curto: "Quadro", icone: "candidaturas", conta: "candidaturas", baixo: true },
   { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel", baixo: true },
+  { href: "/uso", rotulo: "Uso dos serviços", curto: "Uso", icone: "medidor", baixo: false },
   { href: "/configuracoes", rotulo: "Configurações", curto: "Ajustes", icone: "config", baixo: true },
 ];
 
