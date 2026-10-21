@@ -86,7 +86,11 @@ def main() -> int:
     try:
         # 1. vagas e candidaturas de teste (lista "descartada": não aparecem nas suas listas do site)
         vagas, cands = [], []
-        for vaga_id, para in zip(ids, [usuario, inexistente]):
+        # Você mesmo com um "+teste" (o Gmail entrega na sua caixa): endereço diferente do seu normal, para a regra
+        # "um email por destinatário por dia" não segurar o teste se você já mandou algo para si hoje.
+        nome, dominio = usuario.split("@", 1)
+        para_mim = f"{nome}+teste-{sufixo}@{dominio}"
+        for vaga_id, para in zip(ids, [para_mim, inexistente]):
             v = Vaga(fonte="teste", id_origem=vaga_id.split(":", 1)[1], titulo="Analista de Dados Júnior (teste do envio)",
                      empresa="Empresa Fictícia", url="https://github.com/" + os.getenv("GITHUB_REPOSITORY", ""))
             assunto, corpo = email_modelo(v, perfil)
@@ -114,7 +118,7 @@ def main() -> int:
 
         r = envio.enviar_fila(teste, cfg, excluidos, usuario, senha, perfil, mandar=mandar)
         pausa = f"{momentos[1] - momentos[0]:.0f}s" if len(momentos) == 2 else "-"
-        anotar(f"{hora()} Fila enviada: {r['enviados']} enviados, {r['falhas']} falhas, pausa entre os dois: {pausa} "
+        anotar(f"{hora()} Fila enviada: {r['enviados']} enviados, {r['falhas']} falhas, {r['adiados']} adiados, pausa entre os dois: {pausa} "
                f"(sorteada entre 8 e 15s no teste; no uso normal, {envio.configuracao()[0]['intervalo_segundos']}s)")
         c1, c2 = linha(sb, ids[0]), linha(sb, ids[1])
         anotar("Depois do envio: " + " | ".join(
