@@ -15,8 +15,9 @@ Leia antes de mudar qualquer coisa. O que o sistema faz e as regras de negócio 
 
 ## Regras que não mudam
 
-- **Repositório público.** Nada de dado pessoal (currículo real, emails de recrutador, telefone, dados de
-  candidaturas) em arquivo versionado, artefato do Actions, log aberto ou branch. Testes usam só dados fictícios
+- **Repositório público.** Nada de dado pessoal (emails de recrutador, telefone, email pessoal, dados de
+  candidaturas) em arquivo versionado, artefato do Actions, log aberto ou branch. Exceção consciente: o texto do
+  currículo do dono em `perfil/` (sem telefone nem email), que ele decidiu deixar público. Testes usam só dados fictícios
   (`@exemplo.com`). O backup é cifrado.
 - **Segredos** só em variáveis da Vercel / Secrets do GitHub / `.env` local fora do Git. Nunca no código, nunca no
   navegador (nada de `NEXT_PUBLIC_` com segredo), nunca colados em conversa.
