@@ -59,7 +59,8 @@ export type Vaga = {
   motivos: string[];
   habilidades_ok: string[];
   habilidades_faltando: string[];
-  componentes: { semantica?: number; habilidades?: number; trilha?: number };
+  // Vagas da coleta têm os três componentes; vagas capturadas (LinkedIn/colar) têm só a nota da IA.
+  componentes: { semantica?: number; habilidades?: number; trilha?: number; ia?: number };
   primeira_vez_em: string;
   atualizada_em: string;
   candidatura: Candidatura | null;

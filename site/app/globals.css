@@ -174,3 +174,29 @@ textarea { width: 100%; min-height: 90px; resize: vertical; }
   .painel-lateral { position: static; }
   .descricao { padding: 18px; }
 }
+
+/* ---------- email, configurações, adicionar ---------- */
+.email-caixa { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; max-width: 75ch; }
+.linha-botoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.email-form, .formulario { display: flex; flex-direction: column; gap: 12px; }
+.email-form label, .formulario label { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; color: var(--muted); }
+.email-form input[type="email"], .email-form input[type="text"], .formulario input[type="url"], .formulario input[type="file"] {
+  font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px;
+}
+.email-form textarea { min-height: 260px; line-height: 1.55; }
+.email-form .confirmar, .formulario .confirmar { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; }
+.email-form .botao.primario { align-self: flex-start; }
+.dica { font-size: 13px; color: var(--muted); margin: 0; }
+.aviso { font-size: 14px; margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--warm-soft); color: var(--warm); }
+.aviso.ok { background: var(--accent-soft); color: var(--accent); }
+details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.botao:disabled { opacity: 0.55; cursor: not-allowed; }
+.secao { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; max-width: 75ch; display: flex; flex-direction: column; gap: 12px; }
+.secao h2 { margin: 0; }
+.secao p { margin: 0; }
+.situacao { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.situacao li { display: flex; gap: 10px; align-items: baseline; }
+.situacao .sim { color: var(--accent); font-weight: 700; }
+.situacao .nao { color: var(--warm); font-weight: 700; }
+.formulario textarea { min-height: 280px; }
+code { font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }

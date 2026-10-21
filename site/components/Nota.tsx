@@ -9,6 +9,21 @@ const PARTES = [
 
 export default function Nota({ vaga, grande = false }: { vaga: Vaga; grande?: boolean }) {
   const c = vaga.componentes ?? {};
+  // Vaga capturada (post colado/extensão): a nota vem inteira da avaliação da IA, sem componentes.
+  if (c.ia !== undefined) {
+    return (
+      <div className={`nota ${vaga.lista ?? ""} ${grande ? "nota-grande" : ""}`}>
+        <div className="nota-numero">
+          {Math.round(vaga.nota ?? 0)}
+          <small>/100</small>
+        </div>
+        <div className="barra" role="img" aria-label={`Avaliação da IA: ${Math.round(vaga.nota ?? 0)} de 100`}>
+          <span style={{ flex: 1 }}><i style={{ width: `${Math.round(c.ia * 100)}%` }} /></span>
+        </div>
+        <div className="legenda">avaliada pela IA</div>
+      </div>
+    );
+  }
   const resumo = PARTES.map((p) => `${p.rotulo}: ${Math.round((c[p.chave] ?? 0) * p.peso)} de ${p.peso}`).join("; ");
   return (
     <div className={`nota ${vaga.lista ?? ""} ${grande ? "nota-grande" : ""}`}>

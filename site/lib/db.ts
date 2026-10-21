@@ -30,20 +30,21 @@ async function rest<T>(caminho: string, init: RequestInit = {}): Promise<T> {
 
 // ---------------------------------------------------------------- modo demo
 type Demo = { vagas: Vaga[]; candidaturas: Map<string, Candidatura>; execucoes: Execucao[] };
-let demo: Demo | null = null;
+// globalThis: rotas de API e páginas podem carregar cópias separadas deste módulo.
+const G = globalThis as unknown as { __demoBV?: Demo };
 function emDemo(): Demo | null {
   const arq = process.env.DEMO_ARQUIVO;
   if (!arq) return null;
-  if (!demo) {
+  if (!G.__demoBV) {
     const j = JSON.parse(readFileSync(arq, "utf-8"));
     const agora = new Date().toISOString();
-    demo = {
+    G.__demoBV = {
       vagas: (j.vagas as Vaga[]).map((v) => ({ ...v, primeira_vez_em: agora, atualizada_em: agora, candidatura: null })),
       candidaturas: new Map(),
       execucoes: [{ id: 1, iniciada_em: agora, ...j.execucao }],
     };
   }
-  return demo;
+  return G.__demoBV;
 }
 
 function comCandidatura(v: Vaga & { candidatura?: Candidatura | Candidatura[] | null }): Vaga {
@@ -108,6 +109,32 @@ export async function salvarCandidatura(vagaId: string, campos: Partial<Omit<Can
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify({ vaga_id: vagaId, ...campos, atualizada_em: agora }),
+  });
+}
+
+/** Emails de candidatura enviados hoje (horário de Brasília), para o limite diário. */
+export async function enviadosHoje(): Promise<number> {
+  const inicio = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }) + "T00:00:00-03:00").toISOString();
+  const d = emDemo();
+  if (d) return [...d.candidaturas.values()].filter((c) => c.status === "enviada" && (c.enviada_em ?? "") >= inicio).length;
+  const linhas = await rest<{ vaga_id: string }[]>(
+    `/candidaturas?select=vaga_id&enviada_em=gte.${encodeURIComponent(inicio)}&status=eq.enviada`,
+  );
+  return linhas.length;
+}
+
+/** Grava uma vaga vinda da extensão ou do "Adicionar vaga" (fonte linkedin/manual). */
+export async function gravarVaga(v: Omit<Vaga, "candidatura" | "primeira_vez_em" | "atualizada_em"> & { descricao: string }): Promise<void> {
+  const agora = new Date().toISOString();
+  const d = emDemo();
+  if (d) {
+    d.vagas = [{ ...v, primeira_vez_em: agora, atualizada_em: agora, candidatura: null }, ...d.vagas.filter((x) => x.id !== v.id)];
+    return;
+  }
+  await rest(`/vagas?on_conflict=id`, {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
+    body: JSON.stringify({ ...v, atualizada_em: agora }),
   });
 }
 

@@ -56,6 +56,23 @@ com a chave secreta.
 - **Vaga**: motivos da nota, descrição completa, etapa da candidatura e anotações.
 - **Candidaturas**: quadro por etapa (aplicada, email enviado, respondeu, entrevista, proposta, não seguiu).
 - **Painel**: números da última coleta, por que as vagas ficaram de fora, histórico das coletas.
+- **Email para o recrutador**: o Gemini (Flash-Lite, plano grátis) escreve um email curto ligando 2–3 requisitos
+  da vaga a experiências reais do currículo; se a IA estiver indisponível, um modelo pronto usa os destaques do
+  `perfil.yaml` que batem com as habilidades da vaga. Você edita, marca que revisou e envia pelo seu Gmail
+  (SMTP + senha de app), com o PDF do currículo guardado num bucket privado do Supabase. Limite diário configurável
+  e bloqueio de envio duplicado.
+- **Adicionar vaga**: cole o texto de um post; a IA separa cargo, empresa e email, descarta o que não é vaga
+  (ex.: listas de candidatos) e dá uma nota contra o currículo.
+
+## Extensão "Enviar para o busca_vagas" (`extensao/`)
+
+Extensão do Chrome (Manifest V3). Você seleciona o texto de uma vaga em qualquer site, clica com o botão direito
+e escolhe *Enviar para o busca_vagas*; a extensão manda o texto para `POST /api/capturar` (autenticada por
+`CAPTURA_TOKEN`) e mostra a nota numa notificação. Ela só age no clique: não lê páginas sozinha nem automatiza
+nenhum site. Pede permissão de acesso só ao endereço do seu próprio site.
+
+Instalação: `chrome://extensions` → Modo do desenvolvedor → Carregar sem compactação → pasta `extensao/` →
+nas opções, informe o endereço do site e o token.
 
 ```bash
 cd site && cp .env.example .env.local   # preencha as variáveis

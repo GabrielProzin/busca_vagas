@@ -3,8 +3,10 @@ import { sair } from "@/app/acoes";
 
 const LINKS = [
   { href: "/", rotulo: "Vagas" },
+  { href: "/adicionar", rotulo: "Adicionar vaga" },
   { href: "/candidaturas", rotulo: "Candidaturas" },
   { href: "/painel", rotulo: "Painel" },
+  { href: "/configuracoes", rotulo: "Configurações" },
 ];
 
 export default function Topo({ atual }: { atual: string }) {

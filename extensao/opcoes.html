@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>busca_vagas: opções</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; max-width: 520px; margin: 32px auto; padding: 0 16px; color: #172033; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    p { color: #5b6576; margin: 0 0 18px; }
+    label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; margin-bottom: 14px; }
+    input { font: inherit; padding: 8px 10px; border: 1px solid #d9dee5; border-radius: 8px; }
+    button { font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 8px; border: 0; background: #1f6f78; color: #fff; cursor: pointer; }
+    #msg { margin-top: 14px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Enviar para o busca_vagas</h1>
+  <p>Selecione o texto de uma vaga em qualquer site, clique com o botão direito e escolha “Enviar para o busca_vagas”.</p>
+  <label>Endereço do seu site
+    <input id="site" type="url" placeholder="https://busca-vagas-xxxx.vercel.app" required />
+  </label>
+  <label>Token (o mesmo valor de CAPTURA_TOKEN na Vercel)
+    <input id="token" type="password" required />
+  </label>
+  <button id="salvar">Salvar</button>
+  <div id="msg" role="status"></div>
+  <script src="opcoes.js"></script>
+</body>
+</html>

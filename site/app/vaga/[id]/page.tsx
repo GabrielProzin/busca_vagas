@@ -2,9 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Topo from "@/components/Topo";
 import Nota from "@/components/Nota";
+import EmailCandidatura from "@/components/EmailCandidatura";
 import { alterarStatus, salvarNotas } from "../../acoes";
 import { buscarVaga } from "@/lib/db";
-import { fonte, habilidade, local, quando } from "@/lib/formato";
+import { infoCurriculo } from "@/lib/arquivos";
+import { gmailConfigurado } from "@/lib/email";
+import { iaConfigurada } from "@/lib/ia";
+import { fonte, habilidade, local, naFonte, quando } from "@/lib/formato";
 import { ETAPAS, ROTULO_STATUS } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +17,10 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
   const { id } = await params;
   const v = await buscarVaga(decodeURIComponent(id));
   if (!v) notFound();
-  const status = v.candidatura?.status ?? "nova";
+  const c = v.candidatura;
+  const status = c?.status ?? "nova";
+  const cv = await infoCurriculo().catch(() => null);
+  const temEmail = Boolean(v.email_contato || c?.email_para);
 
   return (
     <>
@@ -41,6 +48,24 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
               </div>
             ) : null}
 
+            <h2>{temEmail ? "Email para o recrutador" : "Candidatura por email"}</h2>
+            {!temEmail ? (
+              <p className="dica" style={{ marginBottom: 12, maxWidth: "70ch" }}>
+                Essa vaga não trouxe email: o normal é se candidatar pelo link. Se você achar o email do recrutador, preencha o campo Para e envie por aqui.
+              </p>
+            ) : null}
+            <EmailCandidatura
+              vagaId={v.id}
+              para={c?.email_para ?? v.email_contato ?? ""}
+              assunto={c?.email_assunto ?? ""}
+              corpo={c?.email_corpo ?? ""}
+              jaEnviada={status === "enviada" || Boolean(c?.email_para && c?.enviada_em && status !== "aplicada")}
+              enviadaEm={c?.enviada_em ?? null}
+              iaPronta={iaConfigurada()}
+              gmailPronto={gmailConfigurado()}
+              cvPronto={Boolean(cv)}
+            />
+
             <h2>Descrição da vaga</h2>
             <div className="descricao">{v.descricao || "A fonte não trouxe a descrição. Abra a vaga para ler."}</div>
           </div>
@@ -52,7 +77,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
               <p className="status-atual">Email do recrutador: <b>{v.email_contato}</b></p>
             ) : null}
             {v.url ? (
-              <a className="botao primario" href={v.url} target="_blank" rel="noopener noreferrer">Abrir vaga na {fonte(v.fonte)}</a>
+              <a className="botao primario" href={v.url} target="_blank" rel="noopener noreferrer">Abrir vaga {naFonte(v.fonte)}</a>
             ) : null}
             <form action={alterarStatus} style={{ display: "flex", gap: 8 }}>
               <input type="hidden" name="id" value={v.id} />
@@ -66,7 +91,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
             <form action={salvarNotas} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <input type="hidden" name="id" value={v.id} />
               <label htmlFor="notas" className="status-atual">Anotações</label>
-              <textarea id="notas" name="notas" defaultValue={v.candidatura?.notas ?? ""} placeholder="Contato, data da entrevista, salário combinado…" />
+              <textarea id="notas" name="notas" defaultValue={c?.notas ?? ""} placeholder="Contato, data da entrevista, salário combinado…" />
               <button className="botao" type="submit">Salvar anotações</button>
             </form>
           </aside>

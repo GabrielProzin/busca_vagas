@@ -12,6 +12,11 @@ export function fonte(f: string): string {
   return { gupy: "Gupy", remotar: "Remotar", github: "GitHub", linkedin: "LinkedIn" }[f] ?? f;
 }
 
+/** "na Gupy", "no GitHub", "no LinkedIn"… para o botão de abrir a vaga. */
+export function naFonte(f: string): string {
+  return { gupy: "na Gupy", remotar: "na Remotar", github: "no GitHub", linkedin: "no LinkedIn" }[f] ?? "no site original";
+}
+
 export function quando(iso: string | null): string {
   if (!iso) return "";
   const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 864e5);
