@@ -359,6 +359,82 @@
     "trilha": 1.0,
     "historico": 3.0
    }
+  },
+  {
+   "id": "linkedin:10",
+   "fonte": "linkedin",
+   "titulo": "Analista de Dados Jr (resposta)",
+   "empresa": "Resposta Exemplo",
+   "url": "https://exemplo.com/vagas/8",
+   "cidade": null,
+   "estado": null,
+   "modalidade": "remoto",
+   "descricao": "Correio Exemplo busca Analista de Dados Júnior para atuar com SQL, Power BI e Python, montando dashboards e relatórios para as áreas de negócio. Requisitos: SQL intermediário, Power BI, Excel. Diferenciais: Python, Airflow.\nEnvie o currículo para talentos@correio.exemplo.com.",
+   "publicada_em": "2026-10-20T12:00:00+00:00",
+   "emails": [
+    "rh@resposta.exemplo.com"
+   ],
+   "email_contato": "rh@resposta.exemplo.com",
+   "email_origem": "vaga",
+   "termo_busca": "analista de dados",
+   "trilha": "Analista de Dados / BI",
+   "nivel": "junior",
+   "nota": 82,
+   "lista": "principal",
+   "motivos": [
+    "Pede sql, power_bi, python — está no seu currículo",
+    "Título indica júnior"
+   ],
+   "habilidades_ok": [
+    "sql",
+    "power_bi",
+    "python"
+   ],
+   "habilidades_faltando": [],
+   "componentes": {
+    "semantica": 0.8,
+    "habilidades": 0.9,
+    "trilha": 1.0,
+    "historico": 3.0
+   }
+  },
+  {
+   "id": "linkedin:11",
+   "fonte": "linkedin",
+   "titulo": "Analista de BI Júnior",
+   "empresa": "Devolvida Exemplo",
+   "url": "https://exemplo.com/vagas/8",
+   "cidade": null,
+   "estado": null,
+   "modalidade": "remoto",
+   "descricao": "Correio Exemplo busca Analista de Dados Júnior para atuar com SQL, Power BI e Python, montando dashboards e relatórios para as áreas de negócio. Requisitos: SQL intermediário, Power BI, Excel. Diferenciais: Python, Airflow.\nEnvie o currículo para talentos@correio.exemplo.com.",
+   "publicada_em": "2026-10-20T12:00:00+00:00",
+   "emails": [
+    "naoexiste@devolvida.exemplo.com"
+   ],
+   "email_contato": "naoexiste@devolvida.exemplo.com",
+   "email_origem": "vaga",
+   "termo_busca": "analista de dados",
+   "trilha": "Analista de Dados / BI",
+   "nivel": "junior",
+   "nota": 82,
+   "lista": "principal",
+   "motivos": [
+    "Pede sql, power_bi, python — está no seu currículo",
+    "Título indica júnior"
+   ],
+   "habilidades_ok": [
+    "sql",
+    "power_bi",
+    "python"
+   ],
+   "habilidades_faltando": [],
+   "componentes": {
+    "semantica": 0.8,
+    "habilidades": 0.9,
+    "trilha": 1.0,
+    "historico": 3.0
+   }
   }
  ],
  "candidaturas": [
@@ -398,6 +474,34 @@
    "notas": "Entrevista na sexta",
    "followups": 0,
    "followup_em": null
+  },
+  {
+   "vaga_id": "linkedin:10",
+   "status": "respondeu",
+   "email_para": "rh@resposta.exemplo.com",
+   "email_assunto": "Candidatura: Analista de Dados – Pessoa",
+   "email_corpo": "Olá, tudo bem? ...",
+   "enviada_em_dias_atras": 4,
+   "atualizada_em_dias_atras": 1,
+   "resposta_em_dias_atras": 1,
+   "notas": null,
+   "followups": 0,
+   "followup_em": null,
+   "email_message_id": "<resposta@exemplo.com>"
+  },
+  {
+   "vaga_id": "linkedin:11",
+   "status": "enviada",
+   "email_para": "naoexiste@devolvida.exemplo.com",
+   "email_assunto": "Candidatura: Analista de BI Júnior – Pessoa",
+   "email_corpo": "Olá, tudo bem? ...",
+   "enviada_em_dias_atras": 2,
+   "atualizada_em_dias_atras": 2,
+   "devolvido_em_dias_atras": 2,
+   "notas": null,
+   "followups": 0,
+   "followup_em": null,
+   "email_message_id": "<devolvida@exemplo.com>"
   }
  ]
 }

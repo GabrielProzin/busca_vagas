@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { listarExecucoes } from "@/lib/db";
 import { enviarEmail } from "@/lib/email";
 import { iguais } from "@/lib/sessao";
+import { REPO, dispararWorkflow } from "@/lib/github";
 
 // Vigia da coleta (cron da Vercel, ~12h e ~19h). O agendamento do GitHub às vezes pula horários:
 // - última coleta com mais de 3h -> dispara a coleta no GitHub (precisa do GITHUB_DISPATCH_TOKEN);
@@ -10,31 +11,6 @@ import { iguais } from "@/lib/sessao";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-// O repositório vem das variáveis de sistema da Vercel (projeto ligado ao GitHub); GITHUB_REPO sobrescreve.
-const REPO =
-  process.env.GITHUB_REPO ??
-  (process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG
-    ? `${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
-    : "");
-
-async function disparar(): Promise<string | null> {
-  const token = process.env.GITHUB_DISPATCH_TOKEN;
-  if (!token) return "GITHUB_DISPATCH_TOKEN não configurado na Vercel";
-  if (!REPO) return "não sei qual é o repositório: defina GITHUB_REPO (dono/nome) na Vercel";
-  const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/coleta.yml/dispatches`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ ref: "main" }),
-    cache: "no-store",
-  });
-  return r.status === 204 ? null : `GitHub respondeu ${r.status}`;
-}
 
 export async function GET(req: NextRequest) {
   const segredo = process.env.CRON_SECRET ?? "";
@@ -46,7 +22,7 @@ export async function GET(req: NextRequest) {
   let acao = "nada a fazer";
   let falha: string | null = null;
   if (horas > 3) {
-    falha = await disparar().catch((e) => `erro ao chamar o GitHub: ${(e as Error).message}`);
+    falha = await dispararWorkflow("coleta.yml");
     acao = falha ? `disparo falhou: ${falha}` : "coleta disparada no GitHub";
   }
   if (falha || horas > 26) {

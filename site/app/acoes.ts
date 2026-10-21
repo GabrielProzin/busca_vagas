@@ -4,12 +4,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
-  buscarVaga, enviadosHoje, followupPronto, mudarStatus, reservarEnvio, reservarFollowup, salvarCandidatura, salvarMessageId,
+  buscarVaga, enfileirarVagas, enviadosHoje, filaPronta, followupPronto, mudarStatus, reservarEnvio, reservarFollowup,
+  salvarCandidatura, salvarMessageId, tirarVagaDaFila,
 } from "@/lib/db";
+import { dispararWorkflow } from "@/lib/github";
 import { ErroIA, emailModelo, followupModelo, gerarEmail, gerarFollowup } from "@/lib/ia";
 import { enviarEmail, erroGmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
-import { capturar } from "@/lib/captura";
+import { capturar, dominioExcluido } from "@/lib/captura";
 import { PERFIL } from "@/lib/gerado/perfil";
 import { COOKIE_SESSAO, DURACAO_S, criarSessao, senhaCorreta, sessaoValida } from "@/lib/sessao";
 import type { Status } from "@/lib/tipos";
@@ -65,7 +67,8 @@ export async function salvarNotas(form: FormData) {
 export type EstadoEmail = { ok?: string; erro?: string; assunto?: string; corpo?: string; para?: string } | null;
 
 const EMAIL_RE = /^[^\s@,;]+@[^\s@,;]+\.[^\s@,;]+$/;
-const LIMITE_DIARIO = Number(process.env.LIMITE_DIARIO_EMAILS ?? 40);
+// Limite de emails por dia (site + fila): config/preferencias.yaml -> envio.limite_diario.
+const LIMITE_DIARIO = PERFIL.envio.limiteDiario;
 
 /** Gera o rascunho (IA ou modelo pronto) e salva no banco. */
 export async function gerarRascunho(_: EstadoEmail, form: FormData): Promise<EstadoEmail> {
@@ -109,6 +112,7 @@ export async function enviarCandidatura(_: EstadoEmail, form: FormData): Promise
 
   if (form.get("revisado") !== "on") return { ...devolver, erro: "Marque que revisou o email antes de enviar." };
   if (!EMAIL_RE.test(para)) return { ...devolver, erro: "Email do destinatário inválido." };
+  if (dominioExcluido(para)) return { ...devolver, erro: "Esse domínio está na sua lista de excluídos (dominios_email_excluidos)." };
   if (assunto.length < 5 || corpo.length < 80) return { ...devolver, erro: "Assunto ou corpo muito curtos." };
 
   const v = await buscarVaga(id);
@@ -121,7 +125,8 @@ export async function enviarCandidatura(_: EstadoEmail, form: FormData): Promise
   if (!cv) return { ...devolver, erro: "Envie seu currículo em PDF em Configurações antes." };
 
   // Salva o texto final antes de enviar: se o envio falhar, nada se perde.
-  await salvarCandidatura(id, { email_para: para, email_assunto: assunto, email_corpo: corpo });
+  // (e tira da fila, se estava nela: quem mandou agora foi você)
+  await salvarCandidatura(id, { email_para: para, email_assunto: assunto, email_corpo: corpo, ...((await filaPronta()) ? { fila_em: null } : {}) });
   // Reserva o envio no banco (duas abas clicando juntas: só uma passa).
   const reserva = await reservarEnvio(id);
   if (!reserva.ok) return { ...devolver, erro: "Este email já foi enviado (ou está saindo agora em outra aba)." };
@@ -136,6 +141,54 @@ export async function enviarCandidatura(_: EstadoEmail, form: FormData): Promise
   if (messageId) await salvarMessageId(id, messageId);
   revalidatePath("/", "layout");
   return { ...devolver, ok: `Email enviado para ${para}.` };
+}
+
+// ------------------------------------------------------------------ envio em lote (fila)
+
+export type ItemLote = { id: string; para: string; assunto: string; corpo: string };
+export type ResultadoLote = { ok?: string; erro?: string; aceitas?: string[] };
+
+/** Coloca as vagas escolhidas na fila e pede ao GitHub para começar a enviar agora. */
+export async function enfileirar(itens: ItemLote[]): Promise<ResultadoLote> {
+  await exigirSessao();
+  if (!Array.isArray(itens) || !itens.length) return { erro: "Escolha ao menos uma vaga." };
+  if (itens.length > 100) return { erro: "No máximo 100 vagas por vez." };
+  if (!(await filaPronta())) return { erro: "O banco ainda não tem as colunas da fila: rode de novo o supabase/schema.sql no Supabase." };
+  const validos: { vagaId: string; para: string; assunto: string; corpo: string }[] = [];
+  const recusadas: string[] = [];
+  for (const it of itens) {
+    const para = String(it.para ?? "").trim().toLowerCase();
+    const assunto = String(it.assunto ?? "").trim().slice(0, 200);
+    const corpo = String(it.corpo ?? "").trim().slice(0, 6000);
+    if (!it.id || !EMAIL_RE.test(para) || dominioExcluido(para) || assunto.length < 5 || corpo.length < 80) recusadas.push(String(it.id));
+    else validos.push({ vagaId: String(it.id), para, assunto, corpo });
+  }
+  const aceitas = await enfileirarVagas(validos);
+  const falha = aceitas.length ? await dispararWorkflow("envio.yml") : null;
+  revalidatePath("/", "layout");
+  const n = aceitas.length;
+  const fora = itens.length - n;
+  return {
+    aceitas,
+    ok: n
+      ? `${n} ${n === 1 ? "email entrou" : "emails entraram"} na fila.` +
+        (falha ? " O envio sai na próxima rodada (de hora em hora)." : " O envio começa em 1 ou 2 minutos, com pausa entre eles.")
+      : undefined,
+    erro: fora ? `${fora} não ${fora === 1 ? "entrou" : "entraram"}: email inválido ou de domínio excluído, texto curto, ou a vaga já tinha decisão.` : undefined,
+  };
+}
+
+export async function tirarDaFila(id: string): Promise<string | null> {
+  await exigirSessao();
+  const ok = await tirarVagaDaFila(String(id));
+  revalidatePath("/", "layout");
+  return ok ? null : "Esse email já saiu (ou não estava na fila).";
+}
+
+/** "Enviar agora": pede ao GitHub uma rodada de envio fora do horário de hora em hora. */
+export async function enviarFilaAgora(): Promise<string | null> {
+  await exigirSessao();
+  return dispararWorkflow("envio.yml");
 }
 
 // ------------------------------------------------------------------ configurações e captura

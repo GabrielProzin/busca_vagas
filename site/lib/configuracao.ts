@@ -45,7 +45,7 @@ export async function passosConfiguracao(): Promise<Passo[]> {
     },
     {
       id: "coleta", rotulo: "Primeira coleta de vagas", essencial: true, ok: Boolean(execucoes?.length),
-      detalhe: execucoes?.length ? "A coleta já rodou e roda sozinha 2 vezes por dia." : "Rode a primeira: GitHub → Actions → Coleta de vagas → Run workflow.",
+      detalhe: execucoes?.length ? "A coleta já rodou e roda sozinha 5 vezes por dia." : "Rode a primeira: GitHub → Actions → Coleta de vagas → Run workflow.",
       ancora: "6-ligue-a-coleta-no-github",
     },
     {
@@ -68,6 +68,13 @@ export async function passosConfiguracao(): Promise<Passo[]> {
       id: "ia", rotulo: "IA para escrever e resumir", essencial: false, ok: iaConfigurada(),
       detalhe: iaConfigurada() ? "Gemini pronto. Sem cota no dia, o site usa o modelo pronto." : "Falta GEMINI_API_KEY na Vercel. Sem ela, só o modelo pronto funciona.",
       ancora: "4-prepare-o-gmail-e-o-gemini",
+    },
+    {
+      id: "envio", rotulo: "Envio da fila na hora", essencial: false, ok: Boolean(process.env.GITHUB_DISPATCH_TOKEN),
+      detalhe: process.env.GITHUB_DISPATCH_TOKEN
+        ? "Ao colocar vagas na fila, o site chama o GitHub e o envio começa em 1 ou 2 minutos."
+        : "Sem GITHUB_DISPATCH_TOKEN na Vercel, a fila sai na rodada de hora em hora (7h às 21h).",
+      ancora: "7-últimos-ajustes-no-site",
     },
     {
       id: "senha", rotulo: "Senha do site forte", essencial: false, ok: senha.length >= 12,

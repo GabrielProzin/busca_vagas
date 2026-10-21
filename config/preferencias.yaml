@@ -90,7 +90,22 @@ requisitos_ausentes_pesados: ['spark', 'databricks', 'aws', 'azure', 'scala', 'k
 
 # Corte de nota (0-100). Abaixo disso a vaga não aparece.
 nota_minima: 50
-# Email de resumo depois de cada coleta: só vagas NOVAS com nota a partir deste valor.
+# Envio em lote (fila). Quem envia é o GitHub Actions, em segundo plano.
+envio:
+  limite_diario: 40          # máximo de emails por dia (protege o seu Gmail de bloqueio)
+  max_por_execucao: 10       # por rodada (o envio roda de hora em hora e quando você coloca algo na fila)
+  intervalo_segundos: [60, 120]   # espera aleatória entre um email e outro
+  horario: [7, 21]           # só envia entre 7h e 21h (horário de Brasília)
+  # Modo automático: vagas novas com email e nota alta entram sozinhas na fila, com o modelo pronto.
+  automatico:
+    ligado: false
+    nota_minima: 90
+    so_lista_principal: true
+
+# Emails desses domínios nunca recebem candidatura (ex.: ['gmail.com'] para só mandar para emails de empresa).
+dominios_email_excluidos: []
+
+# Email de resumo depois de cada coleta completa: só vagas NOVAS com nota a partir deste valor.
 resumo:
   nota_minima: 85
 # Só considera vagas publicadas nos últimos N dias.

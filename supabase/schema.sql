@@ -79,3 +79,11 @@ alter table candidaturas add column if not exists followup_em      timestamptz; 
 alter table candidaturas add column if not exists followups        int not null default 0; -- quantos já foram feitos
 alter table candidaturas add column if not exists email_message_id text;                 -- para o follow-up ir na mesma conversa
 alter table execucoes    add column if not exists aprendizado      jsonb;                -- quantos sinais o ranking usou
+
+-- 21/10/2026 (noite): envio em lote e respostas lidas do Gmail.
+alter table candidaturas add column if not exists fila_em      timestamptz;  -- na fila de envio desde
+alter table candidaturas add column if not exists fila_erro    text;         -- por que o envio da fila falhou
+alter table candidaturas add column if not exists resposta_em  timestamptz;  -- quando o recrutador respondeu (lido do Gmail)
+alter table candidaturas add column if not exists devolvido_em timestamptz;  -- quando o email voltou (endereço não existe)
+create index if not exists candidaturas_fila on candidaturas (fila_em) where fila_em is not null;
+alter table execucoes    add column if not exists tipo         text;         -- completa | rapida

@@ -83,11 +83,21 @@ class Supabase:
 
     def registrar_execucao(self, execucao: dict) -> None:
         r = requests.post(f"{self.base}/execucoes", headers=self.h, data=json.dumps(execucao, default=str), timeout=30)
-        if r.status_code == 400 and "aprendizado" in r.text:
-            log.warning("supabase: coluna execucoes.aprendizado ausente; rode o ALTER do supabase/schema.sql")
-            sem = {k: v for k, v in execucao.items() if k != "aprendizado"}
+        novas = [c for c in ("aprendizado", "tipo") if c in execucao]
+        if r.status_code == 400 and any(c in r.text for c in novas):
+            log.warning("supabase: faltam colunas em execucoes (%s); rode o SQL do supabase/schema.sql", ", ".join(novas))
+            sem = {k: v for k, v in execucao.items() if k not in novas}
             r = requests.post(f"{self.base}/execucoes", headers=self.h, data=json.dumps(sem, default=str), timeout=30)
         r.raise_for_status()
+
+    def ultima_completa(self) -> str | None:
+        """Quando começou a última coleta completa (a que manda o resumo). None se não há registro."""
+        r = requests.get(f"{self.base}/execucoes", headers=self.h, timeout=30, params={
+            "select": "iniciada_em", "tipo": "eq.completa", "order": "iniciada_em.desc", "limit": 1})
+        if not r.ok:
+            return None
+        linhas = r.json()
+        return linhas[0]["iniciada_em"] if linhas else None
 
     def sinais_de_uso(self, limite: int = 400) -> list[dict]:
         """O que você fez com as vagas (aplicou, descartou...), com título e descrição, para o ranking aprender."""
@@ -102,5 +112,70 @@ class Supabase:
         """Candidaturas ainda sem resposta (para o lembrete de follow-up no resumo)."""
         r = requests.get(f"{self.base}/candidaturas", headers=self.h, timeout=30, params={
             "select": "*,vaga:vagas(id,titulo,empresa,url)", "status": "in.(aplicada,enviada)"})
+        r.raise_for_status()
+        return r.json()
+
+    # ------------------------------------------------------------------ fila de envio e respostas
+    def _patch(self, filtro: dict, campos: dict) -> list[dict]:
+        r = requests.patch(f"{self.base}/candidaturas", headers={**self.h, "Prefer": "return=representation"},
+                           params=filtro, data=json.dumps(campos, default=str), timeout=30)
+        r.raise_for_status()
+        return r.json()
+
+    def fila(self, limite: int) -> list[dict]:
+        """Candidaturas esperando envio, da mais antiga para a mais nova."""
+        r = requests.get(f"{self.base}/candidaturas", headers=self.h, timeout=30, params={
+            "select": "*,vaga:vagas(id,titulo,empresa)", "fila_em": "not.is.null", "status": "eq.nova",
+            "order": "fila_em.asc", "limit": limite})
+        r.raise_for_status()
+        return r.json()
+
+    def enviados_desde(self, desde_iso: str) -> list[str]:
+        """Endereços que receberam email de candidatura desde um momento (um por email enviado)."""
+        r = requests.get(f"{self.base}/candidaturas", headers=self.h, timeout=30, params={
+            "select": "email_para", "enviada_em": f"gte.{desde_iso}", "email_para": "not.is.null",
+            "status": "not.in.(nova,aplicada,descartada)"})
+        r.raise_for_status()
+        return [(x.get("email_para") or "").lower() for x in r.json()]
+
+    def reservar_envio(self, vaga_id: str) -> bool:
+        """Marca como enviada numa atualização condicional: se outra rodada já pegou, devolve False."""
+        agora = datetime.now(timezone.utc).isoformat()
+        linhas = self._patch({"vaga_id": f"eq.{vaga_id}", "status": "eq.nova", "fila_em": "not.is.null"},
+                             {"status": "enviada", "enviada_em": agora, "atualizada_em": agora})
+        return len(linhas) == 1
+
+    def atualizar_candidatura(self, vaga_id: str, campos: dict, filtro_extra: dict | None = None) -> list[dict]:
+        campos = {**campos, "atualizada_em": datetime.now(timezone.utc).isoformat()}
+        return self._patch({"vaga_id": f"eq.{vaga_id}", **(filtro_extra or {})}, campos)
+
+    def enfileirar(self, linhas: list[dict]) -> int:
+        """Cria candidaturas já na fila; nunca sobrescreve uma candidatura que já existe (decisão sua vale mais)."""
+        if not linhas:
+            return 0
+        r = requests.post(f"{self.base}/candidaturas", headers={**self.h, "Prefer": "resolution=ignore-duplicates,return=representation"},
+                          params={"on_conflict": "vaga_id"}, data=json.dumps(linhas, default=str), timeout=30)
+        r.raise_for_status()
+        return len(r.json())
+
+    def candidaturas_com_email(self) -> list[dict]:
+        """Candidaturas que mandaram email (para achar respostas e devoluções no Gmail)."""
+        r = requests.get(f"{self.base}/candidaturas", headers=self.h, timeout=30, params={
+            "select": "vaga_id,status,email_para,email_message_id,enviada_em,resposta_em,devolvido_em",
+            "email_para": "not.is.null", "enviada_em": "not.is.null"})
+        r.raise_for_status()
+        return r.json()
+
+    def baixar_curriculo(self) -> bytes | None:
+        raiz = self.base[: -len("/rest/v1")]
+        r = requests.get(f"{raiz}/storage/v1/object/privado/curriculo.pdf", headers=self.h, timeout=60)
+        return r.content if r.ok else None
+
+    def vagas_novas_desde(self, desde_iso: str, nota_minima: float) -> list[dict]:
+        """Vagas que chegaram desde um momento, com nota mínima (para o resumo da coleta completa)."""
+        r = requests.get(f"{self.base}/vagas", headers=self.h, timeout=30, params={
+            "select": "id,fonte,titulo,empresa,url,cidade,modalidade,nota,lista,habilidades_ok,email_contato,"
+                      "candidatura:candidaturas(status,fila_em)",
+            "primeira_vez_em": f"gte.{desde_iso}", "nota": f"gte.{nota_minima}", "order": "nota.desc", "limit": 50})
         r.raise_for_status()
         return r.json()

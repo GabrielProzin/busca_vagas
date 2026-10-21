@@ -3,13 +3,15 @@ import Icone, { type NomeIcone } from "./Icone";
 import { sair } from "@/app/acoes";
 import { listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
 import { situacaoFollowup } from "@/lib/followup";
+import { ehNova } from "@/lib/tipos";
 
-type Secao = { href: string; rotulo: string; curto: string; icone: NomeIcone; conta?: "novas" | "candidaturas"; baixo: boolean };
+type Secao = { href: string; rotulo: string; curto: string; icone: NomeIcone; conta?: "novas" | "candidaturas" | "fila"; baixo: boolean };
 // "baixo": aparece também na barra de baixo do celular (cabem 6).
 const SECOES: Secao[] = [
   { href: "/", rotulo: "Hoje", curto: "Hoje", icone: "inicio", baixo: true },
   { href: "/vagas", rotulo: "Vagas", curto: "Vagas", icone: "vagas", conta: "novas", baixo: true },
   { href: "/triagem", rotulo: "Triagem rápida", curto: "Triagem", icone: "triagem", baixo: true },
+  { href: "/lote", rotulo: "Envio em lote", curto: "Lote", icone: "lote", conta: "fila", baixo: false },
   { href: "/adicionar", rotulo: "Adicionar vaga", curto: "Adicionar", icone: "adicionar", baixo: false },
   { href: "/candidaturas", rotulo: "Candidaturas", curto: "Quadro", icone: "candidaturas", conta: "candidaturas", baixo: true },
   { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel", baixo: true },
@@ -21,13 +23,14 @@ const fmtHora = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-dig
 async function resumoNavegacao() {
   try {
     const [vagas, candidaturas, execucoes] = await Promise.all([listarVagas(), listarCandidaturas(), listarExecucoes(1)]);
-    const novas = vagas.filter((v) => (!v.candidatura || v.candidatura.status === "nova") && v.lista === "principal").length;
+    const novas = vagas.filter((v) => ehNova(v) && v.lista === "principal").length;
     const ultima = execucoes[0]?.iniciada_em ?? null;
     const horas = ultima ? (Date.now() - new Date(ultima).getTime()) / 36e5 : null;
     const followups = candidaturas.filter((v) => situacaoFollowup(v.candidatura)?.estado === "followup").length;
-    return { novas, candidaturas: candidaturas.length, followups, ultima, atrasada: horas !== null && horas > 20 };
+    const fila = vagas.filter((v) => v.candidatura?.status === "nova" && v.candidatura.fila_em).length;
+    return { novas, candidaturas: candidaturas.length, fila, followups, ultima, atrasada: horas !== null && horas > 20 };
   } catch {
-    return { novas: 0, candidaturas: 0, followups: 0, ultima: null, atrasada: false };
+    return { novas: 0, candidaturas: 0, fila: 0, followups: 0, ultima: null, atrasada: false };
   }
 }
 

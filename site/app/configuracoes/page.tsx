@@ -1,3 +1,4 @@
+import { PERFIL } from "@/lib/gerado/perfil";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
 import EnviarPdf from "@/components/EnviarPdf";
@@ -9,7 +10,7 @@ export default async function PaginaConfiguracoes() {
   const [passos, repo] = [await passosConfiguracao(), urlRepositorio()];
   const faltam = passos.filter((p) => !p.ok);
   const essenciaisFaltando = faltam.filter((p) => p.essencial).length;
-  const limite = Number(process.env.LIMITE_DIARIO_EMAILS ?? 40);
+  const limite = PERFIL.envio.limiteDiario;
 
   return (
     <Moldura atual="/configuracoes" titulo="Configurações" subtitulo="O que o site precisa para encontrar vagas e mandar candidaturas por você.">
@@ -50,7 +51,7 @@ export default async function PaginaConfiguracoes() {
               ))}
             </ul>
             <p className="dica" style={{ marginTop: 12 }}>
-              Limite de {limite} emails por dia (variável LIMITE_DIARIO_EMAILS), para o Gmail não bloquear sua conta.
+              Limite de {limite} emails por dia, somando o site e a fila (envio.limite_diario em config/preferencias.yaml), para o Gmail não bloquear sua conta.
             </p>
           </div>
         </div>

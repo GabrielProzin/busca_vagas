@@ -2,7 +2,7 @@ import type { Candidatura, Vaga } from "./tipos";
 import { deEmpresa, habilidade, tituloLimpo } from "./formato";
 
 // Quando uma candidatura pede follow-up. A mesma regra está em coletor/followup.py (email de resumo).
-// - Só para "Aplicada" e "Email enviado" (ninguém respondeu ainda).
+// - Só para "Aplicada" e "Email enviado" (ninguém respondeu ainda) e cujo email não voltou.
 // - 15 dias depois do envio (ou do último follow-up) sem resposta: pede follow-up.
 // - Depois de 2 follow-ups sem resposta, 15 dias depois sugere mover para "Não seguiu".
 
@@ -19,6 +19,7 @@ export type Followup = {
 
 export function situacaoFollowup(c: Candidatura | null | undefined, agora = Date.now()): Followup | null {
   if (!c || (c.status !== "aplicada" && c.status !== "enviada")) return null;
+  if (c.devolvido_em) return null; // o email voltou: o endereço não existe, não adianta cobrar resposta
   const desde = Date.parse(c.followup_em ?? c.enviada_em ?? c.atualizada_em);
   if (Number.isNaN(desde)) return null;
   const dias = Math.floor((agora - desde) / 864e5);

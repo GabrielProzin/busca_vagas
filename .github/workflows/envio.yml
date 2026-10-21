@@ -1,0 +1,48 @@
+name: Envio da fila de emails
+
+# Manda os emails da fila (tela "Envio em lote" do site, ou o modo automático) e lê respostas e devoluções no Gmail.
+# Roda de hora em hora no horário de envio (config/preferencias.yaml -> envio.horario) e quando o site pede.
+on:
+  schedule:
+    - cron: "17 10-23 * * *"   # de hora em hora, das 7:17 às 20:17 em Brasília
+  workflow_dispatch:
+    inputs:
+      teste:
+        description: "Teste de ponta a ponta: manda 1 email para você mesmo e provoca 1 devolução (nenhum recrutador recebe nada)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: envio
+  cancel-in-progress: false
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      GMAIL_USER: ${{ secrets.GMAIL_USER }}
+      GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+      CONTATO_TELEFONE: ${{ secrets.CONTATO_TELEFONE }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      # Só o necessário para enviar (sem o modelo de embeddings): a rodada leva poucos segundos.
+      - run: pip install "requests>=2.34.2" "PyYAML>=6.0.3"
+
+      - name: Enviar a fila
+        if: ${{ !inputs.teste }}
+        run: python -m coletor.envio
+
+      - name: Teste de ponta a ponta (só para você mesmo)
+        if: ${{ inputs.teste }}
+        run: python scripts/teste_envio.py

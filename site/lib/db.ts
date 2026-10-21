@@ -91,7 +91,11 @@ export async function buscarVaga(id: string): Promise<Vaga | null> {
 /** Vagas com alguma ação sua (aplicada, enviada, entrevista...), de qualquer data. */
 export const listarCandidaturas = cache(async function listarCandidaturas(): Promise<Vaga[]> {
   const d = emDemo();
-  if (d) return d.vagas.filter((v) => d.candidaturas.has(v.id)).map((v) => ({ ...v, candidatura: d.candidaturas.get(v.id)! }));
+  if (d) {
+    return d.vagas
+      .filter((v) => !["nova", "descartada", undefined].includes(d.candidaturas.get(v.id)?.status))
+      .map((v) => ({ ...v, candidatura: d.candidaturas.get(v.id)! }));
+  }
   const linhas = await rest<Vaga[]>(
     `/vagas?select=${CAMPOS_LISTA},candidatura:candidaturas!inner(*)&candidatura.status=not.in.(nova,descartada)&order=atualizada_em.desc`,
   );
@@ -156,15 +160,112 @@ export async function salvarResumo(id: string, resumo: unknown): Promise<boolean
   }
 }
 
-/** Emails de candidatura enviados hoje (horário de Brasília), para o limite diário. */
+/** Emails de candidatura enviados hoje (horário de Brasília), pelo site ou pela fila, para o limite diário.
+ *  Conta também os que já avançaram (ex.: enviada hoje e já respondeu). Mesma regra de coletor/envio.py. */
 export async function enviadosHoje(): Promise<number> {
   const inicio = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }) + "T00:00:00-03:00").toISOString();
   const d = emDemo();
-  if (d) return [...d.candidaturas.values()].filter((c) => c.status === "enviada" && (c.enviada_em ?? "") >= inicio).length;
+  if (d) {
+    return [...d.candidaturas.values()].filter(
+      (c) => c.email_para && !["nova", "aplicada", "descartada"].includes(c.status) && (c.enviada_em ?? "") >= inicio,
+    ).length;
+  }
   const linhas = await rest<{ vaga_id: string }[]>(
-    `/candidaturas?select=vaga_id&enviada_em=gte.${encodeURIComponent(inicio)}&status=eq.enviada`,
+    `/candidaturas?select=vaga_id&enviada_em=gte.${encodeURIComponent(inicio)}&email_para=not.is.null&status=not.in.(nova,aplicada,descartada)`,
   );
   return linhas.length;
+}
+
+// ---------------------------------------------------------------- fila de envio
+export type ItemFila = { vagaId: string; para: string; assunto: string; corpo: string };
+export type NaFila = Candidatura & { vaga: Pick<Vaga, "id" | "titulo" | "empresa" | "nota" | "fonte"> | null };
+
+/** Coloca na fila. Só mexe em vagas sem decisão (sem candidatura ou "nova"): nunca reenvia nem desfaz uma escolha sua. */
+export async function enfileirarVagas(itens: ItemFila[]): Promise<string[]> {
+  const agora = new Date().toISOString();
+  const d = emDemo();
+  const aceitas: string[] = [];
+  for (const it of itens) {
+    const campos = { status: "nova" as const, email_para: it.para, email_assunto: it.assunto, email_corpo: it.corpo, fila_em: agora, fila_erro: null };
+    if (d) {
+      const atual = d.candidaturas.get(it.vagaId);
+      if (atual && atual.status !== "nova") continue;
+      await salvarCandidatura(it.vagaId, campos);
+      aceitas.push(it.vagaId);
+      continue;
+    }
+    const id = encodeURIComponent(it.vagaId);
+    const mudou = await rest<Candidatura[]>(`/candidaturas?vaga_id=eq.${id}&status=eq.nova`, {
+      method: "PATCH",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ ...campos, atualizada_em: agora }),
+    });
+    if (mudou.length) {
+      aceitas.push(it.vagaId);
+      continue;
+    }
+    const criada = await rest<Candidatura[]>(`/candidaturas?on_conflict=vaga_id`, {
+      method: "POST",
+      headers: { Prefer: "resolution=ignore-duplicates,return=representation" },
+      body: JSON.stringify({ vaga_id: it.vagaId, ...campos, atualizada_em: agora }),
+    });
+    if (criada.length) aceitas.push(it.vagaId);
+  }
+  return aceitas;
+}
+
+/** Tira da fila (se ainda não saiu). A vaga volta para as novas. */
+export async function tirarVagaDaFila(vagaId: string): Promise<boolean> {
+  const d = emDemo();
+  if (d) {
+    const c = d.candidaturas.get(vagaId);
+    if (!c?.fila_em || c.status !== "nova") return false;
+    d.candidaturas.set(vagaId, { ...c, fila_em: null, atualizada_em: new Date().toISOString() });
+    return true;
+  }
+  const linhas = await rest<Candidatura[]>(`/candidaturas?vaga_id=eq.${encodeURIComponent(vagaId)}&status=eq.nova&fila_em=not.is.null`, {
+    method: "PATCH",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ fila_em: null, atualizada_em: new Date().toISOString() }),
+  });
+  return linhas.length === 1;
+}
+
+/** O que está esperando na fila e o que falhou nela (para a tela Envio em lote). */
+export async function listarFila(): Promise<{ esperando: NaFila[]; falharam: NaFila[] }> {
+  const d = emDemo();
+  let linhas: NaFila[];
+  if (d) {
+    linhas = [...d.candidaturas.values()]
+      .filter((c) => c.status === "nova" && (c.fila_em || c.fila_erro))
+      .map((c) => {
+        const v = d.vagas.find((x) => x.id === c.vaga_id);
+        return { ...c, vaga: v ? { id: v.id, titulo: v.titulo, empresa: v.empresa, nota: v.nota, fonte: v.fonte } : null };
+      });
+  } else {
+    if (!(await filaPronta())) return { esperando: [], falharam: [] };
+    linhas = await rest<NaFila[]>(
+      `/candidaturas?select=*,vaga:vagas(id,titulo,empresa,nota,fonte)&status=eq.nova&or=(fila_em.not.is.null,fila_erro.not.is.null)&order=fila_em.asc.nullslast`,
+    );
+  }
+  const semana = Date.now() - 7 * 864e5; // falhas antigas saem da tela
+  return {
+    esperando: linhas.filter((c) => c.fila_em),
+    falharam: linhas.filter((c) => !c.fila_em && c.fila_erro && Date.parse(c.atualizada_em) > semana),
+  };
+}
+
+// O banco só tem as colunas da fila depois do SQL de 21/10 (noite). Confere uma vez por processo.
+let filaOk = false;
+export async function filaPronta(): Promise<boolean> {
+  if (filaOk || emDemo()) return true;
+  try {
+    await rest(`/candidaturas?select=fila_em,fila_erro,resposta_em,devolvido_em&limit=1`);
+    filaOk = true;
+  } catch {
+    return false;
+  }
+  return true;
 }
 
 /** Grava uma vaga vinda da extensão ou do "Adicionar vaga" (fonte linkedin/manual). */
@@ -286,7 +387,8 @@ export async function schemaCompleto(): Promise<boolean> {
     await Promise.all([
       rest(`/vagas?select=resumo,email_origem&limit=1`),
       rest(`/candidaturas?select=followup_em,followups,email_message_id&limit=1`),
-      rest(`/execucoes?select=aprendizado&limit=1`),
+      rest(`/execucoes?select=aprendizado,tipo&limit=1`),
+      rest(`/candidaturas?select=fila_em,fila_erro,resposta_em,devolvido_em&limit=1`),
     ]);
     return true;
   } catch {

@@ -1,13 +1,23 @@
-name: Coleta de vagas (11:00 e 18:30)
+name: Coleta de vagas
 
 on:
   schedule:
     # Horários em UTC (Brasília = UTC-3). O GitHub costuma atrasar alguns minutos os agendamentos,
-    # então eles estão marcados um pouco antes: rodam por volta das 11:00 e das 18:30.
+    # então eles estão marcados um pouco antes.
+    # Completas (todas as fontes, LinkedIn e email de resumo): ~11:00 e ~18:30.
     - cron: "52 13 * * *"   # ~11:00 em Brasília
     - cron: "22 21 * * *"   # ~18:30 em Brasília
+    # Rápidas (só as plataformas, sem LinkedIn e sem email): ~8:00, ~14:00 e ~22:00.
+    - cron: "52 10 * * *"   # ~8:00
+    - cron: "52 16 * * *"   # ~14:00
+    - cron: "52 0 * * *"    # ~22:00
   workflow_dispatch:
     inputs:
+      tipo:
+        description: "completa (com LinkedIn e resumo) ou rapida (só as plataformas)"
+        type: choice
+        options: [completa, rapida]
+        default: completa
       resumo_detalhado:
         description: "Mostrar a tabela de vagas no resumo (o repo é público)"
         type: boolean
@@ -72,6 +82,9 @@ jobs:
           APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
           RESUMO_DETALHADO: ${{ inputs.resumo_detalhado && '1' || '0' }}
           RESUMO_TESTE: ${{ inputs.resumo_teste && '1' || '0' }}
+          # Agendamentos que não são os das 11:00 e 18:30 são coletas rápidas.
+          COLETA_TIPO: ${{ github.event_name == 'schedule' && github.event.schedule != '52 13 * * *' && github.event.schedule != '22 21 * * *' && 'rapida' || inputs.tipo || 'completa' }}
+          CONTATO_TELEFONE: ${{ secrets.CONTATO_TELEFONE }}
           FOLLOWUP_SEMPRE: ${{ inputs.resumo_teste && '1' || '0' }}
           # Email de resumo (vagas novas com nota 85+)
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
@@ -80,6 +93,16 @@ jobs:
           RESUMO_PARA: ${{ secrets.RESUMO_PARA }}
         shell: bash   # com "shell: bash" o Actions usa pipefail, então o tee não esconde falhas
         run: python -m coletor.pipeline 2>&1 | tee saida_log.txt
+
+      - name: Ler respostas e devoluções no Gmail
+        if: ${{ !inputs.sondar_linkedin }}
+        continue-on-error: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: python -m coletor.envio --so-respostas
 
       - name: Avisar por email se algo falhou
         if: ${{ failure() }}

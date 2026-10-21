@@ -29,6 +29,16 @@ const dados = {
   // Para a captura em lote descartar vaga presencial/híbrida fora daqui (mesma regra do coletor).
   cidadesAceitas: preferencias?.localizacao?.cidades_presencial_hibrido ?? [],
   notaMinimaPosts: Number(preferencias?.linkedin_posts?.nota_minima ?? 40),
+  // Envio em lote (a fila é enviada pelo GitHub Actions: coletor/envio.py lê os mesmos valores).
+  envio: {
+    limiteDiario: Number(preferencias?.envio?.limite_diario ?? 40),
+    porRodada: Number(preferencias?.envio?.max_por_execucao ?? 10),
+    intervalo: preferencias?.envio?.intervalo_segundos ?? [60, 120],
+    horario: preferencias?.envio?.horario ?? [7, 21],
+    automatico: Boolean(preferencias?.envio?.automatico?.ligado),
+    automaticoNota: Number(preferencias?.envio?.automatico?.nota_minima ?? 90),
+  },
+  dominiosExcluidos: (preferencias?.dominios_email_excluidos ?? []).map((d) => String(d).toLowerCase().replace(/^@/, "")),
 };
 
 mkdirSync(join(aqui, "..", "lib", "gerado"), { recursive: true });

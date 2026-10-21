@@ -2,6 +2,7 @@ import Moldura from "@/components/Moldura";
 import Triagem, { type ItemTriagem } from "@/components/Triagem";
 import { listarVagas } from "@/lib/db";
 import { fonte, habilidade, idUrl, local, naFonte, quando } from "@/lib/formato";
+import { ehNova } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +13,7 @@ export default async function PaginaTriagem() {
     return [];
   });
   const novas = vagas
-    .filter((v) => !v.candidatura || v.candidatura.status === "nova")
+    .filter(ehNova)
     .sort((a, b) => Number(b.lista === "principal") - Number(a.lista === "principal") || (b.nota ?? 0) - (a.nota ?? 0));
   const itens: ItemTriagem[] = novas.map((v) => ({
     id: v.id,

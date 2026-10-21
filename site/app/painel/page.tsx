@@ -2,7 +2,7 @@ import Moldura from "@/components/Moldura";
 import { listarCandidaturas, listarChegadas, listarExecucoes, type Chegada } from "@/lib/db";
 import { PERFIL } from "@/lib/gerado/perfil";
 import { fonte } from "@/lib/formato";
-import type { Aprendizado, Execucao } from "@/lib/tipos";
+import type { Aprendizado, Execucao, Vaga } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export default async function PaginaPainel() {
     <Moldura
       atual="/painel"
       titulo="Painel"
-      subtitulo={ultima ? `Última coleta em ${fmtData.format(new Date(ultima.iniciada_em))}. As próximas rodam por volta das 11:00 e das 18:30.` : "Nenhuma coleta registrada ainda."}
+      subtitulo={ultima ? `Última coleta em ${fmtData.format(new Date(ultima.iniciada_em))}. Roda por volta das 8:00, 11:00, 14:00, 18:30 e 22:00 (LinkedIn e resumo às 11:00 e 18:30).` : "Nenhuma coleta registrada ainda."}
     >
       <div className="kpis">
         <div className="cartao kpi"><span>Vagas lidas na última coleta</span><strong>{ultima ? total(ultima.coletadas) : 0}</strong></div>
@@ -46,6 +46,8 @@ export default async function PaginaPainel() {
         <div className="cartao kpi"><span>Candidaturas feitas</span><strong>{candidaturas.length}</strong><span>{porEmail} por email</span></div>
         <div className="cartao kpi"><span>Responderam ou chamaram</span><strong>{avancaram}</strong></div>
       </div>
+
+      <CartaoRespostas candidaturas={candidaturas} />
 
       <CartaoAprendizado a={ultima?.aprendizado ?? null} />
 
@@ -83,7 +85,7 @@ export default async function PaginaPainel() {
                       const n = novasPorColeta.get(e.id)!;
                       return (
                         <tr key={e.id} className={n.total ? "" : "sem-novas"}>
-                          <td>{fmtData.format(new Date(e.iniciada_em))}</td>
+                          <td>{fmtData.format(new Date(e.iniciada_em))}{e.tipo === "rapida" ? <span className="dica"> · rápida</span> : null}</td>
                           <td>{n.total ? Object.entries(n.porFonte).sort((a, b) => b[1] - a[1]).map(([f, q]) => `${fonte(f)} ${q}`).join(", ") : "Nenhuma vaga nova"}</td>
                           <td className="num">{n.total ? n.principal : "–"}</td>
                           <td className="num">{n.total ? n.valeTentar : "–"}</td>
@@ -95,14 +97,68 @@ export default async function PaginaPainel() {
                 </table>
               </div>
               <p className="dica rodape-cartao">
-                Só as vagas que apareceram pela primeira vez em cada coleta. O email de resumo sai quando a coluna {PERFIL.resumoNotaMinima}+ passa de zero
-                (ou, na coleta da manhã, quando alguma candidatura pede follow-up).
+                Só as vagas que apareceram pela primeira vez em cada coleta. As coletas rápidas (sem LinkedIn) não mandam email: o resumo das
+                completas (11:00 e 18:30) junta as vagas {PERFIL.resumoNotaMinima}+ que chegaram desde a completa anterior, e na da manhã também os follow-ups.
               </p>
             </>
           )}
         </section>
       </div>
     </Moldura>
+  );
+}
+
+// Taxa de resposta: de cada candidatura feita, quantas tiveram resposta (geral, por email x pelo link e por fonte).
+// Conta como resposta: Respondeu, Entrevista, Proposta, ou uma resposta lida no Gmail (mesmo que depois "Não seguiu").
+// Emails devolvidos (endereço não existe) ficam fora da conta: ninguém recebeu.
+function respondeu(v: Vaga): boolean {
+  const c = v.candidatura;
+  return Boolean(c && (["respondeu", "entrevista", "proposta"].includes(c.status) || c.resposta_em));
+}
+
+function CartaoRespostas({ candidaturas }: { candidaturas: Vaga[] }) {
+  const validas = candidaturas.filter((v) => !v.candidatura?.devolvido_em);
+  const devolvidas = candidaturas.length - validas.length;
+  const porEmail = (v: Vaga) => Boolean(v.candidatura?.email_message_id || (v.candidatura?.email_para && v.candidatura.status !== "aplicada"));
+  const taxa = (l: Vaga[]) => ({ n: l.length, r: l.filter(respondeu).length, pct: l.length ? Math.round((100 * l.filter(respondeu).length) / l.length) : 0 });
+  const geral = taxa(validas);
+  const email = taxa(validas.filter(porEmail));
+  const link = taxa(validas.filter((v) => !porEmail(v)));
+  const grupos = new Map<string, Vaga[]>();
+  for (const v of validas) grupos.set(v.fonte, [...(grupos.get(v.fonte) ?? []), v]);
+  const fontes = [...grupos.entries()]
+    .map(([f, l]) => ({ f, ...taxa(l) }))
+    .sort((a, b) => b.n - a.n);
+  const texto = (t: { n: number; r: number }) => `${t.r} de ${t.n}`;
+  return (
+    <section className="cartao aprendizado" aria-label="Taxa de resposta">
+      <div className="cartao-cabecalho">
+        <h2>Taxa de resposta</h2>
+        {devolvidas ? <span className="dica">{devolvidas} {devolvidas === 1 ? "email devolvido fica" : "emails devolvidos ficam"} fora da conta</span> : null}
+      </div>
+      <div className="cartao-corpo">
+        {!geral.n ? (
+          <p className="dica">Aparece quando você tiver candidaturas. Respostas lidas no Gmail entram sozinhas; as outras, mova o cartão no quadro.</p>
+        ) : (
+          <>
+            <div className="taxas">
+              <div className="taxa"><strong>{geral.pct}%</strong><span>geral · {texto(geral)}</span></div>
+              <div className="taxa"><strong>{email.n ? `${email.pct}%` : "—"}</strong><span>por email · {texto(email)}</span></div>
+              <div className="taxa"><strong>{link.n ? `${link.pct}%` : "—"}</strong><span>pelo link · {texto(link)}</span></div>
+            </div>
+            <div className="taxa-fontes">
+              {fontes.map((t) => (
+                <div key={t.f} className="taxa-fonte">
+                  <span>{fonte(t.f)}</span>
+                  <span className="trilho"><i style={{ width: `${Math.max(2, t.pct)}%` }} /></span>
+                  <b>{t.pct}% · {texto(t)}</b>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 

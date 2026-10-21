@@ -7,7 +7,7 @@ import Icone from "@/components/Icone";
 import FiltroCargo from "@/components/FiltroCargo";
 import { listarVagas } from "@/lib/db";
 import { fonte, habilidade, idUrl, local, normalizarBusca, origemEmail, quando } from "@/lib/formato";
-import type { Vaga } from "@/lib/tipos";
+import { ehNova, type Vaga } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +34,7 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
   }
 
   // "Novas" = sem nenhuma ação sua ainda. Aplicadas e descartadas saem desta lista.
-  const novas = vagas.filter((v) => !v.candidatura || v.candidatura.status === "nova");
+  const novas = vagas.filter(ehNova);
   const contagem = {
     principal: novas.filter((v) => v.lista === "principal").length,
     vale_tentar: novas.filter((v) => v.lista === "vale_tentar").length,
@@ -108,7 +108,7 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
             {vagas.length === 0 ? (
               <>
                 <b>Nenhuma vaga coletada ainda</b>
-                <p>A coleta roda por volta das 11:00 e das 18:30. Para rodar agora: GitHub → Actions → Coleta de vagas → Run workflow.</p>
+                <p>A coleta roda por volta das 8:00, 11:00, 14:00, 18:30 e 22:00. Para rodar agora: GitHub → Actions → Coleta de vagas → Run workflow.</p>
               </>
             ) : (
               <>

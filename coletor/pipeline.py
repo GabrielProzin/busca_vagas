@@ -1,4 +1,8 @@
-"""Execução diária: coleta -> filtra -> detalha -> ranqueia -> grava.
+"""Coleta: coleta -> filtra -> detalha -> ranqueia -> grava.
+
+Dois tipos (variável COLETA_TIPO):
+- completa (padrão; ~11:00 e ~18:30): todas as fontes, inclusive posts do LinkedIn, e o email de resumo;
+- rapida (entre as completas): só as plataformas, sem LinkedIn e sem email.
 
 Uso:  python -m coletor.pipeline [--tfidf] [--sem-github] [--max-paginas N]
 """
@@ -12,7 +16,7 @@ import re
 import os
 import time
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 from pathlib import Path
 
@@ -27,6 +31,8 @@ from .filtros import Filtros
 from .contato import buscar_email_empresa
 from .fontes import github_issues, gupy, linkedin_posts, remotar, solides
 from .http import Http
+from .envio import dominio_excluido
+from .modelo_email import email_modelo
 from .modelos import Vaga
 from .ranking import Embedder, Ranker
 from .texto import normalizar
@@ -110,6 +116,52 @@ def _followups_pendentes(sb: Supabase) -> list[dict]:
     return pendentes
 
 
+def _vaga_do_banco(d: dict) -> Vaga:
+    fonte, _, id_origem = d["id"].partition(":")
+    return Vaga(fonte=fonte, id_origem=id_origem, titulo=d.get("titulo") or "", empresa=d.get("empresa") or "",
+                url=d.get("url") or "", cidade=d.get("cidade"), modalidade=d.get("modalidade"), nota=d.get("nota"),
+                lista=d.get("lista"), habilidades_ok=d.get("habilidades_ok") or [],
+                emails=[d["email_contato"]] if d.get("email_contato") else [])
+
+
+def _novas_para_resumo(sb: Supabase, corte: float, agora: datetime | None = None) -> list[Vaga]:
+    """Vagas que chegaram desde a coleta completa anterior (as rápidas do meio do caminho entram aqui),
+    com nota de corte, sem as que você já decidiu ou colocou na fila."""
+    agora = agora or datetime.now(timezone.utc)
+    desde = sb.ultima_completa()
+    if not desde:  # sem registro (SQL novo não rodado): usa o intervalo normal entre as completas
+        horas = 17 if agora.astimezone(ZoneInfo("America/Sao_Paulo")).hour < 15 else 8
+        desde = (agora - timedelta(hours=horas)).isoformat()
+    vagas = []
+    for d in sb.vagas_novas_desde(desde, corte):
+        c = d.get("candidatura")
+        c = (c[0] if c else None) if isinstance(c, list) else c
+        if c and (c.get("status") != "nova" or c.get("fila_em")):
+            continue
+        vagas.append(_vaga_do_banco(d))
+    return vagas
+
+
+def _para_fila(aprovadas: list[Vaga], existentes: set[str], automatico: dict, excluidos: list[str]) -> list[dict]:
+    """Modo automático: vagas NOVAS com email, nota alta (e na lista principal) vão sozinhas para a fila."""
+    if not automatico.get("ligado"):
+        return []
+    nota = float(automatico.get("nota_minima", 90))
+    agora = datetime.now(timezone.utc).isoformat()
+    linhas = []
+    for v in aprovadas:
+        if v.id in existentes or not v.emails or (v.nota or 0) < nota:
+            continue
+        if automatico.get("so_lista_principal", True) and v.lista != "principal":
+            continue
+        if dominio_excluido(v.emails[0], excluidos):
+            continue
+        assunto, corpo = email_modelo(v)
+        linhas.append({"vaga_id": v.id, "status": "nova", "email_para": v.emails[0], "email_assunto": assunto,
+                       "email_corpo": corpo, "fila_em": agora, "atualizada_em": agora})
+    return linhas
+
+
 def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: int = 4) -> dict:
     inicio = time.monotonic()
     cfg = yaml.safe_load((RAIZ / "config/preferencias.yaml").read_text(encoding="utf-8"))
@@ -118,6 +170,9 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     filtros = Filtros.de_config(cfg)
     http = Http()
     termos = cfg["termos_busca"]
+    tipo = "rapida" if os.getenv("COLETA_TIPO") == "rapida" else "completa"
+    excluidos = [d.lower().lstrip("@") for d in cfg.get("dominios_email_excluidos") or []]
+    _anotar(f"Coleta {tipo}")
 
     # 1. Coleta
     coletadas: dict[str, int] = {}
@@ -133,15 +188,22 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         gh = github_issues.coletar(http, termos, dias=filtros.max_dias)
         coletadas["github"] = len(gh)
         vagas += gh
-    # Posts do LinkedIn com email (só com APIFY_TOKEN configurado).
-    li, li_info = linkedin_posts.coletar(cfg.get("linkedin_posts", {}), [p for _, _, p in filtros.trilhas])
-    if li_info["erro"] != "sem APIFY_TOKEN":
-        coletadas["linkedin"] = li_info["posts"]
+    # Posts do LinkedIn com email (só com APIFY_TOKEN configurado, e só nas coletas completas: o crédito é pequeno).
+    if tipo == "completa":
+        li, li_info = linkedin_posts.coletar(cfg.get("linkedin_posts", {}), [p for _, _, p in filtros.trilhas])
+        if li_info["erro"] != "sem APIFY_TOKEN":
+            coletadas["linkedin"] = li_info["posts"]
+        _anotar(f"LinkedIn: {li_info['posts']} posts, {li_info['vagas']} com email e cargo de dados; "
+                f"descartes {li_info['descartes']}; erro {li_info['erro']}")
+    else:
+        li, li_info = [], {"posts": 0, "vagas": 0, "descartes": {}, "erro": None}
     vagas += li
     vagas = _deduplicar(vagas)
+    # Domínios que nunca devem receber email (config/preferencias.yaml -> dominios_email_excluidos).
+    for v in vagas:
+        if excluidos and v.emails:
+            v.emails = [e for e in v.emails if not dominio_excluido(e, excluidos)]
     log.info("coleta: %s -> %d únicas", coletadas, len(vagas))
-    _anotar(f"LinkedIn: {li_info['posts']} posts, {li_info['vagas']} com email e cargo de dados; "
-            f"descartes {li_info['descartes']}; erro {li_info['erro']}")
 
     # 2. Filtros baratos (título, data) antes de baixar descrições
     descartes: Counter = Counter()
@@ -218,7 +280,7 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         if v.emails or not v.site_empresa:
             continue
         r = buscar_email_empresa(v.site_empresa)
-        if r:
+        if r and not dominio_excluido(r["email"], excluidos):
             v.emails = [r["email"]]
             v.email_origem = f"site_{r['tipo']}"
             v.motivos.append(f"Email {'de RH' if r['tipo'] == 'rh' else 'de contato geral'} encontrado no site da empresa ({r['pagina']})")
@@ -234,6 +296,7 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         "vale_tentar": sum(v.lista == "vale_tentar" for v in aprovadas),
         "backend": ranker.emb.backend,
         "aprendizado": aprendizado.resumo() if aprendizado else None,
+        "tipo": tipo,
     }
 
     # 6. Gravação
@@ -253,18 +316,33 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
             anteriores = []
         existentes = sb.ids_existentes([v.id for v in aprovadas])
         corte = float(cfg.get("resumo", {}).get("nota_minima", 85))
-        para_resumo = [v for v in aprovadas if v.id not in existentes and (v.nota or 0) >= corte]
         teste = os.getenv("RESUMO_TESTE") == "1"
-        if teste and not para_resumo:
-            # Resumo de teste (pedido no Actions): mostra o formato com as 3 melhores vagas atuais.
-            para_resumo = [v for v in aprovadas if (v.nota or 0) >= corte][:3] or aprovadas[:3]
         sb.upsert_vagas(aprovadas)
+        _anotar(f"Vagas novas nesta coleta: {sum(v.id not in existentes for v in aprovadas)} "
+                f"({sum(v.id not in existentes and bool(v.emails) for v in aprovadas)} com email)")
+        fila = _para_fila(aprovadas, existentes, (cfg.get("envio") or {}).get("automatico") or {}, excluidos)
+        if fila:
+            try:
+                _anotar(f"Modo automático: {sb.enfileirar(fila)} vaga(s) novas entraram na fila de envio")
+            except Exception as e:
+                log.warning("fila: não consegui enfileirar: %s", e)
+        if tipo == "completa":
+            try:
+                para_resumo = _novas_para_resumo(sb, corte)
+            except Exception as e:
+                log.warning("resumo: não li as vagas novas do banco: %s", e)
+                para_resumo = [v for v in aprovadas if v.id not in existentes and (v.nota or 0) >= corte]
+            if teste and not para_resumo:
+                # Resumo de teste (pedido no Actions): mostra o formato com as 3 melhores vagas atuais.
+                para_resumo = [v for v in aprovadas if (v.nota or 0) >= corte][:3] or aprovadas[:3]
+            pendentes = _followups_pendentes(sb)
+            _anotar(f"Resumo: {len(para_resumo)} vaga(s) com nota {corte:g}+ desde a coleta completa anterior; "
+                    f"{len(pendentes)} follow-up(s)")
+            try:
+                resumo_email.enviar(para_resumo, corte, pendentes, teste=teste)
+            except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
+                log.warning("resumo: falha ao enviar: %s", e)
         sb.registrar_execucao(execucao)
-        pendentes = _followups_pendentes(sb)
-        try:
-            resumo_email.enviar(para_resumo, corte, pendentes, teste=teste)
-        except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
-            log.warning("resumo: falha ao enviar: %s", e)
         problemas = alerta.verificar_saude(execucao, anteriores)
         if li_info["erro"] and li_info["erro"] != "sem APIFY_TOKEN":
             problemas.append(f"Posts do LinkedIn: {li_info['erro']}. Confira o crédito em console.apify.com.")

@@ -26,7 +26,7 @@ test("login: senha errada não entra; certa entra", async ({ page }) => {
 });
 
 test("sem login: páginas e dados ficam fechados", async ({ request }) => {
-  for (const rota of ["/", "/vagas", "/triagem", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
     const r = await request.get(rota, { maxRedirects: 0 });
     expect(r.status(), rota).toBeGreaterThanOrEqual(300);
     expect(r.status(), rota).toBeLessThan(400);
@@ -131,6 +131,62 @@ test("email: envia com currículo anexado e não sai duas vezes (duas abas)", as
   expect(resultados.filter((t) => /já foi enviado|já enviou/.test(t)).length, resultados.join(" | ")).toBe(1);
 });
 
+test("envio em lote: email pronto, entra na fila, sai das novas e volta ao tirar da fila", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/lote");
+  const lista = page.getByRole("region", { name: "Vagas para enviar" });
+  await expect(lista).toContainText("talentos@correio.exemplo.com");
+  await expect(page.getByRole("region", { name: "Envio de hoje" })).toContainText("/40");
+  const linha = lista.locator("li", { hasText: "Correio Exemplo" });
+  await linha.getByRole("button", { name: "Ver email" }).click();
+  await expect(linha.locator("textarea")).toHaveValue(/Analista de Dados Júnior/);
+  await expect(linha.locator("input[type=text]")).toHaveValue(/^Candidatura: /);
+
+  await page.getByRole("button", { name: "Desmarcar todas" }).click();
+  await linha.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Colocar 1 na fila" }).click();
+  await expect(page.locator(".aviso-flutuante", { hasText: "1 email entrou na fila" })).toBeVisible();
+  await expect(lista.locator("li", { hasText: "Correio Exemplo" })).toHaveCount(0);
+  const fila = page.getByRole("region", { name: "Fila de envio" });
+  await expect(fila).toContainText("Analista de Dados Júnior");
+  await expect(fila).toContainText("talentos@correio.exemplo.com");
+
+  // na fila = não é mais "nova": sai da lista de vagas e aparece na tela da vaga e em Hoje
+  await page.goto("/vagas?email=1");
+  await expect(page.locator(".tv-item", { hasText: "Correio Exemplo" })).toHaveCount(0);
+  await page.goto("/vaga/linkedin%3A8");
+  await expect(page.getByText(/Na fila de envio desde/)).toBeVisible();
+  await page.goto("/");
+  await expect(page.getByRole("region", { name: "Envio de emails" })).toContainText("na fila");
+
+  await page.goto("/lote");
+  await page.getByRole("region", { name: "Fila de envio" }).getByRole("button", { name: "Tirar da fila" }).click();
+  await expect(page.locator(".aviso-flutuante", { hasText: "Saiu da fila" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Fila de envio" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Vagas para enviar" })).toContainText("Correio Exemplo");
+});
+
+test("respostas e devoluções lidas do Gmail aparecem em Hoje, na vaga e no Painel", async ({ page }) => {
+  await entrar(page);
+  const envio = page.getByRole("region", { name: "Envio de emails" });
+  await expect(envio).toContainText("Respondeu");
+  await expect(envio).toContainText("Email voltou");
+  await expect(envio).toContainText(/\d+\/40/);
+  await page.goto("/vaga/linkedin%3A11");
+  await expect(page.getByText(/O email voltou em/)).toBeVisible();
+  await page.goto("/vaga/linkedin%3A10");
+  await expect(page.getByText(/Resposta recebida em/)).toBeVisible();
+  // devolvido não pede follow-up, mesmo enviado
+  await page.goto("/candidaturas");
+  await expect(page.locator(".kanban-cartao", { hasText: "Devolvida Exemplo" }).locator(".kanban-followup")).toHaveCount(0);
+  await page.goto("/painel");
+  const taxa = page.getByRole("region", { name: "Taxa de resposta" });
+  await expect(taxa).toContainText("geral");
+  await expect(taxa).toContainText("por email");
+  await expect(taxa).toContainText("pelo link");
+  await expect(taxa).toContainText("1 email devolvido fica fora da conta");
+});
+
 test("kanban: arrastar o cartão salva a nova etapa", async ({ page }) => {
   await entrar(page);
   await page.goto("/candidaturas");
@@ -202,7 +258,7 @@ test("celular: nenhuma página principal rola para o lado", async ({ browser }) 
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/vagas", "/triagem", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);

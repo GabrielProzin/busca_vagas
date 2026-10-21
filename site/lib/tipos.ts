@@ -41,7 +41,18 @@ export type Candidatura = {
   followup_em?: string | null;
   followups?: number | null;
   email_message_id?: string | null;
+  // Fila de envio e leitura do Gmail (opcionais: só existem depois do SQL de 21/10 à noite).
+  fila_em?: string | null; // na fila de envio desde
+  fila_erro?: string | null; // por que o envio pela fila falhou
+  resposta_em?: string | null; // quando o recrutador respondeu (lido do Gmail)
+  devolvido_em?: string | null; // quando o email voltou (endereço não existe)
 };
+
+/** Vaga ainda sem decisão: sem candidatura, ou "nova" e fora da fila de envio. */
+export function ehNova(v: Pick<Vaga, "candidatura">): boolean {
+  const c = v.candidatura;
+  return !c || (c.status === "nova" && !c.fila_em);
+}
 
 export type Vaga = {
   id: string;
@@ -84,6 +95,7 @@ export type Execucao = {
   principal: number | null;
   vale_tentar: number | null;
   aprendizado?: Aprendizado | null;
+  tipo?: "completa" | "rapida" | null;
 };
 
 export type Aprendizado = {

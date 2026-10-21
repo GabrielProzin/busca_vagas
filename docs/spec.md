@@ -39,6 +39,7 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 | Triagem (`/triagem`) | As vagas novas uma por vez (nota, motivos, requisitos, trecho da descrição), em ordem de nota | Descartar (D), Já apliquei (A), Abrir/Escrever email (Enter), Pular (→), Voltar (←), Desfazer (Z); no celular, botões grandes |
 | Vagas (`/vagas`) | Lista principal / vale tentar, nota com composição, busca, filtro de cargo, "Com email", "Remoto" | Abrir, "Já apliquei", Descartar |
 | Vaga (`/vaga/[id]`) | Follow-up (quando houver candidatura aberta), resumo da IA, por que essa nota, email ao recrutador já preenchido com o modelo pronto (ou "como se candidatar" se não há email), descrição | Melhorar com IA, enviar pelo Gmail, mudar situação, anotações |
+| Envio em lote (`/lote`) | Vagas novas com email acima de uma nota, cada uma com o email pronto; a fila (esperando, com erro); emails enviados hoje / limite | Marcar/desmarcar, ver e editar o email, colocar na fila, tirar da fila |
 | Candidaturas | Quadro (kanban) por etapa, avisos de follow-up | Arrastar cartão, menu "Mover para" |
 | Adicionar vaga | Colar texto de um post; buscas prontas de posts no LinkedIn | Enviar para a IA ler |
 | Painel | Números da última coleta, por que as vagas ficaram de fora, vagas novas por coleta, aprendizado do ranking | — |
@@ -73,7 +74,8 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 
 **Email ao recrutador**
 - Só sai com o candidato marcando "Revisei", com o currículo em PDF anexado, pelo Gmail dele (senha de app).
-- Limite diário de envios (`LIMITE_DIARIO_EMAILS`, padrão 40) para proteger a conta do Gmail.
+- Limite diário de envios (`envio.limite_diario`, padrão 40), somando o site e a fila, para proteger a conta do Gmail.
+- Mesmo destinatário: no máximo um email por dia pela fila (o segundo fica para o dia seguinte).
 - Nunca sai duas vezes para a mesma vaga (trava no banco, vale entre abas).
 - A IA só usa fatos do currículo; texto da vaga é dado, nunca instrução.
 
@@ -83,15 +85,38 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - Toda ação que tira uma vaga da lista ou muda a etapa (descartar, já apliquei, mover no quadro, mudar a situação)
   mostra um aviso com **Desfazer**, que volta ao estado anterior.
 - O menu mostra quantas vagas novas há e, em laranja, quantos follow-ups estão pendentes.
+- A tela Hoje mostra emails enviados hoje / limite, quantos estão na fila e as respostas e devoluções recentes.
+- O Painel mostra a taxa de resposta (geral, por email x pelo link e por fonte).
 
 **Follow-up**
 - Vale para "Aplicada" e "Email enviado". 15 dias sem resposta → pede follow-up.
 - Por email: vai como resposta ao primeiro email, sem anexo. Pelo link: mensagem pronta para o LinkedIn.
 - Depois de 2 follow-ups e mais 15 dias sem resposta → sugere mover para "Não seguiu".
 
-**Resumo por email**
-- Vagas novas (nunca vistas antes) com nota ≥ `resumo.nota_minima`; na coleta da manhã, também os follow-ups.
-- Só envia se houver algo.
+**Envio em lote e fila** (valores em `config/preferencias.yaml`, seção `envio`)
+- Na tela Envio em lote, a pessoa escolhe as vagas e coloca na fila; o texto vem do rascunho salvo ou do modelo pronto.
+  Vaga na fila sai das listas de vagas novas.
+- Quem envia é o GitHub Actions (`coletor/envio.py`), em segundo plano: só no horário configurado, com intervalo
+  aleatório entre emails, até o limite diário (`envio.limite_diario`) e no máximo `envio.max_por_execucao` por rodada.
+  O site dispara o envio na hora; sem isso, ele roda de hora em hora.
+- Cada email da fila é reservado no banco antes de sair (nunca sai duas vezes). Se o Gmail recusar, a vaga sai da fila
+  com o erro anotado e volta a ser nova.
+- Modo automático (`envio.automatico`, desligado por padrão): vagas novas da coleta com email, nota ≥ a nota do modo
+  automático e na lista principal entram sozinhas na fila, com o modelo pronto.
+- Domínios em `dominios_email_excluidos` nunca recebem email (o endereço é descartado na coleta e na captura).
+
+**Respostas e devoluções** (`coletor/respostas.py`)
+- A cada rodada de envio e de coleta, o sistema lê só os cabeçalhos dos emails dos últimos 21 dias da caixa de entrada
+  do Gmail (sem marcar como lido e sem guardar o conteúdo).
+- Resposta (responde ao nosso email ou vem do endereço para quem enviamos, depois do envio) → a candidatura vai para
+  "Respondeu" e o follow-up para.
+- Devolução (aviso de "endereço não existe" do Gmail) → a candidatura fica marcada como devolvida, sem follow-up, com
+  aviso na vaga e na tela Hoje.
+
+**Coleta e resumo**
+- Coleta completa por volta das 11:00 e das 18:30 (com posts do LinkedIn, resumo por email e follow-ups na da manhã).
+- Coletas rápidas entre elas (por volta das 8:00, 14:00 e 22:00): só as plataformas, sem LinkedIn e sem email.
+- O resumo lista as vagas com nota ≥ `resumo.nota_minima` que chegaram desde a coleta completa anterior.
 
 **Segurança e dados**
 - Tudo exige login, menos: `/login`, `/api/capturar` e `/api/capturar/lote` (token da extensão), `/api/vigia`
@@ -118,6 +143,11 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - [ ] Ao abrir uma vaga com email, o email já está preenchido.
 - [ ] O menu mostra o número de follow-ups pendentes.
 - [ ] Configurações mostra os primeiros passos, com o que falta.
+- [ ] Envio em lote: as vagas com email aparecem com o email pronto; as marcadas entram na fila e saem das listas de novas.
+- [ ] O envio da fila respeita horário, intervalo, limite diário e nunca envia duas vezes.
+- [ ] Uma resposta no Gmail move a candidatura para "Respondeu"; um email devolvido marca a candidatura.
+- [ ] A coleta rápida não usa o LinkedIn nem manda resumo.
+- [ ] Hoje mostra "enviados hoje / limite"; o Painel mostra a taxa de resposta.
 - [ ] Nenhuma página principal rola para o lado no celular (390 px).
 - [ ] Lighthouse no celular: desempenho ≥ 90 e acessibilidade ≥ 95 nas páginas principais.
 - [ ] O backup da coleta abre com a senha e confere com o banco.

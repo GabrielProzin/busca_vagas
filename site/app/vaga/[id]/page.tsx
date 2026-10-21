@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import Moldura from "@/components/Moldura";
@@ -17,6 +18,8 @@ import { fonte, habilidade, local, naFonte, origemEmail, quando } from "@/lib/fo
 import { mensagemLinkedin, situacaoFollowup } from "@/lib/followup";
 
 export const dynamic = "force-dynamic";
+
+const fmtDia = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
 export default async function PaginaVaga({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,6 +106,28 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
                 {v.fonte === "linkedin" ? <span className="etiqueta email">Email do post</span> : null}
               </div>
               <div className="cartao-corpo">
+                {c?.resposta_em ? (
+                  <p className="aviso ok" style={{ marginBottom: 14 }} role="status">
+                    <Icone nome="check" tamanho={15} /> Resposta recebida em {fmtDia.format(new Date(c.resposta_em))} (lida no seu Gmail). Abra o Gmail para ver o que disseram.
+                  </p>
+                ) : null}
+                {c?.devolvido_em ? (
+                  <p className="aviso erro-fundo" style={{ marginBottom: 14 }} role="status">
+                    <Icone nome="alerta" tamanho={15} /> O email voltou em {fmtDia.format(new Date(c.devolvido_em))}: o Gmail diz que o endereço não existe.
+                    Confira o endereço ou candidate-se pelo link{v.url ? "" : " da vaga"}. Sem follow-up para esta.
+                  </p>
+                ) : null}
+                {c?.fila_em && status === "nova" ? (
+                  <p className="aviso" style={{ marginBottom: 14 }} role="status">
+                    <Icone nome="relogio" tamanho={15} /> Na fila de envio desde {fmtDia.format(new Date(c.fila_em))}: sai na próxima rodada, sozinho.
+                    Para mudar, <Link href="/lote">tire da fila no Envio em lote</Link> ou envie agora por aqui.
+                  </p>
+                ) : null}
+                {c?.fila_erro && !c.fila_em && status === "nova" ? (
+                  <p className="aviso erro-fundo" style={{ marginBottom: 14 }} role="status">
+                    <Icone nome="alerta" tamanho={15} /> O envio pela fila falhou: {c.fila_erro}
+                  </p>
+                ) : null}
                 {v.email_origem === "site_rh" || v.email_origem === "site_contato" ? (
                   <p className="aviso" style={{ marginBottom: 14 }}>
                     A vaga não trazia email. Este é {v.email_origem === "site_rh" ? "o email de RH" : "o contato geral"} publicado no site da empresa,

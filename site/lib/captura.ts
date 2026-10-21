@@ -5,6 +5,12 @@ import { extrairVaga } from "./ia";
 import { normalizarBusca } from "./formato";
 import { PERFIL } from "./gerado/perfil";
 
+/** O email é de um domínio da lista de excluídos? (mesma regra de coletor/envio.py) */
+export function dominioExcluido(email: string): boolean {
+  const dominio = email.split("@").pop()?.toLowerCase() ?? "";
+  return (PERFIL.dominiosExcluidos as readonly string[]).some((d) => dominio === d || dominio.endsWith("." + d));
+}
+
 export type MotivoRecusa = "curto" | "nao_vaga" | "repetida" | "sem_email" | "fora_do_perfil";
 
 export type ResultadoCaptura =
@@ -33,6 +39,8 @@ export async function capturar(texto: string, url: string | null, op: Opcoes = {
   if (op.lote && (await buscarVaga(id))) return { ok: false, motivo: "repetida", erro: "Vaga já estava no site." };
 
   const x = await extrairVaga(limpo);
+  // Domínios que nunca recebem email (config/preferencias.yaml -> dominios_email_excluidos).
+  x.emails = x.emails.filter((e) => !dominioExcluido(e));
   if (!x.e_vaga) return { ok: false, motivo: "nao_vaga", erro: "Isso não parece uma vaga aberta (pode ser lista de candidatos ou divulgação)." };
   if (op.lote) {
     if (!x.emails.length) return { ok: false, motivo: "sem_email", erro: "Post sem email de contato." };

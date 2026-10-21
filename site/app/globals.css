@@ -615,7 +615,7 @@ a.faixa:hover { filter: brightness(0.97); }
 @media (max-width: 760px) {
   .hoje-grade { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
   .hoje-coluna { display: contents; } /* no celular: email, triagem, follow-ups, andamento */
-  .hoje-email { order: 1; } .hoje-triagem { order: 2; } .hoje-follow { order: 3; } .hoje-andamento { order: 4; }
+  .hoje-email { order: 1; } .hoje-envio { order: 2; } .hoje-triagem { order: 3; } .hoje-follow { order: 4; } .hoje-andamento { order: 5; }
   .hoje-etapas { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
@@ -653,3 +653,55 @@ a.faixa:hover { filter: brightness(0.97); }
   .triagem-acoes kbd, .triagem-rodape kbd { display: none; }
   .botao.grande { min-height: 46px; font-size: 14px; padding-inline: 8px; }
 }
+
+/* ------------------------------------------------------------------ Envio em lote */
+.lote-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.lote-numeros > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lote-numeros strong { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lote-numeros strong small { font-size: 14px; color: var(--muted); font-weight: 600; }
+.lote-numeros span { font-size: 12.5px; color: var(--muted); }
+.lote-fila { margin-bottom: 16px; }
+.lote-fila-item { grid-template-columns: 24px minmax(0, 1fr) auto !important; }
+.lote-fila-item > svg { color: var(--muted); }
+.lote-subtitulo { font-size: 13px; font-weight: 600; color: var(--muted); padding: 10px 18px 0; margin: 0; border-top: 1px solid var(--line); }
+.lote-barra { flex-wrap: wrap; }
+.lote-barra-acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.lote-limite { margin: 12px 18px 0; }
+.lote-lista { list-style: none; margin: 0; padding: 4px 0; }
+.lote-lista > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 18px; }
+.lote-lista > li + li { border-top: 1px solid var(--line); }
+.lote-lista > li.marcada { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.lote-linha { display: grid; grid-template-columns: 20px 40px minmax(0, 1fr); gap: 10px; align-items: center; cursor: pointer; min-width: 0; }
+.lote-linha input { width: 18px; height: 18px; accent-color: var(--accent); }
+.lote-info { display: flex; flex-direction: column; min-width: 0; }
+.lote-info .dica { overflow-wrap: anywhere; }
+.lote-lado { display: flex; gap: 8px; align-items: center; }
+.lote-email { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; padding: 8px 0 4px 30px; }
+.lote-email label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.hoje-envio-numeros { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-end; }
+.hoje-envio-numeros div { display: flex; flex-direction: column; }
+.hoje-envio-numeros strong { font-size: 28px; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hoje-envio-numeros strong small { font-size: 15px; color: var(--muted); }
+.hoje-envio-numeros span { font-size: 12.5px; color: var(--muted); }
+.etiqueta.devolvido { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+.taxas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.taxa { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--r-s); background: var(--surface-2); min-width: 0; }
+.taxa strong { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.taxa span { font-size: 12.5px; color: var(--muted); }
+.taxa-fontes { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.taxa-fonte { display: grid; grid-template-columns: 96px minmax(0, 1fr) 92px; gap: 10px; align-items: center; font-size: 13px; }
+.taxa-fonte .trilho { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.taxa-fonte .trilho i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.taxa-fonte b { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 760px) {
+  .lote-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lote-lista > li { grid-template-columns: minmax(0, 1fr); }
+  .lote-lado { padding-left: 30px; }
+  .lote-email { padding-left: 0; }
+  .lote-fila-item { grid-template-columns: 24px minmax(0, 1fr) !important; }
+  .lote-fila-item > button { grid-column: 2; justify-self: start; }
+  .taxas { grid-template-columns: minmax(0, 1fr); }
+  .taxa-fonte { grid-template-columns: 80px minmax(0, 1fr) 80px; }
+}
+.aviso.erro-fundo { background: var(--danger-soft); color: var(--danger); }
+.aviso svg { vertical-align: -2px; margin-right: 4px; }

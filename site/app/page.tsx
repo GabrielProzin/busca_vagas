@@ -1,12 +1,12 @@
 import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
-import { listarCandidaturas, listarVagas } from "@/lib/db";
+import { enviadosHoje, listarCandidaturas, listarVagas } from "@/lib/db";
 import { idUrl, origemEmail } from "@/lib/formato";
 import { situacaoFollowup } from "@/lib/followup";
 import { passosConfiguracao } from "@/lib/configuracao";
 import { PERFIL } from "@/lib/gerado/perfil";
-import { ETAPAS, type Vaga } from "@/lib/tipos";
+import { ETAPAS, ehNova, type Vaga } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,12 @@ const fmtCurta = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-di
 
 function horaSP(): number {
   return Number(new Intl.DateTimeFormat("pt-BR", { hour: "numeric", hourCycle: "h23", timeZone: fuso }).format(new Date()));
+}
+
+// Coletas: ~8:00, ~11:00, ~14:00, ~18:30 e ~22:00 (as de 11:00 e 18:30 são as completas).
+function proximaColeta(): string {
+  const h = horaSP();
+  return h < 8 ? "8:00" : h < 11 ? "11:00" : h < 14 ? "14:00" : h < 18 ? "18:30" : h < 22 ? "22:00" : "8:00";
 }
 
 function saudacao(): string {
@@ -36,10 +42,10 @@ export default async function PaginaHoje() {
     console.error("hoje:", e);
     falhou = true;
   }
-  const passos = await passosConfiguracao().catch(() => []);
+  const [passos, hoje] = await Promise.all([passosConfiguracao().catch(() => []), enviadosHoje().catch(() => 0)]);
   const essenciais = passos.filter((p) => p.essencial && !p.ok);
 
-  const novas = vagas.filter((v) => !v.candidatura || v.candidatura.status === "nova");
+  const novas = vagas.filter(ehNova);
   const comEmail = novas.filter((v) => v.email_contato).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
   const chegaramHoje = novas.filter((v) => Date.now() - Date.parse(v.primeira_vez_em) < 864e5).length;
 
@@ -48,6 +54,20 @@ export default async function PaginaHoje() {
     .filter((x) => x.fu);
   const pendentes = comFollowup.filter((x) => x.fu!.estado !== "aguardando").sort((a, b) => b.fu!.dias - a.fu!.dias);
   const proximo = comFollowup.filter((x) => x.fu!.estado === "aguardando").sort((a, b) => Date.parse(a.fu!.proxima) - Date.parse(b.fu!.proxima))[0];
+
+  // Envio: fila e o que o Gmail trouxe de volta (respostas e devoluções) nos últimos 7 dias.
+  const naFila = vagas.filter((v) => v.candidatura?.status === "nova" && v.candidatura.fila_em).length;
+  const semana = Date.now() - 7 * 864e5;
+  const porId = new Map([...vagas, ...candidaturas].map((v) => [v.id, v]));
+  const eventos = [...porId.values()]
+    .flatMap((v) => {
+      const c = v.candidatura;
+      const lista: { v: Vaga; tipo: "resposta" | "devolvido"; quando: number }[] = [];
+      if (c?.resposta_em && Date.parse(c.resposta_em) > semana) lista.push({ v, tipo: "resposta", quando: Date.parse(c.resposta_em) });
+      if (c?.devolvido_em && Date.parse(c.devolvido_em) > semana) lista.push({ v, tipo: "devolvido", quando: Date.parse(c.devolvido_em) });
+      return lista;
+    })
+    .sort((a, b) => b.quando - a.quando);
 
   const porEtapa = Object.fromEntries(ETAPAS.map((e) => [e.status, candidaturas.filter((v) => v.candidatura?.status === e.status).length]));
   const avancando = candidaturas.filter((v) => ["respondeu", "entrevista", "proposta"].includes(v.candidatura?.status ?? ""));
@@ -140,9 +160,32 @@ export default async function PaginaHoje() {
             {novas.length ? (
               <Link className="botao primario" href="/triagem">Começar triagem</Link>
             ) : (
-              <span className="dica">Tudo triado. A próxima coleta roda por volta das {horaSP() >= 11 && horaSP() < 18 ? "18:30" : "11:00"}.</span>
+              <span className="dica">Tudo triado. A próxima coleta roda por volta das {proximaColeta()}.</span>
             )}
           </div>
+        </section>
+
+        <section className="cartao hoje-envio" aria-label="Envio de emails">
+          <div className="cartao-cabecalho"><h2><Icone nome="lote" /> Envio de emails</h2></div>
+          <div className="cartao-corpo">
+            <div className="hoje-envio-numeros">
+              <div><strong>{hoje}<small>/{PERFIL.envio.limiteDiario}</small></strong><span>enviados hoje</span></div>
+              <div><strong>{naFila}</strong><span>na fila</span></div>
+            </div>
+            {eventos.length ? (
+              <ul className="hoje-lista compacta">
+                {eventos.slice(0, 5).map(({ v, tipo }) => (
+                  <li key={v.id + tipo}>
+                    <span className={`etiqueta ${tipo === "resposta" ? "ok" : "devolvido"}`}>{tipo === "resposta" ? "Respondeu" : "Email voltou"}</span>
+                    <Link href={idUrl(v.id)} className="hoje-titulo">{v.titulo}</Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="dica" style={{ marginTop: 10 }}>Respostas e emails devolvidos aparecem aqui: o sistema lê o seu Gmail de hora em hora.</p>
+            )}
+          </div>
+          <div className="cartao-rodape"><Link href="/lote">Envio em lote →</Link></div>
         </section>
 
         <section className="cartao hoje-follow" aria-label="Follow-ups">
