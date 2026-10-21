@@ -63,6 +63,14 @@ jobs:
         shell: bash   # com "shell: bash" o Actions usa pipefail, então o tee não esconde falhas
         run: python -m coletor.pipeline 2>&1 | tee saida_log.txt
 
+      - name: Avisar por email se algo falhou
+        if: ${{ failure() }}
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RESUMO_PARA: ${{ secrets.RESUMO_PARA }}
+        run: python -m coletor.alerta "O workflow de coleta falhou" "Um passo do workflow terminou com erro. Abra o link para ver qual."
+
       - name: Sondar fontes
         if: ${{ always() && inputs.diagnostico }}
         run: mkdir -p saida && python scripts/sondar_fontes.py > saida/sondagem.txt 2>&1 || true

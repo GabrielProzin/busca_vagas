@@ -16,6 +16,7 @@ from pathlib import Path
 
 import yaml
 
+from . import alerta
 from . import resumo as resumo_email
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
@@ -153,6 +154,11 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     sb = Supabase.do_ambiente()
     if sb:
         # Novidade = não estava no banco antes desta coleta. Só elas entram no email de resumo.
+        try:
+            anteriores = sb.execucoes_recentes()  # antes de registrar esta, para comparar o volume
+        except Exception as e:
+            log.warning("saúde: não li as execuções anteriores: %s", e)
+            anteriores = []
         existentes = sb.ids_existentes([v.id for v in aprovadas])
         corte = float(cfg.get("resumo", {}).get("nota_minima", 85))
         para_resumo = [v for v in aprovadas if v.id not in existentes and (v.nota or 0) >= corte]
@@ -162,6 +168,13 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
             resumo_email.enviar(para_resumo, corte)
         except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
             log.warning("resumo: falha ao enviar: %s", e)
+        problemas = alerta.verificar_saude(execucao, anteriores)
+        if problemas:
+            log.warning("saúde: %s", problemas)
+            try:
+                alerta.enviar("Problema na coleta de vagas", problemas)
+            except Exception as e:
+                log.warning("alerta: falha ao enviar: %s", e)
     resumo = os.getenv("GITHUB_STEP_SUMMARY")
     if resumo:
         # O repositório é público: o resumo do Actions só mostra a tabela de vagas se pedido.
@@ -179,7 +192,16 @@ def main() -> None:
     ap.add_argument("--sem-github", action="store_true")
     ap.add_argument("--max-paginas", type=int, default=4)
     a = ap.parse_args()
-    executar(forcar_tfidf=a.tfidf, usar_github=not a.sem_github, max_paginas=a.max_paginas)
+    try:
+        executar(forcar_tfidf=a.tfidf, usar_github=not a.sem_github, max_paginas=a.max_paginas)
+    except Exception as e:
+        # Erro que derruba a coleta inteira: avisa por email e deixa o Actions marcar a execução como falha.
+        log.exception("coleta falhou")
+        try:
+            alerta.enviar("A coleta de vagas falhou", [f"Erro: {type(e).__name__}: {e}"])
+        except Exception as e2:
+            log.warning("alerta: falha ao enviar: %s", e2)
+        raise
 
 
 if __name__ == "__main__":

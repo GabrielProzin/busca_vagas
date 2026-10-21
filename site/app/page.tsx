@@ -2,7 +2,7 @@ import Link from "next/link";
 import Topo from "@/components/Topo";
 import Nota from "@/components/Nota";
 import { alterarStatus } from "./acoes";
-import { listarVagas } from "@/lib/db";
+import { listarExecucoes, listarVagas } from "@/lib/db";
 import { fonte, habilidade, idUrl, local, quando } from "@/lib/formato";
 import type { Vaga } from "@/lib/tipos";
 
@@ -15,11 +15,16 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
   const lista = busca.lista === "vale_tentar" ? "vale_tentar" : "principal";
 
   let vagas: Vaga[];
+  let ultimaColeta: string | null = null;
   try {
-    vagas = await listarVagas();
+    const [v, ex] = await Promise.all([listarVagas(), listarExecucoes(1)]);
+    vagas = v;
+    ultimaColeta = ex[0]?.iniciada_em ?? null;
   } catch (e) {
     return <ErroBanco erro={e as Error} />;
   }
+  // Coleta roda ~11:00 e ~18:30; o maior intervalo normal é ~16h30. Passou de 20h, algo travou.
+  const horasSemColeta = ultimaColeta ? (Date.now() - new Date(ultimaColeta).getTime()) / 36e5 : null;
   // "Novas" = sem nenhuma ação sua ainda. Aplicadas e descartadas saem desta lista.
   const novas = vagas.filter((v) => !v.candidatura || v.candidatura.status === "nova");
   const contagem = {
@@ -57,6 +62,12 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
             </Link>
           </nav>
         </div>
+
+        {horasSemColeta !== null && horasSemColeta > 20 ? (
+          <p className="aviso alerta-coleta" role="status">
+            A última coleta foi há {Math.floor(horasSemColeta)} horas. Confira em GitHub → Actions se ela falhou.
+          </p>
+        ) : null}
 
         {daLista.length > 0 ? (
           <div className="filtros" aria-label="Filtros">

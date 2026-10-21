@@ -63,6 +63,8 @@ export type Vaga = {
   componentes: { semantica?: number; habilidades?: number; trilha?: number; ia?: number };
   primeira_vez_em: string;
   atualizada_em: string;
+  // Resumo direto gerado pela IA na primeira vez que a vaga é aberta (coluna opcional no banco).
+  resumo?: import("./ia").ResumoVaga | null;
   candidatura: Candidatura | null;
 };
 

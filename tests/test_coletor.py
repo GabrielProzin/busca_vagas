@@ -112,3 +112,15 @@ def test_resumo_email():
     assert "https://exemplo.vercel.app/vaga/teste%3AAnalista%20de%20BI%20J%C3%BAnior" in texto
     html = msg.get_body(("html",)).get_content()
     assert "Tem email do recrutador" in html and "power bi" in html
+
+
+def test_saude_da_coleta():
+    from coletor.alerta import verificar_saude
+
+    normal = {"coletadas": {"gupy": 340, "remotar": 580, "github": 3}, "backend": "fastembed"}
+    historico = [{"coletadas": {"gupy": 330, "remotar": 570}}] * 5
+    assert verificar_saude(normal, historico) == []
+    quebrada = {"coletadas": {"gupy": 0, "remotar": 300, "github": 0}, "backend": "tfidf"}
+    p = verificar_saude(quebrada, historico)
+    assert any("gupy" in x for x in p) and any("média" in x for x in p) and any("TF-IDF" in x for x in p)
+    assert not any("github" in x for x in p)  # fonte secundária vazia não é crítico

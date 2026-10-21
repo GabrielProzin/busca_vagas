@@ -297,3 +297,20 @@ code { font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 
   .meta-vaga { font-size: 13.5px; margin-bottom: 14px; }
   .detalhe h2.primeiro { margin-top: 26px; }
 }
+
+/* ---------- resumo da vaga ---------- */
+.resumo { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; max-width: 75ch; margin-bottom: 8px; }
+.resumo.carregando { border-left-color: var(--line); }
+.resumo-frase { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.45; }
+.resumo-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
+.resumo h3 { margin: 0 0 4px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.resumo ul { margin: 0; padding-left: 18px; font-size: 14px; display: flex; flex-direction: column; gap: 2px; }
+.resumo-atencao { background: var(--warm-soft); color: var(--warm); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.resumo-atencao ul { margin-top: 4px; }
+.resumo-erro { margin: 0 0 8px; }
+.alerta-coleta { margin: 0 0 16px; }
+@media (max-width: 760px) {
+  .resumo { padding: 14px; }
+  .resumo-grade { grid-template-columns: 1fr; gap: 12px; }
+  .resumo-frase { font-size: 15.5px; }
+}

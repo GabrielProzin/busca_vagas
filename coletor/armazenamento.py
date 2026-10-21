@@ -68,6 +68,12 @@ class Supabase:
             r.raise_for_status()
         log.info("supabase: %d vagas gravadas", len(linhas))
 
+    def execucoes_recentes(self, limite: int = 6) -> list[dict]:
+        r = requests.get(f"{self.base}/execucoes", headers=self.h,
+                         params={"select": "coletadas,iniciada_em", "order": "iniciada_em.desc", "limit": limite}, timeout=30)
+        r.raise_for_status()
+        return r.json()
+
     def registrar_execucao(self, execucao: dict) -> None:
         r = requests.post(f"{self.base}/execucoes", headers=self.h, data=json.dumps(execucao, default=str), timeout=30)
         r.raise_for_status()

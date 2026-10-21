@@ -16,6 +16,10 @@ const MOTIVO: Record<string, string> = {
 
 const fmtData =new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
+function horasDesde(iso: string): number {
+  return (Date.now() - new Date(iso).getTime()) / 36e5;
+}
+
 export default async function PaginaPainel() {
   const [execucoes, candidaturas] = await Promise.all([listarExecucoes(30), listarCandidaturas()]);
   const ultima = execucoes[0];
@@ -33,6 +37,12 @@ export default async function PaginaPainel() {
           </div>
         </div>
 
+        {ultima ? (
+          <p className={horasDesde(ultima.iniciada_em) > 20 ? "aviso" : "aviso ok"} style={{ marginBottom: 14 }}>
+            Última coleta: {fmtData.format(new Date(ultima.iniciada_em))} (há {Math.floor(horasDesde(ultima.iniciada_em))}h).
+            {horasDesde(ultima.iniciada_em) > 20 ? " Está atrasada: confira em GitHub → Actions." : " A próxima roda por volta das 11:00 ou 18:30."}
+          </p>
+        ) : null}
         <div className="numeros">
           <div className="numero"><strong>{ultima ? total(ultima.coletadas) : 0}</strong><span>vagas lidas na última coleta</span></div>
           <div className="numero"><strong>{ultima?.principal ?? 0}</strong><span>entraram na lista principal</span></div>

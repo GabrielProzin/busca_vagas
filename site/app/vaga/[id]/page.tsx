@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import Topo from "@/components/Topo";
 import Nota from "@/components/Nota";
 import EmailCandidatura from "@/components/EmailCandidatura";
+import ResumoVaga, { ResumoCarregando } from "@/components/ResumoVaga";
+import { Suspense } from "react";
 import { alterarStatus, salvarNotas } from "../../acoes";
 import { buscarVaga } from "@/lib/db";
 import { infoCurriculo } from "@/lib/arquivos";
@@ -36,7 +38,11 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
         <div className="detalhe">
           <div>
 
-            <h2 className="primeiro">Por que essa nota</h2>
+            <Suspense fallback={<ResumoCarregando />}>
+              <ResumoVaga vaga={v} />
+            </Suspense>
+
+            <h2>Por que essa nota</h2>
             <ul className="motivos">
               {/* "Pede x, y — está no seu currículo" já aparece nas etiquetas logo abaixo */}
               {v.motivos.filter((m) => !m.startsWith("Pede ")).map((m) => <li key={m}>{m}</li>)}

@@ -112,6 +112,25 @@ export async function salvarCandidatura(vagaId: string, campos: Partial<Omit<Can
   });
 }
 
+/** Guarda o resumo da IA para não gerar de novo. Sem a coluna "resumo" no banco, só não guarda. */
+export async function salvarResumo(id: string, resumo: unknown): Promise<boolean> {
+  const d = emDemo();
+  if (d) {
+    d.vagas = d.vagas.map((v) => (v.id === id ? { ...v, resumo: resumo as Vaga["resumo"] } : v));
+    return true;
+  }
+  try {
+    await rest(`/vagas?id=eq.${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { Prefer: "return=minimal" },
+      body: JSON.stringify({ resumo }),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Emails de candidatura enviados hoje (horário de Brasília), para o limite diário. */
 export async function enviadosHoje(): Promise<number> {
   const inicio = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }) + "T00:00:00-03:00").toISOString();

@@ -67,3 +67,6 @@ grant usage on schema public to service_role;
 grant select, insert, update, delete on vagas, candidaturas, execucoes to service_role;
 grant usage, select on all sequences in schema public to service_role;
 revoke all on vagas, candidaturas, execucoes from anon, authenticated;
+
+-- 21/10/2026: resumo direto da vaga gerado pela IA (o site guarda aqui para não gerar de novo).
+alter table vagas add column if not exists resumo jsonb;
