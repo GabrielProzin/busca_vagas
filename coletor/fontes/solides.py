@@ -44,9 +44,9 @@ def _para_vaga(j: dict, termo: str) -> Vaga:
     senioridade = [x.get("name", "") for x in j.get("seniority") or [] if isinstance(x, dict)]
     titulo = (j.get("title") or "").strip()
     # O nível vem num campo separado e costuma listar TODOS os níveis aceitos ("Júnior, Pleno, Sênior").
-    # Se aceita júnior (ou trainee), a vaga conta como júnior; senão, os níveis vão para o título
+    # Se aceita júnior, a vaga conta como júnior (trainee segue a regra de senioridade do preferencias.yaml); senão, os níveis vão para o título
     # só para o filtro de senioridade enxergar.
-    aceita_junior = any(re.search(r"j[uú]nior|\bjr\b|trainee", n, re.I) for n in senioridade)
+    aceita_junior = any(re.search(r"j[uú]nior|\bjr\b", n, re.I) for n in senioridade)
     if aceita_junior and not re.search(r"j[uú]nior|\bjr\b", titulo, re.I):
         titulo_filtro = f"{titulo} (Júnior)"
     elif senioridade and not aceita_junior and not any(n.lower() in titulo.lower() for n in senioridade):
