@@ -152,3 +152,18 @@ export async function adicionarVaga(_: EstadoEmail, form: FormData): Promise<Est
     throw e; // inclui o redirect, que o Next.js trata como exceção
   }
 }
+
+// ------------------------------------------------------------------ kanban e menus
+
+/** Muda a etapa de uma candidatura (arrastar no kanban ou menu). Devolve erro em texto, ou null. */
+export async function moverCandidatura(id: string, status: Status): Promise<string | null> {
+  await exigirSessao();
+  if (!id || !STATUS_VALIDOS.includes(status)) return "Etapa inválida.";
+  try {
+    await mudarStatus(id, status);
+  } catch (e) {
+    return `Não consegui salvar: ${(e as Error).message}`;
+  }
+  revalidatePath("/", "layout");
+  return null;
+}

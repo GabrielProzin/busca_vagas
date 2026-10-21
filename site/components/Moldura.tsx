@@ -31,10 +31,12 @@ type Props = {
   subtitulo?: React.ReactNode;
   acoes?: React.ReactNode;
   voltar?: { href: string; rotulo: string };
+  /** Usa a largura toda da tela (quadro de candidaturas). */
+  larga?: boolean;
   children: React.ReactNode;
 };
 
-export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar, children }: Props) {
+export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar, larga, children }: Props) {
   const nav = await resumoNavegacao();
   return (
     <div className="app">
@@ -84,7 +86,7 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
           </form>
         </header>
 
-        <main className="pagina">
+        <main className={larga ? "pagina larga" : "pagina"}>
           {voltar ? (
             <Link href={voltar.href} className="trilha">
               <Icone nome="voltar" tamanho={16} /> {voltar.rotulo}

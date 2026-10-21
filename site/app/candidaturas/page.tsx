@@ -1,23 +1,37 @@
-import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
-import { alterarStatus } from "../acoes";
+import QuadroCandidaturas, { type CartaoKanban } from "@/components/QuadroCandidaturas";
 import { listarCandidaturas } from "@/lib/db";
 import { idUrl, quando } from "@/lib/formato";
 import { ETAPAS } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
-const COR: Record<string, string> = { respondeu: "verde", entrevista: "verde", proposta: "verde", recusada: "cinza" };
+// Cor do ponto de cada etapa: azul-petróleo enquanto espera, verde quando a empresa responde, cinza no fim.
+const COR: Record<string, string> = {
+  aplicada: "var(--seg-2)", enviada: "var(--accent)", respondeu: "var(--ok)", entrevista: "var(--ok)", proposta: "var(--ok)", recusada: "var(--muted)",
+};
 
 export default async function PaginaCandidaturas() {
   const vagas = await listarCandidaturas();
-  const andamento = vagas.filter((v) => !["recusada"].includes(v.candidatura?.status ?? "")).length;
+  const andamento = vagas.filter((v) => v.candidatura?.status !== "recusada").length;
+  const cartoes: CartaoKanban[] = vagas.map((v) => ({
+    id: v.id,
+    titulo: v.titulo,
+    empresa: v.empresa || "Empresa não informada",
+    quando: quando(v.candidatura?.enviada_em ?? v.candidatura?.atualizada_em ?? null),
+    status: v.candidatura!.status,
+    nota: v.nota,
+    porEmail: Boolean(v.candidatura?.email_para && v.candidatura.status !== "aplicada"),
+    href: idUrl(v.id),
+  }));
+
   return (
     <Moldura
       atual="/candidaturas"
+      larga
       titulo="Candidaturas"
-      subtitulo={vagas.length ? `${andamento} em andamento de ${vagas.length} no total. Mude a etapa quando a empresa responder.` : undefined}
+      subtitulo={vagas.length ? `${andamento} em andamento de ${vagas.length}. Arraste os cartões entre as colunas quando a empresa responder.` : undefined}
     >
       {vagas.length === 0 ? (
         <div className="cartao vazio">
@@ -26,34 +40,7 @@ export default async function PaginaCandidaturas() {
           <p>Em Vagas, marque “Já apliquei” depois de se candidatar pelo link, ou envie um email pela página da vaga.</p>
         </div>
       ) : (
-        <div className="quadro">
-          {ETAPAS.map((etapa) => {
-            const daEtapa = vagas.filter((v) => v.candidatura?.status === etapa.status);
-            return (
-              <section key={etapa.status} className={`coluna${daEtapa.length ? "" : " vazia"}`} aria-label={etapa.rotulo}>
-                <h3>
-                  <span className={`ponto-etapa ${COR[etapa.status] ?? ""}`} aria-hidden />
-                  {etapa.rotulo}
-                  <span className="contador">{daEtapa.length}</span>
-                </h3>
-                {daEtapa.length === 0 ? <p className="coluna-vazia">Nada aqui ainda.</p> : null}
-                {daEtapa.map((v) => (
-                  <article key={v.id} className="cartao-vaga">
-                    <Link href={idUrl(v.id)}>{v.titulo}</Link>
-                    <small>{v.empresa || "Empresa não informada"} · {quando(v.candidatura?.enviada_em ?? v.candidatura?.atualizada_em ?? null)}</small>
-                    <form action={alterarStatus}>
-                      <input type="hidden" name="id" value={v.id} />
-                      <select name="status" defaultValue={etapa.status} aria-label={`Etapa de ${v.titulo}`}>
-                        {ETAPAS.map((e) => <option key={e.status} value={e.status}>{e.rotulo}</option>)}
-                      </select>
-                      <button className="botao pequeno" type="submit">Mover</button>
-                    </form>
-                  </article>
-                ))}
-              </section>
-            );
-          })}
-        </div>
+        <QuadroCandidaturas iniciais={cartoes} etapas={ETAPAS.map((e) => ({ ...e, rotulo: e.status === "aplicada" ? "Aplicada" : e.rotulo, cor: COR[e.status] ?? "var(--accent)" }))} />
       )}
     </Moldura>
   );

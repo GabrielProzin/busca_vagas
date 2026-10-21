@@ -119,6 +119,7 @@ p { margin: 0; }
 .area-principal { margin-left: var(--lateral); min-width: 0; }
 .barra-mobile { display: none; }
 .pagina { max-width: 1160px; margin: 0 auto; padding: 28px 32px 64px; }
+.pagina.larga { max-width: 1680px; }
 .trilha { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 13px; text-decoration: none; margin-bottom: 10px; }
 .trilha:hover { color: var(--ink); }
 .pagina-cabecalho { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -430,4 +431,78 @@ code { font-size: 12.5px; background: var(--surface-2); border: 1px solid var(--
   .kpi strong { font-size: 24px; }
   .grade-2 { grid-template-columns: 1fr; }
   .ajuste { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
+}
+
+/* =========================================================================
+   seletor (menu suspenso próprio)
+   ========================================================================= */
+select option { background: var(--surface); color: var(--ink); } /* reserva para algum <select> nativo restante */
+.seletor { position: relative; display: inline-flex; flex: none; }
+.seletor-gatilho {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; cursor: pointer;
+  border: 1px solid var(--line-forte); border-radius: 999px; background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+}
+.seletor-gatilho:hover { border-color: var(--muted); }
+.seletor-gatilho[aria-expanded="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.seletor-gatilho svg { color: var(--muted); }
+.seletor-prefixo { color: var(--muted); font-weight: 500; }
+.seletor-campo { display: flex; width: 100%; }
+.seletor-campo .seletor-gatilho { width: 100%; height: 36px; border-radius: var(--r-s); font-size: 14px; font-weight: 500; justify-content: space-between; padding: 0 12px; }
+.seletor-icone .seletor-gatilho { width: 28px; height: 28px; padding: 0; justify-content: center; border-color: transparent; background: transparent; border-radius: 7px; }
+.seletor-icone .seletor-gatilho:hover, .seletor-icone .seletor-gatilho[aria-expanded="true"] { background: var(--surface-2); border-color: var(--line-forte); box-shadow: none; }
+.seletor-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 200px; max-height: 300px; overflow-y: auto;
+  margin: 0; padding: 4px; list-style: none; background: var(--surface); border: 1px solid var(--line-forte);
+  border-radius: 10px; box-shadow: var(--sombra-alta);
+}
+.seletor-menu.direita { left: auto; right: 0; }
+.seletor-campo .seletor-menu { width: 100%; }
+.seletor-menu li[role="option"] {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 10px; border-radius: 7px;
+  cursor: pointer; color: var(--ink-2); font-size: 13.5px; outline: none;
+}
+.seletor-menu li.focado { background: var(--surface-2); color: var(--ink); }
+.seletor-menu li[aria-selected="true"] { color: var(--accent); font-weight: 600; }
+.seletor-menu li svg { flex: none; }
+.seletor-titulo { padding: 6px 10px 4px; font-size: 12px; font-weight: 600; color: var(--muted); }
+
+/* =========================================================================
+   kanban de candidaturas
+   ========================================================================= */
+.kanban {
+  display: grid; grid-auto-flow: column; grid-auto-columns: minmax(168px, 1fr); gap: 12px;
+  overflow-x: auto; padding-bottom: 8px; align-items: stretch;
+}
+.kanban-coluna {
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-m);
+  display: flex; flex-direction: column; min-height: 340px; transition: border-color 0.12s, background 0.12s;
+}
+.kanban-coluna.alvo { border-color: var(--accent); background: var(--accent-soft); }
+.kanban-cabecalho { display: flex; align-items: center; gap: 8px; padding: 12px 12px 8px; }
+.kanban-cabecalho h2 { font-size: 13.5px; font-weight: 600; }
+.kanban-cabecalho .contador { margin-left: auto; }
+.kanban-cartoes { display: flex; flex-direction: column; gap: 8px; padding: 4px 10px 12px; flex: 1; }
+.kanban-cartao {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 11px 12px;
+  display: flex; flex-direction: column; gap: 6px; box-shadow: var(--sombra); cursor: grab; transition: box-shadow 0.12s, opacity 0.12s;
+}
+.kanban-cartao:hover { box-shadow: var(--sombra-alta); border-color: var(--line-forte); }
+.kanban-cartao:active { cursor: grabbing; }
+.kanban-cartao.arrastando { opacity: 0.4; }
+.kanban-cartao-topo { display: flex; align-items: flex-start; gap: 6px; }
+.kanban-titulo { flex: 1; font-weight: 600; font-size: 13.5px; line-height: 1.35; text-decoration: none; color: var(--ink); }
+.kanban-titulo:hover { color: var(--accent); }
+.kanban-empresa { color: var(--muted); font-size: 12.5px; }
+.kanban-rodape { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.kanban-quando { margin-left: auto; color: var(--muted); font-size: 12px; }
+.kanban-vazio { border: 1px dashed var(--line-forte); border-radius: 10px; padding: 18px 10px; text-align: center; color: var(--muted); font-size: 12.5px; }
+.kanban-coluna.alvo .kanban-vazio { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 760px) {
+  .kanban { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: 1fr; overflow: visible; }
+  .kanban-coluna { min-height: 0; }
+  .kanban-coluna.vazia { display: none; }
+  .kanban-cartao { cursor: default; }
+  .seletor-icone .seletor-gatilho { width: 36px; height: 36px; border-color: var(--line-forte); }
 }

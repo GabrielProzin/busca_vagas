@@ -4,6 +4,7 @@ import Moldura from "@/components/Moldura";
 import Nota from "@/components/Nota";
 import Icone from "@/components/Icone";
 import EmailCandidatura from "@/components/EmailCandidatura";
+import StatusVaga from "@/components/StatusVaga";
 import ResumoVaga, { ResumoCarregando } from "@/components/ResumoVaga";
 import { alterarStatus, salvarNotas } from "../../acoes";
 import { buscarVaga } from "@/lib/db";
@@ -11,7 +12,6 @@ import { infoCurriculo } from "@/lib/arquivos";
 import { gmailConfigurado } from "@/lib/email";
 import { iaConfigurada } from "@/lib/ia";
 import { fonte, habilidade, local, naFonte, origemEmail, quando } from "@/lib/formato";
-import { ETAPAS, ROTULO_STATUS } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
@@ -133,19 +133,11 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
           <section className="cartao cartao-candidatura">
             <div className="cartao-cabecalho"><h2>Sua candidatura</h2></div>
             <div className="cartao-corpo form-coluna">
-              <div className="campo-linha"><span>Situação</span><b>{ROTULO_STATUS[status]}</b></div>
               {v.email_contato ? (
                 <div className="campo-linha"><span>{origemEmail(v.email_origem)}</span><b>{v.email_contato}</b></div>
               ) : null}
-              <form action={alterarStatus} className="form-linha" style={{ marginTop: 6 }}>
-                <input type="hidden" name="id" value={v.id} />
-                <select name="status" defaultValue={status === "nova" ? "aplicada" : status} aria-label="Mudar situação">
-                  {ETAPAS.map((e) => <option key={e.status} value={e.status}>{e.rotulo}</option>)}
-                  <option value="descartada">Descartada</option>
-                  <option value="nova">Nova (desfazer)</option>
-                </select>
-                <button className="botao" type="submit">Salvar</button>
-              </form>
+              <label style={{ marginTop: 4 }}>Situação</label>
+              <StatusVaga id={v.id} status={status} />
               <form action={salvarNotas} className="form-coluna" style={{ marginTop: 8 }}>
                 <input type="hidden" name="id" value={v.id} />
                 <label htmlFor="notas">Anotações</label>
