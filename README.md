@@ -1,103 +1,210 @@
 # busca_vagas
 
-Radar pessoal de vagas júnior de dados: coleta vagas todos os dias, filtra o que não faz sentido,
-ranqueia cada vaga contra o meu currículo com uma nota explicável e (nas próximas fases) gera e
-envia emails de candidatura personalizados a partir de um site privado.
+Radar pessoal de vagas. Todo dia ele busca vagas em várias fontes, descarta o que não combina com você
+(área, nível, local), dá uma **nota explicável** contra o **seu currículo** e ajuda a se candidatar:
+escreve o email para o recrutador, manda pelo **seu Gmail** com o currículo anexado e acompanha cada
+candidatura até o fim, com lembrete de follow-up.
 
-> Projeto em construção. Fase 1 (coleta + ranking) pronta; site, emails e quadro de candidaturas a seguir.
+Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banco, o seu site, os seus dados.
 
-## Como funciona
+- **Vagas**: lista ordenada pela nota, com o porquê da nota, busca e filtros (com email, remoto, cargo).
+- **Vaga**: resumo feito pela IA, email ao recrutador pronto para revisar e enviar, situação e anotações.
+- **Candidaturas**: quadro (kanban) de arrastar, com aviso quando passa da hora do follow-up.
+- **Email de resumo**: só as vagas novas com nota alta e os follow-ups do dia.
+- **Posts do LinkedIn com email do recrutador**: busca automática (sem usar a sua conta) e uma extensão do
+  Chrome que manda os posts que você está vendo.
+- **Ranking que aprende**: vagas parecidas com as que você aplica sobem; com as que descarta, descem.
 
-```
-GitHub Actions (todo dia, ~11:00 e ~18:30)
-  └─ coletor/pipeline.py
-       1. Coleta     Gupy (rota do portal) + Remotar e Sólides (APIs dos sites) + issues de repositórios de vagas no GitHub
-                     e deduplica entre fontes (links da Gupy carregam o jobId em base64)
-       2. Filtra     título (trilha de dados, senioridade, bloqueios) e data — antes de baixar descrições
-       3. Detalha    baixa a descrição completa só das candidatas
-       4. Filtra     local (remoto BR ou Goiânia e região), idioma, anos de experiência
-                     e senioridade escrita na descrição
-       5. Ranqueia   nota 0–100 com motivos
-       6. Grava      Supabase (Postgres) + JSON
-       7. Avisa      email de resumo com as vagas novas de nota 85+ (coletor/resumo.py)
-```
+> Como o sistema funciona por dentro, com as regras: [`docs/spec.md`](docs/spec.md).
 
-### A nota de compatibilidade
+---
 
-| Componente | Peso | Como é calculado |
+## Quanto custa
+
+Nada, se você ficar nos planos grátis. Nenhum serviço abaixo pede cartão para o que usamos.
+
+| Serviço | Para quê | Plano grátis |
 |---|---|---|
-| Semântica | 45% | Cada frase da vaga é comparada com cada frase do currículo via embeddings multilíngues (`paraphrase-multilingual-MiniLM-L12-v2`, ONNX via fastembed, roda no CPU do Actions). Média das 8 frases da vaga mais bem atendidas. |
-| Habilidades | 40% | Habilidades do currículo encontradas na vaga (com peso e sinônimos) contra requisitos pesados ausentes (Spark, Databricks, AWS…). Requisito marcado como "diferencial" não penaliza. |
-| Trilha | 15% | Analista de Dados/BI > Engenharia de Dados > Ciência de Dados > genérico. |
-| Júnior | +5 | Título indica júnior. |
+| GitHub | Código e a coleta automática (2x por dia) | Repositório privado com 2.000 min/mês de Actions (a coleta usa ~200) |
+| Supabase | Banco de dados e o PDF do currículo | 500 MB; pausa se ficar 7 dias sem uso (a coleta evita isso) |
+| Vercel | O site | Hobby |
+| Google AI Studio (Gemini) | Escrever emails e resumir vagas | Cota diária grátis; acabou, o site usa um modelo pronto |
+| Gmail | Enviar os emails | Senha de app |
+| Apify (opcional) | Posts do LinkedIn com email | US$ 5/mês de crédito grátis, sem cartão |
 
-Cada vaga sai com os motivos ("Pede Python, SQL, Power BI — está no seu currículo", o trecho da vaga
-mais parecido com uma linha do currículo, o que falta) e cai em uma de duas listas: **principal** ou
-**vale tentar** (quando exige algo central que não está no currículo).
+---
 
-## Estrutura
+## Como montar a sua cópia (uns 40 minutos)
+
+> **Mais fácil:** abra a sua IA (Claude, ChatGPT, Codex…), cole o [prompt de configuração](#prompt-para-a-sua-ia)
+> do fim desta página e siga com ela, um passo por vez. Os passos abaixo são os mesmos que ela vai guiar.
+
+### 1. Copie o repositório
+
+Na página deste repositório no GitHub, clique em **Use this template → Create a new repository**.
+Escolha um nome e marque **Private** (o seu currículo vai ficar nele).
+
+### 2. Coloque o seu perfil
+
+Três arquivos dizem quem você é e o que procura. Edite direto no GitHub (ícone de lápis) ou peça para a sua IA gerar
+a partir do seu currículo:
+
+| Arquivo | O que é |
+|---|---|
+| `perfil/curriculo.md` | Seu currículo em texto (sem telefone nem email). É a base da nota e dos emails. |
+| `perfil/perfil.yaml` | Nome, cargo, links, suas habilidades (com sinônimos e peso) e 4 a 6 destaques do currículo em primeira pessoa. |
+| `config/preferencias.yaml` | O que buscar e o que descartar: termos de busca, tipos de cargo, senioridade, cidades aceitas para presencial/híbrido, nota mínima. |
+
+Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo do formato e troque tudo pelo seu.
+
+### 3. Crie o banco no Supabase
+
+1. Em [supabase.com](https://supabase.com), crie um projeto (região São Paulo). Guarde a senha do banco no seu gerenciador de senhas.
+2. Em **SQL Editor**, cole todo o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique em **Run**.
+3. Em **Project Settings → API Keys**, copie a **Project URL** e a **secret key** (`sb_secret_…`). A secret key
+   dá acesso total ao banco: ela só vai para a Vercel e para os Secrets do GitHub, nunca para o código.
+
+### 4. Prepare o Gmail e o Gemini
+
+- **Gmail:** ative a verificação em duas etapas na sua conta Google e crie uma **senha de app** em
+  [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) (16 letras).
+- **Gemini:** crie uma chave em [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Não ative
+  faturamento no projeto: assim nunca há cobrança.
+
+### 5. Publique o site na Vercel
+
+1. Em [vercel.com](https://vercel.com), **Add New → Project** e escolha o seu repositório.
+2. Em **Root Directory**, escolha a pasta **`site`**.
+3. Em **Environment Variables**, cadastre as variáveis da tabela [Variáveis da Vercel](#variáveis-da-vercel).
+4. **Deploy.** Abra o endereço que a Vercel der e entre com a senha que você escolheu.
+
+### 6. Ligue a coleta no GitHub
+
+1. No seu repositório: **Settings → Secrets and variables → Actions → New repository secret**, e cadastre os
+   [Secrets do GitHub](#secrets-do-github).
+2. **Actions → Coleta de vagas → Run workflow.** Em uns 5 minutos as vagas aparecem no site.
+   Daí em diante ela roda sozinha por volta das 11:00 e das 18:30.
+
+### 7. Últimos ajustes no site
+
+- **Configurações → Currículo anexado:** envie o PDF que vai junto dos emails.
+- **Extensão do Chrome (opcional):** baixe a pasta `extensao/`, abra `chrome://extensions`, ligue o
+  **Modo do desenvolvedor**, clique em **Carregar sem compactação** e escolha a pasta. Nas opções da extensão,
+  informe o endereço do seu site e o `CAPTURA_TOKEN`.
+- **Monitor externo (opcional):** no [UptimeRobot](https://uptimerobot.com), cadastre
+  `https://SEU-SITE.vercel.app/api/saude` para receber um email se o site cair.
+
+---
+
+## Variáveis e segredos
+
+Para gerar um segredo aleatório (senha do site, tokens), no PowerShell:
+
+```powershell
+$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); -join ($b | ForEach-Object { $_.ToString("x2") })
+```
+
+No Mac/Linux: `openssl rand -hex 32`. Use um diferente para cada segredo.
+
+### Variáveis da Vercel
+
+| Nome | Obrigatória | O que colocar |
+|---|---|---|
+| `SITE_PASSWORD` | sim | A senha para entrar no seu site |
+| `SESSION_SECRET` | sim | Segredo aleatório (64 caracteres) |
+| `SUPABASE_URL` | sim | Project URL do Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | sim | Secret key do Supabase (`sb_secret_…`) |
+| `GEMINI_API_KEY` | sim | Chave do Google AI Studio |
+| `GMAIL_USER` | sim | Seu endereço do Gmail |
+| `GMAIL_APP_PASSWORD` | sim | Senha de app do Gmail |
+| `CAPTURA_TOKEN` | para a extensão | Segredo aleatório; o mesmo vai nas opções da extensão |
+| `CONTATO_TELEFONE` | não | Telefone na assinatura dos emails |
+| `CRON_SECRET` | para o vigia | Segredo aleatório (a Vercel usa sozinha no cron) |
+| `GITHUB_DISPATCH_TOKEN` | para o vigia | Token *fine-grained* do GitHub, só deste repositório, permissão **Actions: Read and write** |
+| `LIMITE_DIARIO_EMAILS` | não | Máximo de emails por dia (padrão 40) |
+
+O **vigia** confere duas vezes por dia se a coleta rodou e, se o GitHub pular o horário, dispara a coleta
+e avisa por email.
+
+### Secrets do GitHub
+
+| Nome | Obrigatório | O que colocar |
+|---|---|---|
+| `SUPABASE_URL` | sim | Project URL do Supabase |
+| `SUPABASE_SERVICE_ROLE_KEY` | sim | Secret key do Supabase |
+| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | para o email de resumo e alertas | Os mesmos da Vercel |
+| `SITE_URL` | recomendado | Endereço do seu site (para os links do email de resumo) |
+| `RESUMO_PARA` | não | Para onde mandar o resumo (padrão: o próprio Gmail) |
+| `BACKUP_SENHA` | recomendado | Senha longa do backup cifrado. **Guarde no seu gerenciador de senhas**: sem ela o backup não abre |
+| `APIFY_TOKEN` | para posts do LinkedIn | Token do [Apify](https://console.apify.com) (Settings → API & Integrations) |
+
+---
+
+## Prompt para a sua IA
+
+Cole o texto abaixo na IA que você usa. Se ela tiver acesso ao repositório (Claude Code, Codex), ela edita os
+arquivos; se for um chat, ela te entrega o conteúdo para colar no GitHub.
+
+```text
+Vou montar a minha cópia do busca_vagas, um radar pessoal de vagas que roda grátis em
+GitHub Actions + Supabase + Vercel. O README e o docs/spec.md do repositório explicam tudo.
+
+Objetivo: terminar com o site no ar, a coleta rodando e o sistema configurado para o MEU perfil.
+
+Me guie um passo por vez, na ordem do README (copiar o repositório, perfil, Supabase, Gmail e
+Gemini, Vercel, secrets do GitHub, primeira coleta, ajustes finais). Em cada passo, diga
+exatamente onde clicar, espere eu confirmar que terminei e só então siga. Se eu travar,
+peça a mensagem de erro inteira e descubra a causa antes de sugerir a correção.
+
+No passo do perfil, vou te mandar o meu currículo. A partir dele:
+1. Me faça perguntas, uma por vez, sobre o que procuro: área e cargos, nível (júnior, pleno…),
+   se aceito remoto, quais cidades aceito para presencial/híbrido, o que quero evitar.
+2. Gere perfil/curriculo.md (sem telefone nem email), perfil/perfil.yaml e
+   config/preferencias.yaml no MESMO formato dos arquivos que já estão no repositório,
+   trocando todo o conteúdo pelo meu. Em perfil.yaml: habilidades que eu realmente tenho, com
+   sinônimos como aparecem em vagas e peso de 1 a 3; destaques com "frase" em primeira pessoa,
+   só com fatos do meu currículo.
+3. Me mostre os arquivos para eu conferir antes de salvar.
+
+Regras: nunca me peça para colar senhas, chaves ou tokens na conversa. Diga onde cada um vai
+(Vercel ou Secrets do GitHub) e eu mesmo colo lá. Não invente experiência que não está no meu
+currículo. Prefira o plano grátis de tudo e me avise antes de qualquer coisa que possa cobrar.
+
+No fim, confira comigo esta lista: entrei no site com a senha; a coleta rodou e as vagas
+apareceram; enviei o PDF do currículo em Configurações; um email de teste com "Usar modelo
+pronto" ficou com o meu nome e a minha assinatura.
+```
+
+---
+
+## Para quem programa
 
 ```
-config/preferencias.yaml   termos de busca, trilhas, bloqueios, local, nota mínima
-perfil/perfil.yaml         habilidades (pesos e sinônimos) e destaques para os emails
-perfil/curriculo.md        currículo em texto, base da comparação semântica
-coletor/                   fontes, filtros, ranking, armazenamento e pipeline
-supabase/schema.sql        tabelas vagas, candidaturas, execucoes (RLS ligado)
-tests/                     testes dos filtros e do ranking
+config/preferencias.yaml   o que buscar e filtrar
+perfil/                    currículo e perfil (base da nota e dos emails)
+coletor/                   Python: fontes, filtros, ranking, aprendizado, resumo, alertas, follow-up, backup
+site/                      Next.js na Vercel: páginas, Server Functions, API, testes de ponta a ponta (e2e/)
+extensao/                  extensão do Chrome (Manifest V3)
+supabase/schema.sql        tabelas (RLS ligado, só o servidor acessa)
+.github/workflows/         coleta 2x/dia com backup cifrado; testes do site a cada mudança
+docs/spec.md               a planta do sistema · AGENTS.md: regras para agentes de IA
 ```
 
-## O site (`site/`)
-
-Next.js 16 na Vercel, privado (login por senha, cookie assinado com HMAC; o `proxy.ts` bloqueia tudo sem sessão).
-O navegador nunca fala com o banco: as páginas e as Server Functions leem e gravam no Supabase pelo servidor,
-com a chave secreta.
-
-- **Vagas**: listas principal e vale tentar, filtros por cargo e remoto, nota com a barra de composição
-  (semântica, habilidades, trilha) e ações "Já apliquei" / "Descartar".
-- **Vaga**: motivos da nota, descrição completa, etapa da candidatura e anotações.
-- **Candidaturas**: quadro por etapa (aplicada, email enviado, respondeu, entrevista, proposta, não seguiu).
-- **Painel**: números da última coleta, por que as vagas ficaram de fora, histórico das coletas.
-- **Email para o recrutador**: o Gemini (Flash-Lite, plano grátis) escreve um email curto ligando 2–3 requisitos
-  da vaga a experiências reais do currículo; se a IA estiver indisponível, um modelo pronto usa os destaques do
-  `perfil.yaml` que batem com as habilidades da vaga. Você edita, marca que revisou e envia pelo seu Gmail
-  (SMTP + senha de app), com o PDF do currículo guardado num bucket privado do Supabase. Limite diário configurável
-  e bloqueio de envio duplicado.
-- **Adicionar vaga**: cole o texto de um post; a IA separa cargo, empresa e email, descarta o que não é vaga
-  (ex.: listas de candidatos) e dá uma nota contra o currículo.
-
-## Extensão "Enviar para o busca_vagas" (`extensao/`)
-
-Extensão do Chrome (Manifest V3). Você seleciona o texto de uma vaga em qualquer site, clica com o botão direito
-e escolhe *Enviar para o busca_vagas*; a extensão manda o texto para `POST /api/capturar` (autenticada por
-`CAPTURA_TOKEN`) e mostra a nota numa notificação. Ela só age no clique: não lê páginas sozinha nem automatiza
-nenhum site. Pede permissão de acesso só ao endereço do seu próprio site.
-
-Instalação: `chrome://extensions` → Modo do desenvolvedor → Carregar sem compactação → pasta `extensao/` →
-nas opções, informe o endereço do site e o token.
+**Rodar localmente**
 
 ```bash
-cd site && cp .env.example .env.local   # preencha as variáveis
-npm install && npm run dev
+# coletor
+pip install -r requirements.txt && python -m pytest -q
+python -m coletor.pipeline --tfidf          # sem Supabase grava só em saida/
+
+# site em modo demonstração (dados fictícios, Gemini falso, Gmail simulado)
+cd site && npm install && npm run build && npx playwright test
 ```
 
-Para desenvolver sem banco: `DEMO_ARQUIVO=../saida/vagas_AAAA-MM-DD.json` usa um JSON do coletor em memória.
+**A nota de compatibilidade:** 45% texto parecido com o currículo (embeddings multilíngues rodando no próprio
+Actions) + 40% habilidades + 15% tipo de cargo, +5 para júnior, e um ajuste de −8 a +8 pelo seu histórico de
+aplicadas e descartadas. Detalhes em [`docs/spec.md`](docs/spec.md).
 
-## Quando uma fonte muda
-
-Sites de vagas mudam de API sem aviso (a Gupy trocou de rota em 2026). `scripts/sondar_fontes.py`
-testa os endpoints conhecidos e varre os bundles JavaScript dos sites atrás de rotas de API.
-Ele roda no workflow com a opção **diagnóstico**, que também publica o log da coleta no branch `diagnostico`.
-
-## Rodando localmente
-
-```bash
-pip install -r requirements.txt
-python -m pytest -q
-python -m coletor.pipeline            # --tfidf para rodar sem baixar o modelo de embeddings
-```
-
-Variáveis opcionais: `GITHUB_TOKEN` (fonte GitHub), `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` (gravação no banco).
-
-## Stack
-
-Python · fastembed (ONNX) · scikit-learn · GitHub Actions · Supabase (Postgres) · Next.js + Vercel (fase 2)
+**Segurança:** tudo atrás de login (cookie assinado), segredos só nas variáveis, o navegador nunca fala com o
+banco, backup cifrado a cada coleta, testes de ponta a ponta a cada mudança. A conta do LinkedIn de ninguém é
+automatizada: os posts vêm de um serviço que busca sem login, ou da extensão quando você clica.

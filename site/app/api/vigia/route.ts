@@ -11,11 +11,17 @@ import { iguais } from "@/lib/sessao";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REPO = process.env.GITHUB_REPO ?? "GabrielProzin/busca_vagas";
+// O repositório vem das variáveis de sistema da Vercel (projeto ligado ao GitHub); GITHUB_REPO sobrescreve.
+const REPO =
+  process.env.GITHUB_REPO ??
+  (process.env.VERCEL_GIT_REPO_OWNER && process.env.VERCEL_GIT_REPO_SLUG
+    ? `${process.env.VERCEL_GIT_REPO_OWNER}/${process.env.VERCEL_GIT_REPO_SLUG}`
+    : "");
 
 async function disparar(): Promise<string | null> {
   const token = process.env.GITHUB_DISPATCH_TOKEN;
   if (!token) return "GITHUB_DISPATCH_TOKEN não configurado na Vercel";
+  if (!REPO) return "não sei qual é o repositório: defina GITHUB_REPO (dono/nome) na Vercel";
   const r = await fetch(`https://api.github.com/repos/${REPO}/actions/workflows/coleta.yml/dispatches`, {
     method: "POST",
     headers: {

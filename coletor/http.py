@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import time
 
 import requests
@@ -10,7 +11,9 @@ from urllib3.util.retry import Retry
 
 log = logging.getLogger(__name__)
 
-USER_AGENT = "busca_vagas/0.1 (+https://github.com/GabrielProzin/busca_vagas)"
+# Identifica o robô para os sites (com o repositório de quem roda, quando estiver no GitHub Actions).
+_REPO = os.getenv("GITHUB_REPOSITORY")
+USER_AGENT = f"busca_vagas/0.1 (+https://github.com/{_REPO})" if _REPO else "busca_vagas/0.1"
 
 
 class Http:

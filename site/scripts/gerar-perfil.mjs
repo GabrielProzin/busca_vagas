@@ -13,6 +13,11 @@ const preferencias = parse(readFileSync(join(raiz, "config", "preferencias.yaml"
 
 const dados = {
   nome: perfil.nome,
+  nomeCurto: perfil.nome_curto ?? perfil.nome,
+  cargo: perfil.cargo ?? "",
+  experienciaResumo: perfil.experiencia_resumo ?? "o que venho fazendo na área",
+  regiao: preferencias?.localizacao?.rotulo ?? "",
+  area: preferencias?.area_rotulo ?? "",
   titulo: perfil.titulo,
   cidade: perfil.cidade,
   links: perfil.links,

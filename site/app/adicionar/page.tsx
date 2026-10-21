@@ -1,4 +1,5 @@
 import Moldura from "@/components/Moldura";
+import { PERFIL } from "@/lib/gerado/perfil";
 import Icone from "@/components/Icone";
 import FormAdicionar from "@/components/FormAdicionar";
 
@@ -12,7 +13,7 @@ const BUSCAS = [
   { rotulo: "BI / Power BI", q: '("analista de BI" OR "power bi") (currículo OR CV) (email OR "e-mail")' },
   { rotulo: "Engenharia de dados", q: '("engenheiro de dados" OR "engenharia de dados") (júnior OR jr) (currículo OR CV)' },
   { rotulo: "Ciência de dados", q: '("cientista de dados" OR "ciência de dados") (júnior OR jr) (currículo OR CV)' },
-  { rotulo: "Dados em Goiânia", q: '(dados OR BI) Goiânia vaga (currículo OR CV)' },
+  ...(PERFIL.regiao ? [{ rotulo: `Dados em ${PERFIL.regiao}`, q: `(dados OR BI) ${PERFIL.regiao} vaga (currículo OR CV)` }] : []),
 ];
 
 function urlLinkedIn(q: string): string {
@@ -40,7 +41,7 @@ export default function PaginaAdicionar() {
               <p className="dica">
                 Buscas prontas das últimas 24 horas. Abra uma, role a página por alguns segundos para carregar os posts e
                 clique no <b>ícone da extensão</b>: ela manda de uma vez os posts da tela que têm email e cara de vaga, e só
-                entram as júnior de dados no seu local. Pode rolar mais e clicar de novo; o que já foi enviado não repete.
+                entram as vagas {PERFIL.area} no seu local. Pode rolar mais e clicar de novo; o que já foi enviado não repete.
               </p>
               <p className="dica">A busca automática da coleta já faz algo parecido duas vezes por dia; isto é para quando você quiser mais.</p>
               <div className="form-coluna" style={{ gap: 6, marginTop: 4 }}>

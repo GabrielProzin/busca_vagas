@@ -15,7 +15,7 @@ export default function Login() {
           </span>
           <div>
             <h1>Entrar</h1>
-            <p className="dica">Radar pessoal de vagas júnior de dados.</p>
+            <p className="dica">Radar pessoal de vagas.</p>
           </div>
           <label htmlFor="senha" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             Senha

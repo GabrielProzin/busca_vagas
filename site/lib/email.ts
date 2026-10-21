@@ -1,5 +1,6 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { PERFIL } from "./gerado/perfil";
 
 // Envio pelo Gmail do próprio usuário (SMTP + senha de app). Sai da conta dele
 // e fica na pasta Enviados, como um email escrito à mão.
@@ -25,7 +26,7 @@ export async function enviarEmail(m: Mensagem): Promise<string> {
   if (!usuario || !senha) throw new Error("GMAIL_USER e GMAIL_APP_PASSWORD não configurados na Vercel.");
   const t = nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: usuario, pass: senha } });
   const info = await t.sendMail({
-    from: { name: "Gabriel Mendes", address: usuario },
+    from: { name: PERFIL.nomeCurto, address: usuario },
     to: m.para,
     subject: m.assunto,
     text: m.corpo,

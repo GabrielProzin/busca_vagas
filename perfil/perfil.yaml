@@ -1,9 +1,13 @@
-# Perfil do candidato usado no ranking (e, na fase 3, na geração dos emails).
-# Sem telefone/email aqui: o repositório é público. Contato fica nas variáveis de ambiente.
+# Perfil do candidato: base da nota das vagas e dos emails (assinatura, remetente, modelo pronto).
+# Sem telefone/email aqui: o contato fica nas variáveis de ambiente (CONTATO_TELEFONE, GMAIL_USER).
 
-nome: Gabriel Mendes Alexandrino
+nome: Gabriel Mendes Alexandrino       # nome completo (assinatura dos emails)
+nome_curto: Gabriel Mendes             # como aparece no remetente e no assunto ("Candidatura: <cargo> – Gabriel Mendes")
+cargo: Cientista de Dados              # linha abaixo do nome na assinatura
 titulo: Cientista de Dados | Python | SQL | Power BI | Apache Airflow
 cidade: Goiânia, GO
+# Completa a frase do email pronto: "o trabalho tem muito a ver com ___."
+experiencia_resumo: o que fiz como cientista de dados na Pacto Soluções
 links:
   github: https://github.com/GabrielProzin
   linkedin: https://linkedin.com/in/gabrielmendesurl

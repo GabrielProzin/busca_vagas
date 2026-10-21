@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Moldura from "@/components/Moldura";
+import { PERFIL } from "@/lib/gerado/perfil";
 import Nota from "@/components/Nota";
 import Icone from "@/components/Icone";
 import FiltroCargo from "@/components/FiltroCargo";
@@ -60,7 +61,7 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
     <Moldura
       atual="/"
       titulo="Vagas"
-      subtitulo="Júnior de dados, remotas ou em Goiânia, ordenadas pela nota contra o seu currículo."
+      subtitulo={`Vagas ${PERFIL.area}${PERFIL.regiao ? `, remotas ou em ${PERFIL.regiao}` : ""}, ordenadas pela nota contra o seu currículo.`}
       acoes={
         <nav className="segmentado" aria-label="Listas">
           <Link href={link({ lista: "", trilha: "", modalidade: "", email: "" })} aria-current={lista === "principal"}>

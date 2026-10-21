@@ -14,6 +14,8 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 
+from .http import USER_AGENT
+
 log = logging.getLogger(__name__)
 
 _EMAIL = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
@@ -27,7 +29,7 @@ RH = {"rh", "recrutamento", "recrutamentoeselecao", "recrutamento.selecao", "sel
       "trabalhe.conosco", "gente", "gentegestao", "pessoas", "people", "hr", "recruiting", "recruitment", "rhvagas", "rh.vagas"}
 GERAL = {"contato", "contact", "atendimento", "faleconosco", "fale.conosco", "contato.site"}
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; busca_vagas/1.0; +https://github.com/GabrielProzin/busca_vagas)",
+UA = {"User-Agent": f"Mozilla/5.0 (compatible; {USER_AGENT})",
       "Accept": "text/html,application/xhtml+xml"}
 
 

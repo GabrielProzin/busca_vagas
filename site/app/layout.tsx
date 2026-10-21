@@ -1,9 +1,10 @@
+import { PERFIL } from "@/lib/gerado/perfil";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "busca_vagas",
-  description: "Radar pessoal de vagas júnior de dados",
+  description: `Radar pessoal de vagas ${PERFIL.area}`,
   robots: { index: false, follow: false },
   appleWebApp: { capable: true, title: "Vagas", statusBarStyle: "default" },
 };

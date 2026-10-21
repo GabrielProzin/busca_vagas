@@ -1,5 +1,8 @@
 # Preferências da busca. Tudo que muda o que entra (ou não) na lista diária fica aqui.
 
+# Como o tipo de vaga aparece nos textos do site ("vagas júnior de dados").
+area_rotulo: júnior de dados
+
 # Termos usados para buscar vagas nas fontes. Cada termo vira uma busca separada.
 termos_busca:
   - analista de dados
@@ -51,6 +54,7 @@ empresas_bloqueadas: []
 
 # Localização. Remoto vale para o Brasil todo; híbrido/presencial só nestas cidades.
 localizacao:
+  rotulo: Goiânia            # como a sua região aparece nos textos do site ("remotas ou em Goiânia")
   aceita_remoto: true
   cidades_presencial_hibrido: ['goiania', 'aparecida de goiania', 'senador canedo', 'trindade']
   estado: GO

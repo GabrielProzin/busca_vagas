@@ -10,8 +10,15 @@ import { ErroIA, emailModelo, followupModelo, gerarEmail, gerarFollowup } from "
 import { enviarEmail, erroGmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
 import { capturar } from "@/lib/captura";
+import { PERFIL } from "@/lib/gerado/perfil";
 import { COOKIE_SESSAO, DURACAO_S, criarSessao, senhaCorreta, sessaoValida } from "@/lib/sessao";
 import type { Status } from "@/lib/tipos";
+
+/** "Gabriel_Mendes_Cientista_de_Dados.pdf": nome e cargo do perfil, sem acentos nem espaços. */
+function nomeDoPdf(): string {
+  const base = [PERFIL.nomeCurto, PERFIL.cargo].filter(Boolean).join(" ");
+  return `${base.normalize("NFD").replace(/\p{M}/gu, "").replace(/[^A-Za-z0-9]+/g, "_").replace(/^_|_$/g, "") || "Curriculo"}.pdf`;
+}
 
 const STATUS_VALIDOS: Status[] = ["nova", "descartada", "aplicada", "enviada", "respondeu", "entrevista", "recusada", "proposta"];
 
@@ -120,7 +127,7 @@ export async function enviarCandidatura(_: EstadoEmail, form: FormData): Promise
   if (!reserva.ok) return { ...devolver, erro: "Este email já foi enviado (ou está saindo agora em outra aba)." };
   let messageId: string;
   try {
-    messageId = await enviarEmail({ para, assunto, corpo, anexo: cv, nomeAnexo: "Gabriel_Mendes_Cientista_de_Dados.pdf" });
+    messageId = await enviarEmail({ para, assunto, corpo, anexo: cv, nomeAnexo: nomeDoPdf() });
   } catch (e) {
     const a = reserva.anterior;
     await salvarCandidatura(id, { status: a?.status && a.status !== "enviada" ? a.status : "nova", enviada_em: a?.enviada_em ?? null });

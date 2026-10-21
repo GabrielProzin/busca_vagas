@@ -1,3 +1,4 @@
+import { PERFIL } from "@/lib/gerado/perfil";
 import type { MetadataRoute } from "next";
 
 // Permite "Adicionar à tela inicial" no celular: abre como app, sem a barra do navegador.
@@ -5,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "busca_vagas",
     short_name: "Vagas",
-    description: "Radar pessoal de vagas júnior de dados",
+    description: `Radar pessoal de vagas ${PERFIL.area}`,
     start_url: "/",
     display: "standalone",
     background_color: "#f4f6f8",
