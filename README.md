@@ -96,11 +96,38 @@ Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo
 
 ## A extensão do Chrome
 
-Os emails de recrutador quase sempre estão em **posts** do LinkedIn ("envie o CV para fulana@empresa.com"). A coleta
-automática já busca esses posts duas vezes por dia; a extensão é para quando você quiser mais, direto da sua tela.
-Ela só age quando você clica: não rola a página, não clica em nada e não faz nenhum acesso extra ao LinkedIn.
+### Por que ela existe
 
-**Instalar (uma vez)**
+**O problema.** A maior vantagem deste sistema é mandar o currículo **direto para o email de quem está contratando**,
+em vez de cair na mesma fila de centenas de candidatos de um formulário. Só que:
+
+- As plataformas de vagas (Gupy, Sólides, Remotar…) quase nunca mostram email: a candidatura é pelo formulário delas.
+- Os emails de recrutador aparecem quase só em **posts do LinkedIn** ("estamos contratando… envie o CV para
+  fulana@empresa.com"). É daí que vem o diferencial de serviços como o DevScout.
+- O LinkedIn não tem uma forma oficial de buscar posts, e automatizar a sua própria conta (um robô logado rolando o
+  feed) é proibido pelas regras dele e pode **restringir ou bloquear a sua conta**. Não fazemos isso.
+- Os buscadores (Google etc.) quase não mostram esses posts, e a busca automática que usamos (um serviço que lê
+  posts públicos sem login, pelo Apify) tem cota no plano grátis: rende algumas vagas com email por dia, não todas.
+  Numa medição real, só cerca de 1 em cada 10 posts de vaga tinha email.
+
+**Como a extensão resolve (em parte).** Ela usa o que você **já está vendo**, do jeito que qualquer pessoa vê: você
+abre uma busca de posts no LinkedIn, rola a página e clica no ícone. A extensão lê os posts que estão na tela, separa
+os que têm email e cara de vaga (deixa de fora quem está procurando emprego) e manda para o seu site, onde a IA tira
+cargo, empresa e local, dá a nota e guarda só o que combina com você, já com o email do recrutador pronto para usar.
+Ela não navega, não rola, não clica e não faz nenhum acesso extra ao LinkedIn.
+
+**Por que "em parte".**
+
+- Não é automática: depende de você abrir a busca e rolar (uns 2 minutos por dia rendem bem).
+- Só pega o que carregou na tela. Posts muito longos podem chegar cortados no "…ver mais".
+- O LinkedIn muda a página de vez em quando; a extensão tem um plano B, mas pode precisar de ajuste.
+- Ler a própria tela é bem diferente de um robô, mas as regras do LinkedIn não aprovam nenhum tipo de coleta.
+  Use com moderação, como usaria o site normalmente.
+
+Juntas, a busca automática (duas vezes por dia) e a extensão (quando você quiser mais) trazem bem mais vagas com email
+do que qualquer uma sozinha, sem nenhum robô usando a sua conta.
+
+### Instalar (uma vez)
 
 1. No seu repositório no GitHub: **Code → Download ZIP** e descompacte. A extensão é a pasta `extensao`.
 2. No Chrome, abra `chrome://extensions`, ligue o **Modo do desenvolvedor** (canto superior direito) e clique em
@@ -108,7 +135,7 @@ Ela só age quando você clica: não rola a página, não clica em nada e não f
 3. Clique no ícone da extensão (fixe-a na barra pelo ícone de quebra-cabeça). Nas opções, informe o endereço do seu site e o
    mesmo valor do `CAPTURA_TOKEN` que está na Vercel. Salvar.
 
-**Usar**
+### Usar
 
 - **Vários posts de uma vez (LinkedIn):** no site, em **Adicionar vaga**, abra uma das buscas prontas de posts
   (últimas 24h). Role a página por alguns segundos para carregar e **clique no ícone da extensão**. Ela manda os posts da
