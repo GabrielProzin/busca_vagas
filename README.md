@@ -45,6 +45,25 @@ supabase/schema.sql        tabelas vagas, candidaturas, execucoes (RLS ligado)
 tests/                     testes dos filtros e do ranking
 ```
 
+## O site (`site/`)
+
+Next.js 16 na Vercel, privado (login por senha, cookie assinado com HMAC; o `proxy.ts` bloqueia tudo sem sessão).
+O navegador nunca fala com o banco: as páginas e as Server Functions leem e gravam no Supabase pelo servidor,
+com a chave secreta.
+
+- **Vagas**: listas principal e vale tentar, filtros por cargo e remoto, nota com a barra de composição
+  (semântica, habilidades, trilha) e ações "Já apliquei" / "Descartar".
+- **Vaga**: motivos da nota, descrição completa, etapa da candidatura e anotações.
+- **Candidaturas**: quadro por etapa (aplicada, email enviado, respondeu, entrevista, proposta, não seguiu).
+- **Painel**: números da última coleta, por que as vagas ficaram de fora, histórico das coletas.
+
+```bash
+cd site && cp .env.example .env.local   # preencha as variáveis
+npm install && npm run dev
+```
+
+Para desenvolver sem banco: `DEMO_ARQUIVO=../saida/vagas_AAAA-MM-DD.json` usa um JSON do coletor em memória.
+
 ## Quando uma fonte muda
 
 Sites de vagas mudam de API sem aviso (a Gupy trocou de rota em 2026). `scripts/sondar_fontes.py`
