@@ -21,6 +21,9 @@ const dados = {
   curriculo,
   // Nota mínima das vagas que entram no email de resumo (o painel mostra quantas chegaram).
   resumoNotaMinima: Number(preferencias?.resumo?.nota_minima ?? 85),
+  // Para a captura em lote descartar vaga presencial/híbrida fora daqui (mesma regra do coletor).
+  cidadesAceitas: preferencias?.localizacao?.cidades_presencial_hibrido ?? [],
+  notaMinimaPosts: Number(preferencias?.linkedin_posts?.nota_minima ?? 40),
 };
 
 mkdirSync(join(aqui, "..", "lib", "gerado"), { recursive: true });
