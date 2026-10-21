@@ -64,11 +64,19 @@ localizacao:
 # 2 buscas x 20 posts x 2 coletas por dia = ~2.400 posts/mês. Mude com cuidado.
 linkedin_posts:
   horas: 13                 # cada coleta olha só as últimas 13 horas (as duas coletas do dia não se repetem)
-  max_posts_por_busca: 20
+  max_posts_por_busca: 15
+  # Buscas curtas e simples: as booleanas (AND/OR) e as longas voltaram vazias no teste de 21/10.
+  # Rendimento medido numa semana de posts: "currículo + cargo" ~40% com email (poucos posts, baratos);
+  # "vaga engenheiro de dados" 15%; "vaga analista de dados/BI" ~5%. Sem email: "vaga power bi",
+  # "vaga cientista de dados", "analista de dados júnior".
+  # Estimativa: ~40 posts por coleta, ~2.400 por mês (dentro do crédito grátis de US$ 5).
   buscas:
-    # Máximo de 5 operadores (AND/OR) por busca, limite do ator.
-    - 'vaga AND (currículo OR curriculo) AND ("analista de dados" OR "analista de BI")'
-    - 'vaga AND (currículo OR curriculo) AND ("cientista de dados" OR "engenheiro de dados")'
+    - currículo analista de dados
+    - currículo analista de BI
+    - currículo cientista de dados
+    - currículo engenheiro de dados
+    - vaga engenheiro de dados
+    - vaga analista de dados
 
 # Ferramentas que, se forem requisito central e você não tiver, mandam a vaga
 # para a lista "vale tentar" em vez da lista principal.
