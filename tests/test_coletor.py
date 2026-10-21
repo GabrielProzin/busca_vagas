@@ -124,3 +124,14 @@ def test_saude_da_coleta():
     p = verificar_saude(quebrada, historico)
     assert any("gupy" in x for x in p) and any("média" in x for x in p) and any("TF-IDF" in x for x in p)
     assert not any("github" in x for x in p)  # fonte secundária vazia não é crítico
+
+
+def test_contato_so_emails_de_setor():
+    from coletor.contato import _classificar, _dominio
+
+    assert _dominio("www.empresa.com.br") == "empresa.com.br"
+    assert _classificar("rh@empresa.com.br", "empresa.com.br") == "rh"
+    assert _classificar("talentos.ti@empresa.com.br", "empresa.com.br") == "rh"
+    assert _classificar("maria.souza@empresa.com.br", "empresa.com.br") is None  # pessoa: nunca
+    assert _classificar("rh@outra.com.br", "empresa.com.br") is None  # outro domínio: nunca
+    assert _classificar("contato@empresa.com.br", "empresa.com.br") == "contato"

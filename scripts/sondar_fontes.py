@@ -1,15 +1,17 @@
-"""Sonda fontes de vagas: testa endpoints, procura rotas de API nos bundles JS e mostra o formato dos dados.
+"""Sonda fontes de vagas e a busca de email de RH (só para diagnóstico, fora da coleta).
 
 Uso (no Actions, modo diagnóstico): python scripts/sondar_fontes.py > saida/sondagem.txt
-Não faz parte da coleta; serve para quando uma fonte muda ou para avaliar uma fonte nova.
 """
 from __future__ import annotations
 
 import json
 import re
-from urllib.parse import urljoin
+import sys
+from pathlib import Path
 
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 UA = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36",
       "Accept": "application/json, text/html;q=0.9, */*;q=0.8", "Accept-Language": "pt-BR,pt;q=0.9"}
@@ -17,11 +19,11 @@ s = requests.Session()
 s.headers.update(UA)
 
 
-def chaves(d, prof=0, max_prof=2):
+def chaves(d, prof=0, max_prof=1):
     pad = "    " * prof
     if isinstance(d, dict):
         for k, v in list(d.items())[:40]:
-            amostra = "" if isinstance(v, (dict, list)) else repr(v)[:90]
+            amostra = "" if isinstance(v, (dict, list)) else repr(v)[:100]
             print(f"{pad}{k}: {type(v).__name__} {amostra}")
             if prof < max_prof and isinstance(v, (dict, list)):
                 chaves(v, prof + 1, max_prof)
@@ -30,92 +32,76 @@ def chaves(d, prof=0, max_prof=2):
         chaves(d[0], prof + 1, max_prof)
 
 
-def get(u, **kw):
-    print("\n#", u, kw.get("params") or "")
+def j(u, **kw):
     try:
         r = s.get(u, timeout=25, **kw)
+        return r.status_code, (r.json() if "json" in r.headers.get("content-type", "") else r.text[:300])
     except Exception as e:
-        print("  ERRO", e)
-        return None
-    print(f"  -> {r.status_code} {r.headers.get('content-type', '')} {len(r.content)}B final={r.url}")
-    return r
+        return 0, str(e)
 
 
-def varrer_bundles(pagina: str, termos: list[str], max_js: int = 80) -> None:
-    """Procura nos JS da página strings de API que contenham algum dos termos."""
-    r = get(pagina)
-    if r is None:
-        return
-    srcs = set(re.findall(r'(?:src|href)="([^"]+?\.js)"', r.text))
-    srcs |= set(re.findall(r'(/_next/static/chunks/[A-Za-z0-9_\-/.\[\]%]+?\.js)', r.text))
-    srcs |= set(re.findall(r'(static/js/[A-Za-z0-9_\-.]+\.js)', r.text))
-    print(f"  {len(srcs)} scripts")
-    achados: dict[str, str] = {}
-    for src in list(srcs)[:max_js]:
+print("=" * 20, "SOLIDES: parâmetro de busca")
+for params in [{"title": "analista de dados"}, {"search": "analista de dados"}, {"jobTitle": "analista de dados"},
+               {"q": "analista de dados"}, {"keyword": "analista de dados"}, {"title": "analista de dados", "page": 2},
+               {"title": "dados", "locations": "Goiânia"}, {"title": "analista de dados", "homeOffice": "true"}]:
+    st, d = j("https://vagas.solides.com.br/api/vacancies", params=params)
+    if isinstance(d, dict):
+        print(params, st, "count", d.get("count"), "pages", d.get("totalPages"), [x.get("title") for x in d.get("data", [])[:6]])
+    else:
+        print(params, st, d)
+st, d = j("https://vagas.solides.com.br/api/vacancies", params={"title": "analista de dados"})
+if isinstance(d, dict) and d.get("data"):
+    x = d["data"][0]
+    for k in ("state", "city", "address", "salary", "seniority", "occupationAreas", "hardSkills", "recruitmentContractType"):
+        print(f"  {k}:", json.dumps(x.get(k), ensure_ascii=False)[:250])
+    print("  slug/id/redirect:", x.get("slug"), x.get("id"), x.get("redirectLink"))
+    for u in [f"https://{x.get('slug')}.vagas.solides.com.br/vaga/{x.get('id')}", f"https://vagas.solides.com.br/vaga/{x.get('id')}"]:
         try:
-            js = s.get(urljoin(r.url, src if src.startswith(("/", "http")) else "/" + src), timeout=20).text
-        except Exception:
-            continue
-        for m in re.finditer(r'["\'`]((?:https?:)?//[a-zA-Z0-9.\-]+(?:/[A-Za-z0-9_\-/.{}$:]*)?|/[a-zA-Z0-9_\-]+/[A-Za-z0-9_\-/.{}$:]*)["\'`]', js):
-            alvo = m.group(1)
-            if any(t in alvo.lower() for t in termos) and alvo not in achados:
-                achados[alvo] = js[max(0, m.start() - 80): m.end() + 80].replace("\n", " ")
-    for a, ctx in list(achados.items())[:60]:
-        print("   ", a, "  ::", ctx[:200])
-
-
-def mostrar_json(r, n=1):
-    if r is not None and r.ok and "json" in r.headers.get("content-type", ""):
-        try:
-            chaves(r.json())
+            r = s.get(u, timeout=20)
+            print("  ", u, r.status_code, r.url, len(r.text))
         except Exception as e:
-            print("  json inválido", e)
-    elif r is not None:
-        print("  ", re.sub(r"\s+", " ", r.text[:600]))
+            print("  ", u, e)
 
+print("\n" + "=" * 20, "TRAMPOS: detalhe")
+st, d = j("https://trampos.co/api/v2/opportunities", params={"tr": "analista de dados"})
+if isinstance(d, dict) and d.get("opportunities"):
+    print("  títulos:", [o["name"] for o in d["opportunities"][:12]], "total", d.get("pagination"))
+    st2, det = j(f"https://trampos.co/api/v2/opportunities/{d['opportunities'][0]['id']}")
+    print("  detalhe", st2)
+    if isinstance(det, dict):
+        chaves(det, 0, 2)
 
-print("=" * 20, "SOLIDES")
-for u in ["https://apigw.solides.com.br/jobs/v3/home/vacancy?title=analista%20de%20dados&page=1",
-          "https://apigw.solides.com.br/jobs/v2/home/vacancy?title=analista%20de%20dados&page=1",
-          "https://vagas.solides.com.br/api/vacancies?title=analista%20de%20dados",
-          "https://vagas.solides.com.br/api/vagas?search=analista%20de%20dados"]:
-    mostrar_json(get(u))
-varrer_bundles("https://vagas.solides.com.br/vagas/todos/analista-de-dados", ["vacanc", "vaga", "job", "apigw", "api."])
+print("\n" + "=" * 20, "GUPY: empresa e careerPage")
+st, d = j("https://portal.gupy.io/api/job-search/jobs", params={"jobName": "analista de dados", "limit": 1})
+if isinstance(d, dict):
+    url = d["data"][0]["jobUrl"]
+    r = s.get(url, headers={"Accept": "text/html"}, timeout=25)
+    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', r.text, re.S)
+    job = json.loads(m.group(1))["props"]["pageProps"]["job"]
+    print("  company:", json.dumps(job.get("company"), ensure_ascii=False)[:600])
+    print("  careerPage:", json.dumps(job.get("careerPage"), ensure_ascii=False)[:600])
 
-print("\n" + "=" * 20, "INHIRE")
-for u in ["https://api.inhire.app/job-posts/public/search?query=dados",
-          "https://api.inhire.app/job-posts/public/pages?search=dados"]:
-    mostrar_json(get(u))
-varrer_bundles("https://inhire.app/vagas?search=dados", ["job", "vaga", "api."])
-
-print("\n" + "=" * 20, "TRAMPOS")
-for u in ["https://trampos.co/api/v2/opportunities?tr=dados&page=1", "https://trampos.co/api/opportunities?tr=dados"]:
-    mostrar_json(get(u))
-r = get("https://trampos.co/oportunidades?tr=analista%20de%20dados")
-if r is not None and r.ok:
-    print("  links /oportunidades/:", re.findall(r'href="(/oportunidades/\d+[^"]*)"', r.text)[:8])
-    print("  json embutido:", [m[:200] for m in re.findall(r'(\{"opportunit[^<]{0,400})', r.text)[:2]])
-varrer_bundles("https://trampos.co/oportunidades?tr=dados", ["opportun", "api"])
-
-print("\n" + "=" * 20, "GUPY: dados da empresa na página da vaga")
-r = get("https://portal.gupy.io/api/job-search/jobs", params={"jobName": "analista de dados", "limit": 2})
-if r is not None and r.ok:
-    job = r.json()["data"][0]
-    p = get(job["jobUrl"], headers={"Accept": "text/html"})
-    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', p.text, re.S) if p is not None else None
-    if m:
-        pp = json.loads(m.group(1))["props"]["pageProps"]
-        print("  pageProps:", list(pp.keys()))
-        for k in ("job", "careerPage", "company"):
-            if isinstance(pp.get(k), dict):
-                print(f"  {k}:")
-                chaves({kk: vv for kk, vv in pp[k].items() if kk not in ("description", "responsibilities", "prerequisites")}, 2, 1)
-        print("  urls no HTML:", sorted(set(u for u in re.findall(r'https?://[a-zA-Z0-9.\-]+', p.text) if "gupy" not in u))[:20])
-        print("  emails no HTML:", sorted(set(re.findall(r"[\w.+-]+@[\w-]+\.[\w.]+", p.text)))[:10])
-
-print("\n" + "=" * 20, "TESTE: email de RH no site da empresa")
-for site in ["https://www.simplesdental.com/", "https://www.piracanjuba.com.br/", "https://www.spread.com.br/"]:
-    for caminho in ["", "contato", "trabalhe-conosco", "carreiras"]:
-        r = get(urljoin(site, caminho))
-        if r is not None and r.ok:
-            print("  emails:", sorted(set(e.lower() for e in re.findall(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", r.text) if not e.endswith((".png", ".jpg", ".webp", ".svg"))))[:10])
+print("\n" + "=" * 20, "COBERTURA DE EMAIL: empresas das vagas reais")
+try:
+    from coletor.contato import buscar_email_empresa
+    sites = []
+    for termo in ("analista de dados", "analista de bi", "engenheiro de dados"):
+        st, d = j("https://portal.gupy.io/api/job-search/jobs", params={"jobName": termo, "limit": 6})
+        for x in (d.get("data", []) if isinstance(d, dict) else []):
+            try:
+                r = s.get(x["jobUrl"], headers={"Accept": "text/html"}, timeout=20)
+                m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', r.text, re.S)
+                job = json.loads(m.group(1))["props"]["pageProps"]["job"]
+                site = (job.get("careerPage") or {}).get("companySite") or (job.get("company") or {}).get("site") or ""
+                sites.append((x.get("careerPageName"), site))
+            except Exception as e:
+                sites.append((x.get("careerPageName"), f"erro {e}"))
+    achou = 0
+    for nome, site in sites:
+        r = buscar_email_empresa(site) if site.startswith("http") else None
+        achou += bool(r)
+        print(f"  {nome!r:40} {site!r:40} -> {r}")
+    print(f"  cobertura: {achou}/{len(sites)}")
+except Exception as e:
+    import traceback
+    traceback.print_exc()
