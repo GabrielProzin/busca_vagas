@@ -20,7 +20,8 @@ from . import alerta
 from . import resumo as resumo_email
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
-from .fontes import github_issues, gupy, remotar
+from .contato import buscar_email_empresa
+from .fontes import github_issues, gupy, remotar, solides
 from .http import Http
 from .modelos import Vaga
 from .ranking import Embedder, Ranker
@@ -90,6 +91,9 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     rem = remotar.coletar(http, termos)
     coletadas["remotar"] = len(rem)
     vagas += rem
+    sol = solides.coletar(http, cfg.get("termos_solides", ["dados", "bi", "data"]))
+    coletadas["solides"] = len(sol)
+    vagas += sol
     if usar_github:
         gh = github_issues.coletar(http, termos, dias=filtros.max_dias)
         coletadas["github"] = len(gh)
@@ -133,6 +137,20 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         if v.lista == "descartada":
             descartes["nota abaixo do mínimo"] += 1
     aprovadas = sorted([v for v in restantes if v.lista != "descartada"], key=lambda v: -(v.nota or 0))
+
+    # Vagas aprovadas sem email: procura um email público de RH no site oficial da empresa.
+    achados = 0
+    for v in aprovadas:
+        if v.emails or not v.site_empresa:
+            continue
+        r = buscar_email_empresa(v.site_empresa)
+        if r:
+            v.emails = [r["email"]]
+            v.email_origem = f"site_{r['tipo']}"
+            v.motivos.append(f"Email {'de RH' if r['tipo'] == 'rh' else 'de contato geral'} encontrado no site da empresa ({r['pagina']})")
+            achados += 1
+    com_email = sum(bool(v.emails) for v in aprovadas)
+    log.info("contato: %d emails achados em sites; %d de %d vagas com email", achados, com_email, len(aprovadas))
 
     execucao = {
         "duracao_s": round(time.monotonic() - inicio, 1),

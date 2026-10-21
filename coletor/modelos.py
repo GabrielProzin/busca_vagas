@@ -20,6 +20,8 @@ class Vaga:
     emails: list[str] = field(default_factory=list)
     termo_busca: str | None = None
     tags: list[str] = field(default_factory=list)
+    site_empresa: str | None = None
+    email_origem: str | None = None  # vaga (estava no texto) | site_rh | site_contato
 
     # Preenchidos pelos filtros/ranking
     trilha: str | None = None
@@ -44,5 +46,7 @@ class Vaga:
         d = asdict(self)
         d["id"] = self.id
         d["email_contato"] = self.email_contato
+        if self.emails and not self.email_origem:
+            d["email_origem"] = "vaga"
         d["publicada_em"] = self.publicada_em.isoformat() if self.publicada_em else None
         return d

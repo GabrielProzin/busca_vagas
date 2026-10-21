@@ -70,3 +70,6 @@ revoke all on vagas, candidaturas, execucoes from anon, authenticated;
 
 -- 21/10/2026: resumo direto da vaga gerado pela IA (o site guarda aqui para não gerar de novo).
 alter table vagas add column if not exists resumo jsonb;
+
+-- 21/10/2026: de onde veio o email do recrutador: vaga (estava no texto) | site_rh | site_contato
+alter table vagas add column if not exists email_origem text;

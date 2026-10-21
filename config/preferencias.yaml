@@ -14,6 +14,9 @@ termos_busca:
   - data engineer
   - power bi
 
+# Sólides: a busca por título casa qualquer palavra, então usamos termos curtos e específicos.
+termos_solides: [dados, bi, data, analytics]
+
 # Trilhas de cargo, na ordem de prioridade. O título da vaga é classificado
 # na primeira trilha cujo padrão (regex, sem acento, minúsculo) bater.
 trilhas:

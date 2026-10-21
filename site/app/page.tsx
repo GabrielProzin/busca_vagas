@@ -3,12 +3,12 @@ import Topo from "@/components/Topo";
 import Nota from "@/components/Nota";
 import { alterarStatus } from "./acoes";
 import { listarExecucoes, listarVagas } from "@/lib/db";
-import { fonte, habilidade, idUrl, local, quando } from "@/lib/formato";
+import { fonte, habilidade, idUrl, local, origemEmail, quando } from "@/lib/formato";
 import type { Vaga } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
-type Busca = { lista?: string; trilha?: string; modalidade?: string };
+type Busca = { lista?: string; trilha?: string; modalidade?: string; email?: string };
 
 export default async function PaginaVagas({ searchParams }: { searchParams: Promise<Busca> }) {
   const busca = await searchParams;
@@ -34,7 +34,10 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
   const daLista = novas.filter((v) => v.lista === lista);
   const trilhas = [...new Set(daLista.map((v) => v.trilha).filter(Boolean))] as string[];
   const visiveis = daLista.filter(
-    (v) => (!busca.trilha || v.trilha === busca.trilha) && (!busca.modalidade || v.modalidade === busca.modalidade),
+    (v) =>
+      (!busca.trilha || v.trilha === busca.trilha) &&
+      (!busca.modalidade || v.modalidade === busca.modalidade) &&
+      (!busca.email || Boolean(v.email_contato)),
   );
 
   const link = (mudar: Partial<Busca>) => {
@@ -75,6 +78,9 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
             {trilhas.map((t) => (
               <Link key={t} href={link({ trilha: t })} aria-current={busca.trilha === t}>{t}</Link>
             ))}
+            <Link href={link({ email: busca.email ? "" : "1" })} aria-current={Boolean(busca.email)}>
+              Só com email ({daLista.filter((v) => v.email_contato).length})
+            </Link>
             <Link href={link({ modalidade: busca.modalidade === "remoto" ? "" : "remoto" })} aria-current={busca.modalidade === "remoto"}>
               Só remoto
             </Link>
@@ -118,7 +124,7 @@ function ItemVaga({ vaga: v }: { vaga: Vaga }) {
         </div>
         {resumo ? <p className="motivo">{resumo}</p> : null}
         <div className="etiquetas">
-          {v.email_contato ? <span className="etiqueta email">Tem email do recrutador</span> : null}
+          {v.email_contato ? <span className="etiqueta email">{origemEmail(v.email_origem)}</span> : null}
           {v.habilidades_ok.slice(0, 5).map((h) => (
             <span key={h} className="etiqueta">{habilidade(h)}</span>
           ))}

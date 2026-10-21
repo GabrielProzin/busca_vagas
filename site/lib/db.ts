@@ -53,8 +53,9 @@ function comCandidatura(v: Vaga & { candidatura?: Candidatura | Candidatura[] | 
 }
 
 // ---------------------------------------------------------------- leitura
-const CAMPOS_LISTA =
-  "id,fonte,titulo,empresa,url,cidade,estado,modalidade,publicada_em,email_contato,emails,trilha,nivel,nota,lista,motivos,habilidades_ok,habilidades_faltando,componentes,primeira_vez_em,atualizada_em";
+// "*" em vez de colunas fixas: colunas novas (email_origem, resumo) aparecem quando existirem no banco,
+// sem quebrar enquanto o ALTER não foi rodado. A descrição vem junto; o volume é pequeno.
+const CAMPOS_LISTA = "*";
 
 /** Vagas vistas pela coleta nos últimos `dias` dias (as outras provavelmente fecharam). */
 export async function listarVagas(dias = 3): Promise<Vaga[]> {

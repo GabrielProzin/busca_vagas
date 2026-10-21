@@ -10,7 +10,7 @@ import { buscarVaga } from "@/lib/db";
 import { infoCurriculo } from "@/lib/arquivos";
 import { gmailConfigurado } from "@/lib/email";
 import { iaConfigurada } from "@/lib/ia";
-import { fonte, habilidade, local, naFonte, quando } from "@/lib/formato";
+import { fonte, habilidade, local, naFonte, origemEmail, quando } from "@/lib/formato";
 import { ETAPAS, ROTULO_STATUS } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +55,12 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
             ) : null}
 
             <h2>{temEmail ? "Email para o recrutador" : "Candidatura por email"}</h2>
+            {v.email_origem === "site_rh" || v.email_origem === "site_contato" ? (
+              <p className="dica" style={{ marginBottom: 12, maxWidth: "70ch" }}>
+                A vaga não trazia email. Este endereço é {v.email_origem === "site_rh" ? "o de RH" : "o de contato geral"} publicado no site da empresa,
+                não o do recrutador desta vaga. Vale enviar e também se candidatar pelo link.
+              </p>
+            ) : null}
             {!temEmail ? (
               <p className="dica" style={{ marginBottom: 12, maxWidth: "70ch" }}>
                 Essa vaga não trouxe email: o normal é se candidatar pelo link. Se você achar o email do recrutador, preencha o campo Para e envie por aqui.
@@ -80,7 +86,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
             <Nota vaga={v} grande />
             <p className="status-atual">Situação: <b>{ROTULO_STATUS[status]}</b></p>
             {v.email_contato ? (
-              <p className="status-atual">Email do recrutador: <b>{v.email_contato}</b></p>
+              <p className="status-atual">{origemEmail(v.email_origem)}: <b>{v.email_contato}</b></p>
             ) : null}
             {v.url ? (
               <a className="botao primario" href={v.url} target="_blank" rel="noopener noreferrer">Abrir vaga {naFonte(v.fonte)}</a>

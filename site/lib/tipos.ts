@@ -52,6 +52,8 @@ export type Vaga = {
   publicada_em: string | null;
   email_contato: string | null;
   emails: string[];
+  // De onde veio o email: "vaga" (estava no texto) | "site_rh" | "site_contato" (site oficial da empresa)
+  email_origem?: string | null;
   trilha: string | null;
   nivel: string | null;
   nota: number | null;

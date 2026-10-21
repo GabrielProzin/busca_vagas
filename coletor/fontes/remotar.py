@@ -49,6 +49,7 @@ def _para_vaga(j: dict, termo: str) -> Vaga:
         emails=extrair_emails(descricao),
         termo_busca=termo,
         tags=[t for t in tags if t],
+        site_empresa=((j.get("company") or {}).get("link") or None),
     )
 
 

@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 _COLUNAS_VAGA = ["id", "fonte", "titulo", "empresa", "url", "descricao", "cidade", "estado", "modalidade",
                  "publicada_em", "email_contato", "emails", "trilha", "nivel", "nota", "lista", "motivos",
-                 "habilidades_ok", "habilidades_faltando", "componentes", "termo_busca"]
+                 "habilidades_ok", "habilidades_faltando", "componentes", "termo_busca", "email_origem"]
 
 
 def salvar_json(vagas: list[Vaga], execucao: dict, pasta: str = "saida") -> Path:
@@ -63,8 +63,15 @@ class Supabase:
             linhas.append(linha)
         # "primeira_vez_em" fica de fora do payload, então o upsert preserva o valor original.
         for i in range(0, len(linhas), 200):
+            lote = linhas[i:i + 200]
             r = requests.post(f"{self.base}/vagas", headers={**self.h, "Prefer": "resolution=merge-duplicates"},
-                              params={"on_conflict": "id"}, data=json.dumps(linhas[i:i + 200], default=str), timeout=60)
+                              params={"on_conflict": "id"}, data=json.dumps(lote, default=str), timeout=60)
+            if r.status_code == 400 and "email_origem" in r.text:
+                # Banco sem a coluna nova (falta rodar o ALTER do schema.sql): grava o resto mesmo assim.
+                log.warning("supabase: coluna email_origem ausente; rode o ALTER do supabase/schema.sql")
+                lote = [{k: v for k, v in x.items() if k != "email_origem"} for x in lote]
+                r = requests.post(f"{self.base}/vagas", headers={**self.h, "Prefer": "resolution=merge-duplicates"},
+                                  params={"on_conflict": "id"}, data=json.dumps(lote, default=str), timeout=60)
             r.raise_for_status()
         log.info("supabase: %d vagas gravadas", len(linhas))
 

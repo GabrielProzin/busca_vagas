@@ -11,7 +11,7 @@ envia emails de candidatura personalizados a partir de um site privado.
 ```
 GitHub Actions (todo dia, ~11:00 e ~18:30)
   └─ coletor/pipeline.py
-       1. Coleta     Gupy (rota do portal) + Remotar (API do site) + issues de repositórios de vagas no GitHub
+       1. Coleta     Gupy (rota do portal) + Remotar e Sólides (APIs dos sites) + issues de repositórios de vagas no GitHub
                      e deduplica entre fontes (links da Gupy carregam o jobId em base64)
        2. Filtra     título (trilha de dados, senioridade, bloqueios) e data — antes de baixar descrições
        3. Detalha    baixa a descrição completa só das candidatas

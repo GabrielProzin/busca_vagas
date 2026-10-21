@@ -135,3 +135,15 @@ def test_contato_so_emails_de_setor():
     assert _classificar("maria.souza@empresa.com.br", "empresa.com.br") is None  # pessoa: nunca
     assert _classificar("rh@outra.com.br", "empresa.com.br") is None  # outro domínio: nunca
     assert _classificar("contato@empresa.com.br", "empresa.com.br") == "contato"
+
+
+def test_solides_para_vaga():
+    from coletor.fontes.solides import _para_vaga
+
+    j = {"id": 1, "slug": "acme", "title": "Analista de Dados", "description": "<p>SQL e Power BI</p>", "companyName": "ACME",
+         "city": {"name": "Goiânia"}, "state": {"code": "GO"}, "homeOffice": False, "jobType": "hibrido",
+         "seniority": [{"name": "Pleno"}], "hardSkills": [{"name": "Python"}], "createdAt": "2026-10-20"}
+    v = _para_vaga(j, "dados")
+    assert v.url == "https://acme.vagas.solides.com.br/vaga/1" and v.modalidade == "hibrido" and v.cidade == "Goiânia"
+    assert "Pleno" in v.titulo and F.filtrar_titulo(v).startswith("senioridade")  # nível do campo separado é respeitado
+    assert "Python" in v.descricao

@@ -9,12 +9,12 @@ export function local(v: Pick<Vaga, "modalidade" | "cidade" | "estado">): string
 }
 
 export function fonte(f: string): string {
-  return { gupy: "Gupy", remotar: "Remotar", github: "GitHub", linkedin: "LinkedIn" }[f] ?? f;
+  return { gupy: "Gupy", remotar: "Remotar", solides: "Sólides", github: "GitHub", linkedin: "LinkedIn", manual: "Adicionada por você" }[f] ?? f;
 }
 
 /** "na Gupy", "no GitHub", "no LinkedIn"… para o botão de abrir a vaga. */
 export function naFonte(f: string): string {
-  return { gupy: "na Gupy", remotar: "na Remotar", github: "no GitHub", linkedin: "no LinkedIn" }[f] ?? "no site original";
+  return { gupy: "na Gupy", remotar: "na Remotar", solides: "na Sólides", github: "no GitHub", linkedin: "no LinkedIn" }[f] ?? "no site original";
 }
 
 export function quando(iso: string | null): string {
@@ -32,4 +32,11 @@ export function habilidade(h: string): string {
 
 export function idUrl(id: string): string {
   return `/vaga/${encodeURIComponent(id)}`;
+}
+
+/** Texto curto sobre de onde veio o email do recrutador. */
+export function origemEmail(origem: string | null | undefined): string {
+  if (origem === "site_rh") return "Email de RH do site da empresa";
+  if (origem === "site_contato") return "Contato geral do site da empresa";
+  return "Email do recrutador";
 }
