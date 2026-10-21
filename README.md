@@ -88,11 +88,37 @@ Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo
 ### 7. Últimos ajustes no site
 
 - **Configurações → Currículo anexado:** envie o PDF que vai junto dos emails.
-- **Extensão do Chrome (opcional):** baixe a pasta `extensao/`, abra `chrome://extensions`, ligue o
-  **Modo do desenvolvedor**, clique em **Carregar sem compactação** e escolha a pasta. Nas opções da extensão,
-  informe o endereço do seu site e o `CAPTURA_TOKEN`.
+- **Extensão do Chrome (opcional, recomendada):** veja [A extensão do Chrome](#a-extensão-do-chrome), logo abaixo.
 - **Monitor externo (opcional):** no [UptimeRobot](https://uptimerobot.com), cadastre
   `https://SEU-SITE.vercel.app/api/saude` para receber um email se o site cair.
+
+---
+
+## A extensão do Chrome
+
+Os emails de recrutador quase sempre estão em **posts** do LinkedIn ("envie o CV para fulana@empresa.com"). A coleta
+automática já busca esses posts duas vezes por dia; a extensão é para quando você quiser mais, direto da sua tela.
+Ela só age quando você clica: não rola a página, não clica em nada e não faz nenhum acesso extra ao LinkedIn.
+
+**Instalar (uma vez)**
+
+1. No seu repositório no GitHub: **Code → Download ZIP** e descompacte. A extensão é a pasta `extensao`.
+2. No Chrome, abra `chrome://extensions`, ligue o **Modo do desenvolvedor** (canto superior direito) e clique em
+   **Carregar sem compactação**. Escolha a pasta `extensao`.
+3. Clique no ícone da extensão (fixe-a na barra pelo ícone de quebra-cabeça). Nas opções, informe o endereço do seu site e o
+   mesmo valor do `CAPTURA_TOKEN` que está na Vercel. Salvar.
+
+**Usar**
+
+- **Vários posts de uma vez (LinkedIn):** no site, em **Adicionar vaga**, abra uma das buscas prontas de posts
+  (últimas 24h). Role a página por alguns segundos para carregar e **clique no ícone da extensão**. Ela manda os posts da
+  tela que têm email e cara de vaga; o site lê cada um com a IA e guarda só os do seu perfil (área, nível, local).
+  Um aviso mostra quantas vagas entraram. Pode rolar mais e clicar de novo: o que já foi enviado não repete.
+- **Um texto de qualquer site:** selecione o texto da vaga, clique com o botão direito e escolha
+  **Enviar para o busca_vagas**.
+
+Quando atualizar o repositório com uma versão nova da extensão, baixe o ZIP de novo e clique em **Atualizar** em
+`chrome://extensions` (ou remova e carregue a pasta outra vez).
 
 ---
 
@@ -171,8 +197,9 @@ Regras: nunca me peça para colar senhas, chaves ou tokens na conversa. Diga ond
 currículo. Prefira o plano grátis de tudo e me avise antes de qualquer coisa que possa cobrar.
 
 No fim, confira comigo esta lista: entrei no site com a senha; a coleta rodou e as vagas
-apareceram; enviei o PDF do currículo em Configurações; um email de teste com "Usar modelo
-pronto" ficou com o meu nome e a minha assinatura.
+apareceram; a página Configurações mostra todos os primeiros passos essenciais prontos; ao
+abrir uma vaga com email, o email já vem com o meu nome e a minha assinatura; instalei a
+extensão do Chrome e uma captura no LinkedIn trouxe vagas para o site.
 ```
 
 ---
