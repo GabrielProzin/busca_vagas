@@ -3,10 +3,14 @@ import { PERFIL } from "./gerado/perfil";
 import type { Vaga } from "./tipos";
 import { deEmpresa, tituloLimpo } from "./formato";
 
-// Gemini via REST. Modelo padrão: Flash-Lite (no plano grátis, ~500 pedidos/dia contra ~20 do Flash).
-// O texto de vagas e posts é tratado como dado: o resultado é sempre um rascunho que você revisa.
+// Gemini via REST. O texto de vagas e posts é tratado como dado: o resultado é sempre um rascunho que você revisa.
+// Dois níveis no plano grátis:
+// - Flash-Lite: ~500 pedidos/dia. Usado nos resumos e na leitura de posts (muitos pedidos).
+// - Flash: escreve melhor, mas só ~20 pedidos/dia. Usado nos emails e follow-ups; se o limite do dia
+//   acabar, cai sozinho para o Flash-Lite.
 
-const MODELOS_PADRAO = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"];
+const MODELOS_LITE = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"];
+const MODELOS_FLASH = ["gemini-3.5-flash", "gemini-3.1-flash", "gemini-flash-latest"];
 
 export class ErroIA extends Error {
   constructor(msg: string, public tipo: "sem_chave" | "limite" | "falha") {
@@ -18,12 +22,19 @@ export function iaConfigurada(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
-async function gerarJSON<T>(prompt: string, temperatura = 0.4): Promise<T> {
+async function gerarJSON<T>(prompt: string, temperatura = 0.4, escrita = false): Promise<T> {
   const chave = process.env.GEMINI_API_KEY;
   if (!chave) throw new ErroIA("GEMINI_API_KEY não configurada na Vercel.", "sem_chave");
-  const modelos = process.env.GEMINI_MODEL ? [process.env.GEMINI_MODEL] : MODELOS_PADRAO;
+  const modelos = process.env.GEMINI_MODEL
+    ? [process.env.GEMINI_MODEL]
+    : escrita
+      ? [...MODELOS_FLASH, ...MODELOS_LITE]
+      : MODELOS_LITE;
   let ultimo = "";
+  let flashEsgotado = false;
   for (const modelo of modelos) {
+    const ehFlash = MODELOS_FLASH.includes(modelo);
+    if (ehFlash && flashEsgotado) continue;
     const base = process.env.GEMINI_BASE_URL ?? "https://generativelanguage.googleapis.com"; // trocável só para testes
     const r = await fetch(`${base}/v1beta/models/${modelo}:generateContent`, {
       method: "POST",
@@ -37,6 +48,11 @@ async function gerarJSON<T>(prompt: string, temperatura = 0.4): Promise<T> {
     if (r.status === 404) {
       ultimo = `modelo ${modelo} indisponível`;
       continue; // tenta o próximo da lista
+    }
+    if ((r.status === 429 || r.status === 503) && ehFlash && escrita) {
+      flashEsgotado = true; // limite do Flash (ou sobrecarga): segue com o Flash-Lite
+      ultimo = `${modelo} sem cota`;
+      continue;
     }
     if (r.status === 429) throw new ErroIA("Limite diário da IA atingido. Use o modelo pronto ou tente amanhã.", "limite");
     if (!r.ok) throw new ErroIA(`A IA respondeu ${r.status}: ${(await r.text()).slice(0, 200)}`, "falha");
@@ -94,12 +110,13 @@ function vicios(texto: string): string[] {
 
 /** Gera, confere os vícios e, se achar algum, pede uma reescrita sem eles (uma vez). */
 async function gerarTexto<T extends { corpo?: string }>(prompt: string): Promise<T> {
-  let r = await gerarJSON<T>(prompt, 0.85);
+  let r = await gerarJSON<T>(prompt, 0.85, true);
   const achados = vicios(r?.corpo ?? "");
   if (achados.length) {
     r = await gerarJSON<T>(
       `${prompt}\n\nUma versão anterior usou expressões proibidas (${achados.join(", ")}). Escreva de novo, sem elas e sem soar formal demais.`,
       0.85,
+      true,
     ).catch(() => r);
   }
   // Último recurso para o vício mais teimoso: travessão vira vírgula.
