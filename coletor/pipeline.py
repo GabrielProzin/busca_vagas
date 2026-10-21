@@ -198,6 +198,11 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         motivos = Counter((v.motivo_descarte or "aprovada").split(":")[0].split(" em ")[0] if v.lista == "descartada" or not v.lista
                           else "aprovada" for v in da_fonte)
         _anotar(f"Funil {fonte}: {len(da_fonte)} únicas -> {dict(motivos.most_common(8))}")
+    # Sólides: só as de cargo de dados (a busca da Sólides é frouxa e traz de tudo).
+    trilhas = [p for _, _, p in filtros.trilhas]
+    dados_sol = [v for v in vagas if v.fonte == "solides" and any(p.search(normalizar(v.titulo)) for p in trilhas)]
+    _anotar(f"Sólides, só cargos de dados: {len(dados_sol)} -> "
+            f"{dict(Counter((v.motivo_descarte or 'aprovada').split(':')[0].split(' em ')[0] for v in dados_sol).most_common(6))}")
     # Amostra: vagas da Sólides com cargo de dados que ficaram de fora (o Actions mostra só 10 anotações por passo).
     amostra = [v for v in vagas if v.fonte == "solides" and v.trilha and v.lista == "descartada"]
     for v in amostra[:4]:
