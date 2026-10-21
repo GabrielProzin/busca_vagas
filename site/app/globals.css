@@ -656,10 +656,10 @@ a.faixa:hover { filter: brightness(0.97); }
 
 /* ------------------------------------------------------------------ Envio em lote */
 .lote-numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
-.lote-numeros > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.lote-numeros strong { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.lote-numeros strong small { font-size: 14px; color: var(--muted); font-weight: 600; }
-.lote-numeros span { font-size: 12.5px; color: var(--muted); }
+.lote-numeros > div:not(.contador-envio) { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lote-numeros > div:not(.contador-envio) strong { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.lote-numeros > div:not(.contador-envio) strong small { font-size: 14px; color: var(--muted); font-weight: 600; }
+.lote-numeros > div:not(.contador-envio) > span { font-size: 12.5px; color: var(--muted); }
 .lote-fila { margin-bottom: 16px; }
 .lote-fila-item { grid-template-columns: 24px minmax(0, 1fr) auto !important; }
 .lote-fila-item > svg { color: var(--muted); }
@@ -694,7 +694,7 @@ a.faixa:hover { filter: brightness(0.97); }
 .taxa-fonte .trilho i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
 .taxa-fonte b { font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 760px) {
-  .lote-numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lote-numeros { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .lote-lista > li { grid-template-columns: minmax(0, 1fr); }
   .lote-lado { padding-left: 30px; }
   .lote-email { padding-left: 0; }
@@ -705,3 +705,21 @@ a.faixa:hover { filter: brightness(0.97); }
 }
 .aviso.erro-fundo { background: var(--danger-soft); color: var(--danger); }
 .aviso svg { vertical-align: -2px; margin-right: 4px; }
+
+/* Contador de emails enviados hoje (Hoje, Envio em lote, menu) */
+.contador-envio { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: var(--r-m); background: var(--accent-soft); color: var(--accent); min-width: 0; }
+.contador-envio-topo { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.contador-envio-rotulo { font-size: 13px; font-weight: 600; }
+.contador-envio-numero { font-size: 38px; line-height: 1; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.contador-envio-numero span { font-size: 22px; font-weight: 650; opacity: 0.7; }
+.contador-envio-barra { height: 10px; border-radius: 5px; background: color-mix(in srgb, currentColor 16%, transparent); overflow: hidden; }
+.contador-envio-barra i { display: block; height: 100%; border-radius: 5px; background: currentColor; transition: width 0.3s; }
+.contador-envio-pe { font-size: 12.5px; color: var(--ink-2); }
+.contador-envio.perto { background: var(--warm-soft); color: var(--warm); }
+.contador-envio.cheio { background: var(--danger-soft); color: var(--danger); }
+.lote-numeros { grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)); }
+.contador.envio { background: var(--accent-soft); color: var(--accent); border-color: transparent; font-weight: 650; }
+.contador.envio.cheio { background: var(--danger-soft); color: var(--danger); }
+@media (max-width: 760px) {
+  .lote-numeros > .contador-envio { grid-column: 1 / -1; }
+}

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import Icone, { type NomeIcone } from "./Icone";
 import { sair } from "@/app/acoes";
-import { listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
+import { enviadosHoje, listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
+import { PERFIL } from "@/lib/gerado/perfil";
 import { situacaoFollowup } from "@/lib/followup";
 import { ehNova } from "@/lib/tipos";
 
@@ -22,15 +23,17 @@ const fmtHora = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-dig
 
 async function resumoNavegacao() {
   try {
-    const [vagas, candidaturas, execucoes] = await Promise.all([listarVagas(), listarCandidaturas(), listarExecucoes(1)]);
+    const [vagas, candidaturas, execucoes, enviados] = await Promise.all([
+      listarVagas(), listarCandidaturas(), listarExecucoes(1), enviadosHoje().catch(() => 0),
+    ]);
     const novas = vagas.filter((v) => ehNova(v) && v.lista === "principal").length;
     const ultima = execucoes[0]?.iniciada_em ?? null;
     const horas = ultima ? (Date.now() - new Date(ultima).getTime()) / 36e5 : null;
     const followups = candidaturas.filter((v) => situacaoFollowup(v.candidatura)?.estado === "followup").length;
     const fila = vagas.filter((v) => v.candidatura?.status === "nova" && v.candidatura.fila_em).length;
-    return { novas, candidaturas: candidaturas.length, fila, followups, ultima, atrasada: horas !== null && horas > 20 };
+    return { novas, candidaturas: candidaturas.length, fila, enviados, followups, ultima, atrasada: horas !== null && horas > 20 };
   } catch {
-    return { novas: 0, candidaturas: 0, fila: 0, followups: 0, ultima: null, atrasada: false };
+    return { novas: 0, candidaturas: 0, fila: 0, enviados: 0, followups: 0, ultima: null, atrasada: false };
   }
 }
 
@@ -69,7 +72,11 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
                     {fu}<span className="sr-only"> {fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}</span>
                   </span>
                 ) : null}
-                {n ? <span className="contador">{n}</span> : null}
+                {s.href === "/lote" ? (
+                  <span className={`contador envio${nav.enviados >= PERFIL.envio.limiteDiario ? " cheio" : ""}`} title="Emails enviados hoje / limite do dia">
+                    {nav.enviados}/{PERFIL.envio.limiteDiario}<span className="sr-only"> emails enviados hoje</span>
+                  </span>
+                ) : n ? <span className="contador">{n}</span> : null}
               </Link>
             );
           })}

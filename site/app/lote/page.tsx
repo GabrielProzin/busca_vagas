@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
+import ContadorEnvio from "@/components/ContadorEnvio";
 import Lote, { Fila, type ItemLoteTela } from "@/components/Lote";
 import { enviadosHoje, filaPronta, listarFila, listarVagas } from "@/lib/db";
 import { emailModelo } from "@/lib/ia";
@@ -70,7 +71,7 @@ export default async function PaginaLote() {
       {falhou ? <div className="faixa aviso" role="status"><Icone nome="alerta" /> Não consegui ler o banco agora. Tente recarregar.</div> : null}
 
       <section className="lote-numeros" aria-label="Envio de hoje">
-        <div><strong>{hoje}<small>/{e.limiteDiario}</small></strong><span>emails enviados hoje</span></div>
+        <ContadorEnvio hoje={hoje} limite={e.limiteDiario} />
         <div><strong>{fila.esperando.length}</strong><span>na fila</span></div>
         <div><strong>{e.horario[0]}h–{e.horario[1]}h</strong><span>horário de envio</span></div>
         <div><strong>{e.intervalo[0] / 60}–{e.intervalo[1] / 60} min</strong><span>entre um email e outro</span></div>

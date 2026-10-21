@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
+import ContadorEnvio from "@/components/ContadorEnvio";
 import { enviadosHoje, listarCandidaturas, listarVagas } from "@/lib/db";
 import { idUrl, origemEmail } from "@/lib/formato";
 import { situacaoFollowup } from "@/lib/followup";
@@ -168,10 +169,7 @@ export default async function PaginaHoje() {
         <section className="cartao hoje-envio" aria-label="Envio de emails">
           <div className="cartao-cabecalho"><h2><Icone nome="lote" /> Envio de emails</h2></div>
           <div className="cartao-corpo">
-            <div className="hoje-envio-numeros">
-              <div><strong>{hoje}<small>/{PERFIL.envio.limiteDiario}</small></strong><span>enviados hoje</span></div>
-              <div><strong>{naFila}</strong><span>na fila</span></div>
-            </div>
+            <ContadorEnvio hoje={hoje} limite={PERFIL.envio.limiteDiario} naFila={naFila} />
             {eventos.length ? (
               <ul className="hoje-lista compacta">
                 {eventos.slice(0, 5).map(({ v, tipo }) => (
