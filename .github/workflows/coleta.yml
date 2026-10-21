@@ -80,6 +80,9 @@ jobs:
         run: |
           mkdir -p /tmp/diag && cp -r saida/* /tmp/diag/ 2>/dev/null || true
           cp saida_log.txt /tmp/diag/log.txt 2>/dev/null || true
+          # A Vercel tenta publicar todo branch como preview. Este branch só tem logs, então
+          # desliga o deploy dele (a Vercel lê o vercel.json dentro da pasta "site").
+          mkdir -p /tmp/diag/site && echo '{"git":{"deploymentEnabled":false}}' > /tmp/diag/site/vercel.json
           cd /tmp/diag
           git init -q && git checkout -q -b diagnostico
           git config user.name "github-actions" && git config user.email "actions@github.com"
