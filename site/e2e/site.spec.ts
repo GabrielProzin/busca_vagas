@@ -258,17 +258,21 @@ test("uso dos serviços: mostra cada plano grátis e conta Gmail e IA usados pel
   await entrar(page);
   await expect(page.locator("a.faixa", { hasText: "Apify em 85%" })).toBeVisible(); // aviso em Hoje: passou de 80%
   await page.goto("/uso");
-  await expect(page.getByRole("region", { name: "GitHub Actions" })).toContainText("1240 de 2000 min");
-  await expect(page.getByRole("region", { name: "Supabase" })).toContainText("MB de 500,0 MB");
+  // medidores do mais apertado para o mais folgado (o Flash ficou sem cota no teste); Vercel por último
+  await expect(page.locator(".medidor h2").first()).toHaveText("Gemini Flash");
+  await expect(page.locator(".medidor h2").nth(1)).toHaveText("Apify");
+  await expect(page.locator(".medidor h2").last()).toHaveText("Vercel");
   const apify = page.getByRole("region", { name: "Apify" });
+  await expect(apify).toContainText("85%");
   await expect(apify).toContainText("US$ 4,27 de US$ 5,00");
   await expect(apify).toContainText("Perto do limite");
+  await expect(page.getByRole("region", { name: "GitHub Actions" })).toContainText("1.240 de 2.000 min");
+  await expect(page.getByRole("region", { name: "Supabase" })).toContainText("MB de 500,0 MB");
   // os testes anteriores enviaram 1 candidatura e 1 follow-up pelo site, e pediram o follow-up à IA
   await expect(page.getByRole("region", { name: "Gmail" })).toContainText("2 pelo site, 0 pela fila, 1 resumo(s)");
   // o Gemini falso responde "sem cota" no Flash: o site conta a falta de cota e o pedido que caiu no Flash-Lite
-  const gemini = page.getByRole("region", { name: "Gemini (IA)" });
-  await expect(gemini).toContainText(/Flash-Lite hoje[1-9]\d* de ~500 pedidos/);
-  await expect(gemini).toContainText(/A cota acabou [1-9]\d* vez/);
+  await expect(page.getByRole("region", { name: "Gemini Flash", exact: true })).toContainText(/A cota acabou [1-9]\d* vez/);
+  await expect(page.getByRole("region", { name: "Gemini Flash-Lite" })).toContainText(/[1-9]\d* de ~500 pedidos hoje/);
   await expect(page.getByRole("region", { name: "Vercel" })).toContainText("Sem medição");
 });
 

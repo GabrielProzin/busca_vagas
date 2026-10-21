@@ -2,7 +2,7 @@ import Link from "next/link";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
 import { enviadosHoje, lerUso, listarExecucoes } from "@/lib/db";
-import { medidoEm, montarUso, type Barra, type CartaoUso } from "@/lib/uso";
+import { montarUso, quandoMedido, type Medidor } from "@/lib/uso";
 
 export const dynamic = "force-dynamic";
 
@@ -17,13 +17,13 @@ export default async function PaginaUso() {
     listarExecucoes(1).catch(() => []),
     enviadosHoje().catch(() => 0),
   ]);
-  const cartoes = montarUso({
+  const medidores = montarUso({
     servicos: uso?.servicos ?? [],
     diario: uso?.diario ?? [],
     ultimaColeta: execucoes[0]?.iniciada_em ?? null,
     emailsCandidaturaHoje: hoje,
   });
-  const faltaMedir = ["github", "supabase", "apify"].filter((id) => !cartoes.some((c) => c.id === id));
+  const faltaMedir = ["github", "supabase", "apify"].filter((id) => !medidores.some((c) => c.id === id));
 
   return (
     <Moldura
@@ -40,45 +40,40 @@ export default async function PaginaUso() {
           <Icone nome="relogio" /> {faltaMedir.map((id) => ({ github: "GitHub", supabase: "Supabase", apify: "Apify" })[id]).join(", ")}: a primeira medição sai na próxima coleta.
         </div>
       ) : null}
-      <div className="uso-grade">
-        {cartoes.map((c) => <Cartao key={c.id} c={c} />)}
+      <div className="medidores">
+        {medidores.map((m) => <Cartao key={m.id} m={m} />)}
       </div>
     </Moldura>
   );
 }
 
-function Cartao({ c }: { c: CartaoUso }) {
+const RAIO = 54;
+const VOLTA = 2 * Math.PI * RAIO;
+
+function Cartao({ m }: { m: Medidor }) {
+  const f = m.fracao === null ? 0 : Math.min(1, m.fracao);
+  const centro = m.centro ?? `${Math.round((m.fracao ?? 0) * 100)}%`;
   return (
-    <section className={`cartao uso-cartao ${c.estado}`} aria-label={c.nome}>
-      <div className="cartao-cabecalho">
-        <div>
-          <h2>{c.nome}</h2>
-          <span className="dica">{c.para}</span>
-        </div>
-        <span className={`uso-estado ${c.estado}`}>{ROTULO[c.estado]}</span>
-      </div>
-      <div className="cartao-corpo">
-        {c.barras.map((b) => <BarraUso key={b.rotulo} b={b} />)}
-        {c.linhas.map((l) => <p key={l} className="dica uso-linha">{l}</p>)}
-      </div>
-      <div className="cartao-rodape uso-rodape">
-        <span className="dica">{c.estado === "sem" ? "Não medido" : medidoEm(c.medidoEm)}</span>
-        <a href={c.link.href} target="_blank" rel="noopener noreferrer">{c.link.rotulo} <Icone nome="externo" tamanho={13} /></a>
+    <section className={`cartao medidor ${m.estado}`} aria-label={m.nome}>
+      <svg className="medidor-anel" width="150" height="150" viewBox="0 0 150 150" role="img"
+        aria-label={m.fracao === null ? `${m.nome}: ${m.texto}` : `${m.nome}: ${Math.round(m.fracao * 100)}% do limite grátis`}>
+        <circle cx="75" cy="75" r={RAIO} className="medidor-fundo" />
+        {f > 0 ? (
+          <circle cx="75" cy="75" r={RAIO} className="medidor-valor" strokeDasharray={`${VOLTA * Math.max(f, 0.015)} ${VOLTA}`} transform="rotate(-90 75 75)" />
+        ) : null}
+        <text x="75" y={m.fracao === null ? 86 : 80} textAnchor="middle" className="medidor-numero">{centro}</text>
+        {m.fracao !== null ? <text x="75" y="101" textAnchor="middle" className="medidor-legenda">do limite</text> : null}
+      </svg>
+      <h2>{m.nome}</h2>
+      <span className="dica">{m.para}</span>
+      <b className="medidor-texto">{m.texto}</b>
+      <span className={`uso-estado ${m.estado}`}>{ROTULO[m.estado]}</span>
+      <span className="dica">{m.periodo}</span>
+      <ul className="medidor-detalhes">{m.detalhes.map((d) => <li key={d}>{d}</li>)}</ul>
+      <div className="medidor-rodape">
+        <span>{quandoMedido(m)}</span>
+        <a href={m.link.href} target="_blank" rel="noopener noreferrer">{m.link.rotulo} <Icone nome="externo" tamanho={13} /></a>
       </div>
     </section>
-  );
-}
-
-function BarraUso({ b }: { b: Barra }) {
-  const f = b.limite ? Math.min(1, b.usado / b.limite) : null;
-  const nivel = f === null ? "" : f >= 0.8 ? "critico" : f >= 0.6 ? "atencao" : "";
-  return (
-    <div className={`uso-barra ${nivel}`}>
-      <div className="uso-barra-topo">
-        <span>{b.rotulo}</span>
-        <b>{b.texto}{f !== null ? <small> · {Math.round(f * 100)}%</small> : null}</b>
-      </div>
-      {f !== null ? <span className="uso-trilho" aria-hidden><i style={{ width: `${Math.max(b.usado ? 2 : 0, f * 100)}%` }} /></span> : null}
-    </div>
   );
 }
