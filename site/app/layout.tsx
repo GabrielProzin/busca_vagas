@@ -1,6 +1,7 @@
 import { PERFIL } from "@/lib/gerado/perfil";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { ProvedorAvisos } from "@/components/Avisos";
 
 export const metadata: Metadata = {
   title: "busca_vagas",
@@ -31,7 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <ProvedorAvisos>{children}</ProvedorAvisos>
+      </body>
     </html>
   );
 }

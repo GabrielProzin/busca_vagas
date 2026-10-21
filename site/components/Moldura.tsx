@@ -2,13 +2,18 @@ import Link from "next/link";
 import Icone, { type NomeIcone } from "./Icone";
 import { sair } from "@/app/acoes";
 import { listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
+import { situacaoFollowup } from "@/lib/followup";
 
-const SECOES: { href: string; rotulo: string; curto: string; icone: NomeIcone; conta?: "novas" | "candidaturas" }[] = [
-  { href: "/", rotulo: "Vagas", curto: "Vagas", icone: "vagas", conta: "novas" },
-  { href: "/adicionar", rotulo: "Adicionar vaga", curto: "Adicionar", icone: "adicionar" },
-  { href: "/candidaturas", rotulo: "Candidaturas", curto: "Candidaturas", icone: "candidaturas", conta: "candidaturas" },
-  { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel" },
-  { href: "/configuracoes", rotulo: "Configurações", curto: "Ajustes", icone: "config" },
+type Secao = { href: string; rotulo: string; curto: string; icone: NomeIcone; conta?: "novas" | "candidaturas"; baixo: boolean };
+// "baixo": aparece também na barra de baixo do celular (cabem 6).
+const SECOES: Secao[] = [
+  { href: "/", rotulo: "Hoje", curto: "Hoje", icone: "inicio", baixo: true },
+  { href: "/vagas", rotulo: "Vagas", curto: "Vagas", icone: "vagas", conta: "novas", baixo: true },
+  { href: "/triagem", rotulo: "Triagem rápida", curto: "Triagem", icone: "triagem", baixo: true },
+  { href: "/adicionar", rotulo: "Adicionar vaga", curto: "Adicionar", icone: "adicionar", baixo: false },
+  { href: "/candidaturas", rotulo: "Candidaturas", curto: "Quadro", icone: "candidaturas", conta: "candidaturas", baixo: true },
+  { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel", baixo: true },
+  { href: "/configuracoes", rotulo: "Configurações", curto: "Ajustes", icone: "config", baixo: true },
 ];
 
 const fmtHora = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
@@ -19,9 +24,10 @@ async function resumoNavegacao() {
     const novas = vagas.filter((v) => (!v.candidatura || v.candidatura.status === "nova") && v.lista === "principal").length;
     const ultima = execucoes[0]?.iniciada_em ?? null;
     const horas = ultima ? (Date.now() - new Date(ultima).getTime()) / 36e5 : null;
-    return { novas, candidaturas: candidaturas.length, ultima, atrasada: horas !== null && horas > 20 };
+    const followups = candidaturas.filter((v) => situacaoFollowup(v.candidatura)?.estado === "followup").length;
+    return { novas, candidaturas: candidaturas.length, followups, ultima, atrasada: horas !== null && horas > 20 };
   } catch {
-    return { novas: 0, candidaturas: 0, ultima: null, atrasada: false };
+    return { novas: 0, candidaturas: 0, followups: 0, ultima: null, atrasada: false };
   }
 }
 
@@ -50,10 +56,16 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
         <nav className="lateral-nav">
           {SECOES.map((s) => {
             const n = s.conta ? nav[s.conta] : 0;
+            const fu = s.href === "/candidaturas" ? nav.followups : 0;
             return (
               <Link key={s.href} href={s.href} aria-current={atual === s.href ? "page" : undefined}>
                 <Icone nome={s.icone} />
                 <span>{s.rotulo}</span>
+                {fu ? (
+                  <span className="contador quente" title={`${fu} ${fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}`}>
+                    {fu}<span className="sr-only"> {fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}</span>
+                  </span>
+                ) : null}
                 {n ? <span className="contador">{n}</span> : null}
               </Link>
             );
@@ -109,9 +121,12 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
       </div>
 
       <nav className="nav-baixo" aria-label="Seções">
-        {SECOES.map((s) => (
+        {SECOES.filter((s) => s.baixo).map((s) => (
           <Link key={s.href} href={s.href} aria-current={atual === s.href ? "page" : undefined}>
-            <Icone nome={s.icone} tamanho={22} />
+            <span className="nav-baixo-icone">
+              <Icone nome={s.icone} tamanho={22} />
+              {s.href === "/candidaturas" && nav.followups ? <span className="ponto-quente" aria-label={`${nav.followups} follow-ups pendentes`} /> : null}
+            </span>
             <span>{s.curto}</span>
           </Link>
         ))}

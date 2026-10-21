@@ -1,38 +1,51 @@
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
 import EnviarPdf from "@/components/EnviarPdf";
-import { infoCurriculo } from "@/lib/arquivos";
-import { gmailConfigurado } from "@/lib/email";
-import { iaConfigurada } from "@/lib/ia";
+import { passosConfiguracao, urlRepositorio } from "@/lib/configuracao";
 
 export const dynamic = "force-dynamic";
 
 export default async function PaginaConfiguracoes() {
-  const cv = await infoCurriculo().catch(() => null);
-  const itens = [
-    { ok: Boolean(cv), texto: cv ? `Currículo em PDF salvo${cv.atualizado ? ` em ${new Date(cv.atualizado).toLocaleDateString("pt-BR")}` : ""}` : "Currículo em PDF ainda não enviado" },
-    { ok: gmailConfigurado(), texto: gmailConfigurado() ? `Gmail pronto para enviar (${process.env.GMAIL_USER})` : "Gmail: falta GMAIL_USER e GMAIL_APP_PASSWORD na Vercel" },
-    { ok: iaConfigurada(), texto: iaConfigurada() ? "IA (Gemini) pronta para escrever emails, resumir vagas e ler posts" : "IA: falta GEMINI_API_KEY na Vercel" },
-    { ok: Boolean(process.env.CAPTURA_TOKEN), texto: process.env.CAPTURA_TOKEN ? "Extensão do navegador liberada" : "Extensão: falta CAPTURA_TOKEN na Vercel" },
-  ];
+  const [passos, repo] = [await passosConfiguracao(), urlRepositorio()];
+  const faltam = passos.filter((p) => !p.ok);
+  const essenciaisFaltando = faltam.filter((p) => p.essencial).length;
   const limite = Number(process.env.LIMITE_DIARIO_EMAILS ?? 40);
 
   return (
-    <Moldura atual="/configuracoes" titulo="Configurações" subtitulo="O que o site precisa para escrever e enviar candidaturas por você.">
+    <Moldura atual="/configuracoes" titulo="Configurações" subtitulo="O que o site precisa para encontrar vagas e mandar candidaturas por você.">
       <section className="cartao">
         <div className="ajuste">
           <div>
-            <h2>Situação</h2>
-            <p className="dica">Tudo verde = pronto para enviar candidaturas.</p>
+            <h2>Primeiros passos</h2>
+            <p className="dica">
+              {faltam.length === 0
+                ? "Tudo pronto."
+                : essenciaisFaltando
+                  ? `${essenciaisFaltando === 1 ? "Falta 1 passo essencial" : `Faltam ${essenciaisFaltando} passos essenciais`} para o básico funcionar.`
+                  : "O básico está pronto. O que falta é opcional."}
+            </p>
+            <div className="progresso-passos" role="img" aria-label={`${passos.length - faltam.length} de ${passos.length} prontos`}>
+              <i style={{ width: `${Math.round(((passos.length - faltam.length) / passos.length) * 100)}%` }} />
+            </div>
+            <p className="dica">{passos.length - faltam.length} de {passos.length} prontos</p>
           </div>
           <div>
-            <ul className="situacao">
-              {itens.map((i) => (
-                <li key={i.texto}>
-                  <span className={`selo ${i.ok ? "sim" : "nao"}`} aria-hidden>
-                    <Icone nome={i.ok ? "check" : "alerta"} tamanho={13} />
+            <ul className="passos">
+              {[...passos].sort((a, b) => Number(a.ok) - Number(b.ok) || Number(b.essencial) - Number(a.essencial)).map((p) => (
+                <li key={p.id} className={p.ok ? "pronto" : p.essencial ? "falta essencial" : "falta"}>
+                  <span className={`selo ${p.ok ? "sim" : "nao"}`} aria-hidden>
+                    <Icone nome={p.ok ? "check" : "alerta"} tamanho={13} />
                   </span>
-                  <span>{i.texto}</span>
+                  <div>
+                    <b>{p.rotulo}</b>
+                    {!p.ok && !p.essencial ? <span className="etiqueta" style={{ marginLeft: 8 }}>opcional</span> : null}
+                    <p className="dica">{p.detalhe}</p>
+                    {!p.ok && p.ancora && repo ? (
+                      <a className="link-passo" href={`${repo}#${p.ancora}`} target="_blank" rel="noopener noreferrer">
+                        Como fazer <Icone nome="externo" tamanho={13} />
+                      </a>
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>

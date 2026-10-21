@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Enviar para o busca_vagas",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Manda vagas para o seu busca_vagas: o texto que você selecionar, ou de uma vez os posts com email que estão na sua tela do LinkedIn.",
   "permissions": [
     "contextMenus",

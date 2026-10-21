@@ -23,6 +23,8 @@ const CAMINHOS = {
   abaixo: <path d="m6 9 6 6 6-6" />,
   arrastar: <><circle cx="9" cy="6" r="1.2" /><circle cx="15" cy="6" r="1.2" /><circle cx="9" cy="12" r="1.2" /><circle cx="15" cy="12" r="1.2" /><circle cx="9" cy="18" r="1.2" /><circle cx="15" cy="18" r="1.2" /></>,
   linkedin: <><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M8 10v7M8 7v.1M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" /></>,
+  inicio: <><path d="M4 11.5 12 4.5l8 7" /><path d="M6.5 9.5V20h11V9.5" /><path d="M10 20v-5.5h4V20" /></>,
+  triagem: <><rect x="5" y="4" width="14" height="16" rx="2.5" /><path d="M9 9h6M9 13h4" /><path d="m14.5 16.5 1.5 1.5 3-3" /></>,
   copiar: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></>,
   sino: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0" />,
 } as const;

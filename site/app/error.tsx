@@ -15,7 +15,7 @@ export default function Erro({ error, reset }: { error: Error & { digest?: strin
         {error.digest ? <p className="dica">Código do erro: {error.digest}</p> : null}
         <div className="linha-botoes" style={{ justifyContent: "center" }}>
           <button className="botao primario" onClick={() => reset()}>Tentar de novo</button>
-          <a className="botao" href="/">Ir para as vagas</a>
+          <a className="botao" href="/vagas">Ir para as vagas</a>
         </div>
       </div>
     </main>

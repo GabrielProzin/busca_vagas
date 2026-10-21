@@ -17,7 +17,7 @@ export default function FiltroCargo({ trilhas, atual, base }: { trilhas: string[
         if (v) p.set("trilha", v);
         else p.delete("trilha");
         const s = p.toString();
-        router.push(s ? `/?${s}` : "/");
+        router.push(s ? `/vagas?${s}` : "/vagas");
       }}
     />
   );

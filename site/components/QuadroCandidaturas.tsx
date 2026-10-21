@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import Icone from "./Icone";
 import Seletor from "./Seletor";
 import { moverCandidatura } from "@/app/acoes";
+import { useAviso } from "./Avisos";
 import type { Status } from "@/lib/tipos";
 import { FOLLOWUP_DIAS } from "@/lib/followup";
 
@@ -32,11 +33,14 @@ export default function QuadroCandidaturas({ iniciais, etapas }: { iniciais: Car
   const [alvo, setAlvo] = useState<Status | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const aviso = useAviso();
+  const nomeEtapa = (s: Status) => etapas.find((e) => e.status === s)?.rotulo ?? s;
 
-  function mover(id: string, status: Status) {
+  function mover(id: string, status: Status, desfazendo = false) {
     const antes = cartoes;
     const cartao = antes.find((c) => c.id === id);
     if (!cartao || cartao.status === status) return;
+    const anterior = cartao.status;
     setErro(null);
     setCartoes((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
     startTransition(async () => {
@@ -44,6 +48,13 @@ export default function QuadroCandidaturas({ iniciais, etapas }: { iniciais: Car
       if (falha) {
         setCartoes(antes);
         setErro(falha);
+        return;
+      }
+      if (!desfazendo) {
+        aviso({
+          texto: `Movida para ${nomeEtapa(status)}: ${cartao.titulo}`,
+          acao: { rotulo: "Desfazer", fazer: () => mover(id, anterior, true) },
+        });
       }
     });
   }

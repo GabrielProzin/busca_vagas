@@ -277,3 +277,19 @@ export async function reservarFollowup(vagaId: string, feitos: number): Promise<
   });
   return { ok: linhas.length === 1, anterior: antes[0]?.followup_em ?? null };
 }
+
+
+/** O SQL inteiro do supabase/schema.sql foi rodado? (as colunas mais novas existem) */
+export async function schemaCompleto(): Promise<boolean> {
+  if (emDemo()) return true;
+  try {
+    await Promise.all([
+      rest(`/vagas?select=resumo,email_origem&limit=1`),
+      rest(`/candidaturas?select=followup_em,followups,email_message_id&limit=1`),
+      rest(`/execucoes?select=aprendizado&limit=1`),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
+}

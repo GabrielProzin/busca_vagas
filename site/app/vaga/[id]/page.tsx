@@ -7,11 +7,12 @@ import EmailCandidatura from "@/components/EmailCandidatura";
 import StatusVaga from "@/components/StatusVaga";
 import Followup from "@/components/Followup";
 import ResumoVaga, { ResumoCarregando } from "@/components/ResumoVaga";
-import { alterarStatus, salvarNotas } from "../../acoes";
+import { salvarNotas } from "../../acoes";
+import AcoesVaga from "@/components/AcoesVaga";
 import { buscarVaga } from "@/lib/db";
 import { infoCurriculo } from "@/lib/arquivos";
 import { gmailConfigurado } from "@/lib/email";
-import { iaConfigurada } from "@/lib/ia";
+import { emailModelo, iaConfigurada } from "@/lib/ia";
 import { fonte, habilidade, local, naFonte, origemEmail, quando } from "@/lib/formato";
 import { mensagemLinkedin, situacaoFollowup } from "@/lib/followup";
 
@@ -27,6 +28,9 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
   const temEmail = Boolean(v.email_contato || c?.email_para);
   const motivos = v.motivos.filter((m) => !m.startsWith("Pede ")); // "Pede x, y" já aparece nas etiquetas
   const descricaoLonga = (v.descricao ?? "").length > 900;
+  // Sem rascunho salvo: o formulário já abre com o modelo pronto (instantâneo, sem gastar a cota da IA).
+  const jaEnviou = status === "enviada" || Boolean(c?.email_para && c?.enviada_em && status !== "aplicada");
+  const modelo = !c?.email_corpo && !jaEnviou ? emailModelo(v) : null;
   const fu = situacaoFollowup(c);
   const cartaoFollowup = fu ? (
     <section className={`cartao cartao-followup ${fu.estado}`} aria-label="Follow-up">
@@ -52,7 +56,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
   return (
     <Moldura
       atual=""
-      voltar={{ href: "/", rotulo: "Vagas" }}
+      voltar={{ href: "/vagas", rotulo: "Vagas" }}
       titulo={v.titulo}
       subtitulo={
         <>
@@ -63,13 +67,7 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
       }
       acoes={
         <>
-          {status === "nova" ? (
-            <form action={alterarStatus}>
-              <input type="hidden" name="id" value={v.id} />
-              <button className="botao fantasma perigo" name="status" value="descartada">Descartar</button>
-              <button className="botao" name="status" value="aplicada"><Icone nome="check" tamanho={16} /> Já apliquei</button>
-            </form>
-          ) : null}
+          {status === "nova" ? <AcoesVaga id={v.id} titulo={v.titulo} variante="botoes" /> : null}
           {v.url ? (
             <a className="botao primario" href={v.url} target="_blank" rel="noopener noreferrer">
               Abrir vaga {naFonte(v.fonte)} <Icone nome="externo" tamanho={16} />
@@ -114,9 +112,10 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
               <EmailCandidatura
                 vagaId={v.id}
                 para={c?.email_para ?? v.email_contato ?? ""}
-                assunto={c?.email_assunto ?? ""}
-                corpo={c?.email_corpo ?? ""}
-                jaEnviada={status === "enviada" || Boolean(c?.email_para && c?.enviada_em && status !== "aplicada")}
+                assunto={c?.email_assunto ?? modelo?.assunto ?? ""}
+                corpo={c?.email_corpo ?? modelo?.corpo ?? ""}
+                preenchidoComModelo={Boolean(modelo)}
+                jaEnviada={jaEnviou}
                 enviadaEm={c?.enviada_em ?? null}
                 iaPronta={iaConfigurada()}
                 gmailPronto={gmailConfigurado()}
@@ -135,9 +134,10 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
                     <EmailCandidatura
                       vagaId={v.id}
                       para={c?.email_para ?? v.email_contato ?? ""}
-                      assunto={c?.email_assunto ?? ""}
-                      corpo={c?.email_corpo ?? ""}
-                      jaEnviada={status === "enviada" || Boolean(c?.email_para && c?.enviada_em && status !== "aplicada")}
+                      assunto={c?.email_assunto ?? modelo?.assunto ?? ""}
+                      corpo={c?.email_corpo ?? modelo?.corpo ?? ""}
+                      preenchidoComModelo={Boolean(modelo)}
+                      jaEnviada={jaEnviou}
                       enviadaEm={c?.enviada_em ?? null}
                       iaPronta={iaConfigurada()}
                       gmailPronto={gmailConfigurado()}

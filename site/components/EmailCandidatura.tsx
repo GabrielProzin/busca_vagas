@@ -9,6 +9,8 @@ type Props = {
   assunto: string;
   corpo: string;
   jaEnviada: boolean;
+  /** O texto inicial é o modelo pronto (não salvo), não um rascunho seu. */
+  preenchidoComModelo?: boolean;
   enviadaEm: string | null;
   iaPronta: boolean;
   gmailPronto: boolean;
@@ -21,12 +23,14 @@ export default function EmailCandidatura(p: Props) {
   const [corpo, setCorpo] = useState(p.corpo);
   const [gerado, gerar, gerando] = useActionState<EstadoEmail, FormData>(gerarRascunho, null);
   const [envio, enviar, enviando] = useActionState<EstadoEmail, FormData>(enviarCandidatura, null);
+  const [tocado, setTocado] = useState(false); // depois de editar ou gerar, some o aviso de "modelo pronto"
 
   // Quando a IA devolve um rascunho, ele substitui o texto dos campos.
   useEffect(() => {
     if (gerado?.assunto) setAssunto(gerado.assunto);
     if (gerado?.corpo) setCorpo(gerado.corpo);
     if (gerado?.para) setPara(gerado.para);
+    if (gerado) setTocado(true);
   }, [gerado]);
 
   const enviada = p.jaEnviada || Boolean(envio?.ok);
@@ -56,14 +60,17 @@ export default function EmailCandidatura(p: Props) {
         <input type="hidden" name="id" value={p.vagaId} />
         <input type="hidden" name="para" value={para} />
         <button className="botao" name="modo" value="ia" disabled={gerando}>
-          {gerando ? "Escrevendo…" : corpo ? "Reescrever com IA" : "Escrever com IA"}
+          {gerando ? "Escrevendo…" : corpo ? "Melhorar com IA" : "Escrever com IA"}
         </button>
         <button className="botao fantasma" name="modo" value="modelo" disabled={gerando}>Usar modelo pronto</button>
         {!p.iaPronta ? <span className="dica">Sem GEMINI_API_KEY: só o modelo pronto funciona.</span> : null}
       </form>
       {gerado?.erro ? <p className="aviso">{gerado.erro}</p> : null}
+      {p.preenchidoComModelo && !tocado ? (
+        <p className="dica">Já preenchido com o modelo pronto e os seus destaques que combinam com a vaga. Revise e envie, ou use “Melhorar com IA”.</p>
+      ) : null}
 
-      <form action={enviar} className="email-form">
+      <form action={enviar} className="email-form" onChange={() => setTocado(true)}>
         <input type="hidden" name="id" value={p.vagaId} />
         <label>
           Para

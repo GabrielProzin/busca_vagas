@@ -179,7 +179,7 @@ async function capturarLote(tab) {
     titulo = "Parou no meio";
     msg = `${total.erroRede}. ${msg}`;
   }
-  const destino = total.novas.length === 1 ? `${cfg.site}/vaga/${encodeURIComponent(total.novas[0].id)}` : `${cfg.site}/?email=1`;
+  const destino = total.novas.length === 1 ? `${cfg.site}/vaga/${encodeURIComponent(total.novas[0].id)}` : `${cfg.site}/vagas?email=1`;
   avisar(titulo, (msg || "Clique para abrir.").trim(), total.novas.length ? `abrir|${destino}` : undefined);
 }
 

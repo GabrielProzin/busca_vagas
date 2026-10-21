@@ -1,177 +1,179 @@
 import Link from "next/link";
 import Moldura from "@/components/Moldura";
-import { PERFIL } from "@/lib/gerado/perfil";
-import Nota from "@/components/Nota";
 import Icone from "@/components/Icone";
-import FiltroCargo from "@/components/FiltroCargo";
-import { alterarStatus } from "./acoes";
-import { listarVagas } from "@/lib/db";
-import { fonte, habilidade, idUrl, local, normalizarBusca, origemEmail, quando } from "@/lib/formato";
-import type { Vaga } from "@/lib/tipos";
+import { listarCandidaturas, listarVagas } from "@/lib/db";
+import { idUrl, origemEmail } from "@/lib/formato";
+import { situacaoFollowup } from "@/lib/followup";
+import { passosConfiguracao } from "@/lib/configuracao";
+import { PERFIL } from "@/lib/gerado/perfil";
+import { ETAPAS, type Vaga } from "@/lib/tipos";
 
 export const dynamic = "force-dynamic";
 
-type Busca = { lista?: string; trilha?: string; modalidade?: string; email?: string; q?: string };
+// Hoje: o que pede ação agora, numa tela só. Cada bloco leva direto para onde se resolve.
 
-export default async function PaginaVagas({ searchParams }: { searchParams: Promise<Busca> }) {
-  const busca = await searchParams;
-  const lista = busca.lista === "vale_tentar" ? "vale_tentar" : "principal";
+const fuso = "America/Sao_Paulo";
+const fmtDia = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: fuso });
+const fmtCurta = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: fuso });
 
-  let vagas: Vaga[];
+function horaSP(): number {
+  return Number(new Intl.DateTimeFormat("pt-BR", { hour: "numeric", hourCycle: "h23", timeZone: fuso }).format(new Date()));
+}
+
+function saudacao(): string {
+  const hora = horaSP();
+  const primeiro = PERFIL.nomeCurto.split(" ")[0];
+  return `${hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite"}, ${primeiro}`;
+}
+
+export default async function PaginaHoje() {
+  let vagas: Vaga[] = [];
+  let candidaturas: Vaga[] = [];
+  let falhou = false;
   try {
-    vagas = await listarVagas();
+    [vagas, candidaturas] = await Promise.all([listarVagas(), listarCandidaturas()]);
   } catch (e) {
-    console.error("listarVagas:", e); // detalhe técnico só no log da Vercel
-    return (
-      <Moldura atual="/" titulo="Vagas">
-        <div className="cartao vazio">
-          <Icone nome="alerta" tamanho={32} />
-          <b>Não consegui ler o banco agora.</b>
-          <p>Tente recarregar em instantes. Se continuar, confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel e o log da implantação.</p>
-        </div>
-      </Moldura>
-    );
+    console.error("hoje:", e);
+    falhou = true;
   }
+  const passos = await passosConfiguracao().catch(() => []);
+  const essenciais = passos.filter((p) => p.essencial && !p.ok);
 
-  // "Novas" = sem nenhuma ação sua ainda. Aplicadas e descartadas saem desta lista.
   const novas = vagas.filter((v) => !v.candidatura || v.candidatura.status === "nova");
-  const contagem = {
-    principal: novas.filter((v) => v.lista === "principal").length,
-    vale_tentar: novas.filter((v) => v.lista === "vale_tentar").length,
-  };
-  const daLista = novas.filter((v) => v.lista === lista);
-  const trilhas = [...new Set(daLista.map((v) => v.trilha).filter(Boolean))] as string[];
-  const termo = normalizarBusca(busca.q ?? "");
-  const visiveis = daLista.filter(
-    (v) =>
-      (!busca.trilha || v.trilha === busca.trilha) &&
-      (!busca.modalidade || v.modalidade === busca.modalidade) &&
-      (!busca.email || Boolean(v.email_contato)) &&
-      (!termo || normalizarBusca(`${v.titulo} ${v.empresa ?? ""} ${v.habilidades_ok.join(" ")}`).includes(termo)),
-  );
+  const comEmail = novas.filter((v) => v.email_contato).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
+  const chegaramHoje = novas.filter((v) => Date.now() - Date.parse(v.primeira_vez_em) < 864e5).length;
 
-  const link = (mudar: Partial<Busca>) => {
-    const p = new URLSearchParams({ ...(busca as Record<string, string>), ...(mudar as Record<string, string>) });
-    for (const [k, v] of [...p.entries()]) if (!v) p.delete(k);
-    const s = p.toString();
-    return s ? `/?${s}` : "/";
-  };
+  const comFollowup = candidaturas
+    .map((v) => ({ v, fu: situacaoFollowup(v.candidatura) }))
+    .filter((x) => x.fu);
+  const pendentes = comFollowup.filter((x) => x.fu!.estado !== "aguardando").sort((a, b) => b.fu!.dias - a.fu!.dias);
+  const proximo = comFollowup.filter((x) => x.fu!.estado === "aguardando").sort((a, b) => Date.parse(a.fu!.proxima) - Date.parse(b.fu!.proxima))[0];
+
+  const porEtapa = Object.fromEntries(ETAPAS.map((e) => [e.status, candidaturas.filter((v) => v.candidatura?.status === e.status).length]));
+  const avancando = candidaturas.filter((v) => ["respondeu", "entrevista", "proposta"].includes(v.candidatura?.status ?? ""));
 
   return (
     <Moldura
       atual="/"
-      titulo="Vagas"
-      subtitulo={`Vagas ${PERFIL.area}${PERFIL.regiao ? `, remotas ou em ${PERFIL.regiao}` : ""}, ordenadas pela nota contra o seu currículo.`}
+      titulo={saudacao()}
+      subtitulo={<span className="primeira-maiuscula">{fmtDia.format(new Date())}</span>}
       acoes={
-        <nav className="segmentado" aria-label="Listas">
-          <Link href={link({ lista: "", trilha: "", modalidade: "", email: "" })} aria-current={lista === "principal"}>
-            Principal <b>{contagem.principal}</b>
-          </Link>
-          <Link href={link({ lista: "vale_tentar", trilha: "", modalidade: "", email: "" })} aria-current={lista === "vale_tentar"}>
-            Vale tentar <b>{contagem.vale_tentar}</b>
-          </Link>
-        </nav>
+        <Link className="botao" href="/adicionar">
+          <Icone nome="adicionar" tamanho={16} /> Adicionar vaga
+        </Link>
       }
     >
-      <section className="cartao tabela-vagas">
-        <div className="ferramentas">
-          <form className="busca" action="/" role="search">
-            <Icone nome="busca" tamanho={16} />
-            {Object.entries(busca).filter(([k, v]) => k !== "q" && v).map(([k, v]) => (
-              <input key={k} type="hidden" name={k} value={v} />
-            ))}
-            <input type="search" name="q" defaultValue={busca.q ?? ""} placeholder="Buscar vagas" aria-label="Buscar" />
-          </form>
-          <div className="chips">
-            <FiltroCargo
-              trilhas={trilhas}
-              atual={busca.trilha ?? ""}
-              base={Object.fromEntries(Object.entries(busca).filter(([k, v]) => k !== "trilha" && v)) as Record<string, string>}
-            />
-            <Link className="chip" href={link({ email: busca.email ? "" : "1" })} aria-current={Boolean(busca.email)}>
-              <Icone nome="email" tamanho={14} /> Com email <span className="n">{daLista.filter((v) => v.email_contato).length}</span>
-            </Link>
-            <Link className="chip" href={link({ modalidade: busca.modalidade === "remoto" ? "" : "remoto" })} aria-current={busca.modalidade === "remoto"}>
-              Remoto
-            </Link>
-          </div>
-          <span className="espaco" />
-          <span className="total">{visiveis.length} {visiveis.length === 1 ? "vaga" : "vagas"}</span>
-        </div>
+      {essenciais.length ? (
+        <Link href="/configuracoes" className="faixa aviso">
+          <Icone nome="alerta" /> {essenciais.length === 1 ? "Falta 1 passo" : `Faltam ${essenciais.length} passos`} para o sistema ficar completo:{" "}
+          {essenciais.map((p) => p.rotulo.charAt(0).toLowerCase() + p.rotulo.slice(1)).join(", ")}. Ver em Configurações →
+        </Link>
+      ) : null}
+      {falhou ? (
+        <div className="faixa aviso" role="status"><Icone nome="alerta" /> Não consegui ler o banco agora. Tente recarregar em instantes.</div>
+      ) : null}
 
-        {visiveis.length === 0 ? (
-          <div className="vazio">
-            <Icone nome="vagas" tamanho={36} />
-            {vagas.length === 0 ? (
-              <>
-                <b>Nenhuma vaga coletada ainda</b>
-                <p>A coleta roda por volta das 11:00 e das 18:30. Para rodar agora: GitHub → Actions → Coleta de vagas → Run workflow.</p>
-              </>
+      <div className="hoje-grade">
+        <div className="hoje-coluna">
+        <section className="cartao hoje-email" aria-label="Vagas novas com email">
+          <div className="cartao-cabecalho">
+            <h2><Icone nome="email" /> Vagas novas com email</h2>
+            <span className="contador">{comEmail.length}</span>
+          </div>
+          {comEmail.length ? (
+            <>
+              <ul className="hoje-lista">
+                {comEmail.slice(0, 5).map((v) => (
+                  <li key={v.id}>
+                    <span className={`hoje-nota ${v.lista ?? ""}`}>{Math.round(v.nota ?? 0)}</span>
+                    <div>
+                      <Link href={idUrl(v.id)} className="hoje-titulo">{v.titulo}</Link>
+                      <span className="dica">{v.empresa || "Empresa não informada"} · {origemEmail(v.email_origem)}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="cartao-rodape">
+                <Link href="/vagas?email=1">Ver todas com email →</Link>
+              </div>
+            </>
+          ) : (
+            <div className="cartao-corpo dica">
+              Nenhuma vaga nova com email agora. No LinkedIn, abra uma busca de posts e clique na extensão para trazer mais
+              (<Link href="/adicionar">buscas prontas</Link>).
+            </div>
+          )}
+        </section>
+
+        <section className="cartao hoje-andamento" aria-label="Em andamento">
+          <div className="cartao-cabecalho"><h2><Icone nome="candidaturas" /> Em andamento</h2></div>
+          <div className="cartao-corpo">
+            <div className="hoje-etapas">
+              {ETAPAS.filter((e) => e.status !== "recusada").map((e) => (
+                <Link key={e.status} href="/candidaturas" className="hoje-etapa">
+                  <strong>{porEtapa[e.status] ?? 0}</strong>
+                  <span>{e.status === "aplicada" ? "Aplicada" : e.rotulo}</span>
+                </Link>
+              ))}
+            </div>
+            {avancando.length ? (
+              <ul className="hoje-lista compacta">
+                {avancando.slice(0, 4).map((v) => (
+                  <li key={v.id}>
+                    <span className="etiqueta ok">{ETAPAS.find((e) => e.status === v.candidatura?.status)?.rotulo}</span>
+                    <Link href={idUrl(v.id)} className="hoje-titulo">{v.titulo}</Link>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <>
-                <b>Nada por aqui com esses filtros</b>
-                <p>Tente a outra lista, limpe os filtros ou veja o que você já aplicou em Candidaturas.</p>
-              </>
+              <p className="dica" style={{ marginTop: 12 }}>Quando uma empresa responder, mova o cartão no quadro: ela aparece aqui.</p>
             )}
           </div>
-        ) : (
-          <div role="table" aria-label="Vagas">
-            <div className="tv-linha tv-cabecalho" role="row">
-              <span role="columnheader">Nota</span>
-              <span role="columnheader">Vaga</span>
-              <span role="columnheader" className="tv-requisitos">Pede e você tem</span>
-              <span role="columnheader">Publicada</span>
-              <span role="columnheader" style={{ textAlign: "right" }}>Ações</span>
-            </div>
-            {visiveis.map((v) => <LinhaVaga key={v.id} vaga={v} />)}
-          </div>
-        )}
-      </section>
-    </Moldura>
-  );
-}
-
-function LinhaVaga({ vaga: v }: { vaga: Vaga }) {
-  const ok = v.habilidades_ok.slice(0, 3);
-  const resto = v.habilidades_ok.length - ok.length;
-  return (
-    <div className="tv-linha tv-item" role="row">
-      <div role="cell"><Nota vaga={v} /></div>
-      <div role="cell" style={{ minWidth: 0 }}>
-        <Link href={idUrl(v.id)} className="tv-titulo">{v.titulo}</Link>
-        <div className="tv-meta">
-          <span className="item"><Icone nome="empresa" tamanho={14} />{v.empresa || "Empresa não informada"}</span>
-          <span className="item"><Icone nome="local" tamanho={14} />{local(v)}</span>
-          <span className="item"><Icone nome="fonte" tamanho={14} />{fonte(v.fonte)}</span>
+        </section>
         </div>
-        {v.email_contato ? (
-          <div className="etiquetas" style={{ marginTop: 6 }}>
-            <span className="etiqueta email"><Icone nome="email" tamanho={12} />{origemEmail(v.email_origem)}</span>
+        <div className="hoje-coluna">
+        <section className="cartao hoje-triagem" aria-label="Triagem">
+          <div className="cartao-cabecalho"><h2><Icone nome="triagem" /> Para triar</h2></div>
+          <div className="cartao-corpo hoje-numero">
+            <strong>{novas.length}</strong>
+            <span>{novas.length === 1 ? "vaga nova esperando decisão" : "vagas novas esperando decisão"}{chegaramHoje ? `, ${chegaramHoje} chegaram nas últimas 24h` : ""}.</span>
+            {novas.length ? (
+              <Link className="botao primario" href="/triagem">Começar triagem</Link>
+            ) : (
+              <span className="dica">Tudo triado. A próxima coleta roda por volta das {horaSP() >= 11 && horaSP() < 18 ? "18:30" : "11:00"}.</span>
+            )}
           </div>
-        ) : null}
+        </section>
+
+        <section className="cartao hoje-follow" aria-label="Follow-ups">
+          <div className="cartao-cabecalho">
+            <h2><Icone nome="sino" /> Follow-ups</h2>
+            {pendentes.length ? <span className="contador quente">{pendentes.length}</span> : null}
+          </div>
+          {pendentes.length ? (
+            <ul className="hoje-lista">
+              {pendentes.slice(0, 5).map(({ v, fu }) => (
+                <li key={v.id}>
+                  <span className={`hoje-selo ${fu!.estado}`}>{fu!.dias}d</span>
+                  <div>
+                    <Link href={idUrl(v.id)} className="hoje-titulo">{v.titulo}</Link>
+                    <span className="dica">
+                      {v.empresa || "Empresa não informada"} · {fu!.estado === "followup" ? "fazer follow-up" : "talvez mover para Não seguiu"}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="cartao-corpo dica">
+              Nenhum follow-up pendente.
+              {proximo ? <> O próximo é <Link href={idUrl(proximo.v.id)}>{proximo.v.titulo}</Link>, a partir de {fmtCurta.format(new Date(proximo.fu!.proxima))}.</> : null}
+            </div>
+          )}
+        </section>
+
+        </div>
       </div>
-      <div role="cell" className="tv-requisitos etiquetas">
-        {ok.map((h) => <span key={h} className="etiqueta ok">{habilidade(h)}</span>)}
-        {resto > 0 ? <span className="mais">+{resto}</span> : null}
-        {v.habilidades_faltando.slice(0, 1).map((h) => <span key={h} className="etiqueta falta">Falta {h}</span>)}
-      </div>
-      <div role="cell" className="tv-data">{quando(v.publicada_em)}</div>
-      <div role="cell" className="tv-acoes">
-        {v.url ? (
-          <a className="icone-botao" href={v.url} target="_blank" rel="noopener noreferrer" title="Abrir vaga" aria-label={`Abrir a vaga ${v.titulo}`}>
-            <Icone nome="externo" />
-          </a>
-        ) : null}
-        <form action={alterarStatus}>
-          <input type="hidden" name="id" value={v.id} />
-          <button className="icone-botao ok" name="status" value="aplicada" title="Já apliquei" aria-label={`Marcar ${v.titulo} como aplicada`}>
-            <Icone nome="check" />
-          </button>
-          <button className="icone-botao perigo" name="status" value="descartada" title="Descartar" aria-label={`Descartar ${v.titulo}`}>
-            <Icone nome="x" />
-          </button>
-        </form>
-      </div>
-    </div>
+    </Moldura>
   );
 }

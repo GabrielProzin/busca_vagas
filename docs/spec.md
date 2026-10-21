@@ -35,12 +35,14 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 | Tela | O que mostra | Ações |
 |---|---|---|
 | Login | Campo de senha | Entrar |
-| Vagas (`/`) | Lista principal / vale tentar, nota com composição, busca, filtro de cargo, "Com email", "Remoto" | Abrir, "Já apliquei", Descartar |
-| Vaga (`/vaga/[id]`) | Follow-up (quando houver candidatura aberta), resumo da IA, por que essa nota, email ao recrutador (ou "como se candidatar" se não há email), descrição | Escrever com IA / modelo, enviar pelo Gmail, mudar situação, anotações |
+| Hoje (`/`, início) | O que pede ação agora: vagas novas com email, quantas faltam triar, follow-ups pendentes, candidaturas que avançaram; aviso se faltar algum passo da configuração | Ir direto para cada item, começar a triagem |
+| Triagem (`/triagem`) | As vagas novas uma por vez (nota, motivos, requisitos, trecho da descrição), em ordem de nota | Descartar (D), Já apliquei (A), Abrir/Escrever email (Enter), Pular (→), Voltar (←), Desfazer (Z); no celular, botões grandes |
+| Vagas (`/vagas`) | Lista principal / vale tentar, nota com composição, busca, filtro de cargo, "Com email", "Remoto" | Abrir, "Já apliquei", Descartar |
+| Vaga (`/vaga/[id]`) | Follow-up (quando houver candidatura aberta), resumo da IA, por que essa nota, email ao recrutador já preenchido com o modelo pronto (ou "como se candidatar" se não há email), descrição | Melhorar com IA, enviar pelo Gmail, mudar situação, anotações |
 | Candidaturas | Quadro (kanban) por etapa, avisos de follow-up | Arrastar cartão, menu "Mover para" |
 | Adicionar vaga | Colar texto de um post; buscas prontas de posts no LinkedIn | Enviar para a IA ler |
 | Painel | Números da última coleta, por que as vagas ficaram de fora, vagas novas por coleta, aprendizado do ranking | — |
-| Configurações | Situação das integrações, currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
+| Configurações | Primeiros passos (o que está pronto e o que falta, com o link do passo no README), currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
 
 ## 4. Dados (Supabase / Postgres, `supabase/schema.sql`)
 
@@ -75,6 +77,13 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - Nunca sai duas vezes para a mesma vaga (trava no banco, vale entre abas).
 - A IA só usa fatos do currículo; texto da vaga é dado, nunca instrução.
 
+**Uso no dia a dia**
+- Ao abrir uma vaga com email e sem rascunho salvo, o email já vem preenchido com o modelo pronto (sem gastar IA);
+  "Melhorar com IA" reescreve. Nada é salvo até enviar.
+- Toda ação que tira uma vaga da lista ou muda a etapa (descartar, já apliquei, mover no quadro, mudar a situação)
+  mostra um aviso com **Desfazer**, que volta ao estado anterior.
+- O menu mostra quantas vagas novas há e, em laranja, quantos follow-ups estão pendentes.
+
 **Follow-up**
 - Vale para "Aplicada" e "Email enviado". 15 dias sem resposta → pede follow-up.
 - Por email: vai como resposta ao primeiro email, sem anexo. Pelo link: mensagem pronta para o LinkedIn.
@@ -103,6 +112,12 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - [ ] A captura em lote recusa sem token e não repete o mesmo post.
 - [ ] `/api/saude` não mostra dados; `/api/vigia` exige o segredo do cron.
 - [ ] "Exportar meus dados" baixa todas as candidaturas.
+- [ ] A página inicial (Hoje) mostra vagas com email, triagem, follow-ups e andamento.
+- [ ] Na triagem, D descarta e Z desfaz (a vaga volta para a lista).
+- [ ] Descartar uma vaga na lista mostra "Desfazer", e desfazer devolve a vaga.
+- [ ] Ao abrir uma vaga com email, o email já está preenchido.
+- [ ] O menu mostra o número de follow-ups pendentes.
+- [ ] Configurações mostra os primeiros passos, com o que falta.
 - [ ] Nenhuma página principal rola para o lado no celular (390 px).
 - [ ] Lighthouse no celular: desempenho ≥ 90 e acessibilidade ≥ 95 nas páginas principais.
 - [ ] O backup da coleta abre com a senha e confere com o banco.

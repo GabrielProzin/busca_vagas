@@ -22,11 +22,11 @@ test("login: senha errada não entra; certa entra", async ({ page }) => {
   await page.click("button[type=submit]");
   await expect(page.getByText("Senha incorreta.")).toBeVisible();
   await entrar(page);
-  await expect(page.locator(".tv-item").first()).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/^(Bom dia|Boa tarde|Boa noite), /);
 });
 
 test("sem login: páginas e dados ficam fechados", async ({ request }) => {
-  for (const rota of ["/", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
     const r = await request.get(rota, { maxRedirects: 0 });
     expect(r.status(), rota).toBeGreaterThanOrEqual(300);
     expect(r.status(), rota).toBeLessThan(400);
@@ -34,16 +34,77 @@ test("sem login: páginas e dados ficam fechados", async ({ request }) => {
   }
 });
 
+test("Hoje: mostra vagas com email, triagem, follow-ups e andamento", async ({ page }) => {
+  await entrar(page);
+  for (const bloco of ["Vagas novas com email", "Triagem", "Follow-ups", "Em andamento"]) {
+    await expect(page.getByRole("region", { name: bloco })).toBeVisible();
+  }
+  await expect(page.getByRole("region", { name: "Vagas novas com email" })).toContainText("Fictícia Log");
+  await expect(page.getByRole("region", { name: "Follow-ups" })).toContainText("16d");
+  // menu: selo laranja com os follow-ups pendentes
+  await expect(page.locator(".lateral-nav .contador.quente")).toHaveText(/^1/);
+});
+
 test("lista: filtro Com email mostra só vagas com email", async ({ page }) => {
   await entrar(page);
+  await page.goto("/vagas");
   const total = await page.locator(".tv-item").count();
   expect(total).toBeGreaterThan(2);
-  await page.getByRole("link", { name: /Com email/ }).click();
-  await page.waitForURL(/email=1/);
+  await page.locator(".chips").getByRole("link", { name: /Com email/ }).click();
+  await page.waitForURL(/vagas\?.*email=1/);
   const itens = page.locator(".tv-item");
   expect(await itens.count()).toBeGreaterThan(0);
   expect(await itens.count()).toBeLessThan(total);
   for (const item of await itens.all()) await expect(item.locator(".etiqueta.email")).toBeVisible();
+});
+
+test("lista: descartar mostra Desfazer, e desfazer devolve a vaga", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/vagas");
+  const antes = await page.locator(".tv-item").count();
+  const titulo = (await page.locator(".tv-item .tv-titulo").first().innerText()).trim();
+  await page.locator(".tv-item").first().getByRole("button", { name: /Descartar/ }).click();
+  const aviso = page.locator(".aviso-flutuante", { hasText: "Descartada" });
+  await expect(aviso).toBeVisible();
+  await expect(page.locator(".tv-item")).toHaveCount(antes - 1);
+  await aviso.getByRole("button", { name: "Desfazer" }).click();
+  await expect(page.locator(".tv-item")).toHaveCount(antes);
+  await expect(page.locator(".tv-item .tv-titulo", { hasText: titulo }).first()).toBeVisible();
+});
+
+test("triagem: D descarta e Z desfaz", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/triagem");
+  await expect(page.locator(".triagem-cartao")).toBeVisible();
+  await expect(page.locator(".triagem-progresso")).toContainText("0 decididas");
+  await page.keyboard.press("d");
+  await expect(page.locator(".triagem-progresso")).toContainText("1 decididas");
+  await expect(page.locator(".triagem-progresso")).toContainText("Vaga 2 de");
+  await page.keyboard.press("z");
+  await expect(page.locator(".triagem-progresso")).toContainText("0 decididas");
+  await expect(page.locator(".triagem-progresso")).toContainText("Vaga 1 de");
+  // o desfazer chegou ao banco: a vaga continua na lista
+  await page.waitForTimeout(500);
+  await page.goto("/triagem");
+  await expect(page.locator(".triagem-progresso")).toContainText("0 decididas");
+});
+
+test("vaga com email abre com o email já preenchido", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/vaga/linkedin%3A8");
+  await expect(page.locator("textarea[name=corpo]")).toHaveValue(/Analista de Dados Júnior/);
+  await expect(page.locator("input[name=assunto]")).toHaveValue(/^Candidatura: /);
+  await expect(page.getByText("Já preenchido com o modelo pronto")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Melhorar com IA" })).toBeVisible();
+});
+
+test("configurações: primeiros passos mostram o que falta", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/configuracoes");
+  const passos = page.locator(".passos");
+  await expect(passos).toContainText("Currículo em PDF anexado");
+  await expect(passos.locator("li.falta.essencial", { hasText: "Currículo em PDF" })).toBeVisible();
+  await expect(passos.locator("li.pronto", { hasText: "Banco de dados conectado" })).toBeVisible();
 });
 
 test("email: envia com currículo anexado e não sai duas vezes (duas abas)", async ({ page, context }) => {
@@ -141,7 +202,7 @@ test("celular: nenhuma página principal rola para o lado", async ({ browser }) 
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);
