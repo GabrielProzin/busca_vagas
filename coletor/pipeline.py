@@ -16,6 +16,7 @@ from pathlib import Path
 
 import yaml
 
+from . import resumo as resumo_email
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
 from .fontes import github_issues, gupy, remotar
@@ -151,8 +152,16 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     log.info("json: %s", caminho)
     sb = Supabase.do_ambiente()
     if sb:
+        # Novidade = não estava no banco antes desta coleta. Só elas entram no email de resumo.
+        existentes = sb.ids_existentes([v.id for v in aprovadas])
+        corte = float(cfg.get("resumo", {}).get("nota_minima", 85))
+        para_resumo = [v for v in aprovadas if v.id not in existentes and (v.nota or 0) >= corte]
         sb.upsert_vagas(aprovadas)
         sb.registrar_execucao(execucao)
+        try:
+            resumo_email.enviar(para_resumo, corte)
+        except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
+            log.warning("resumo: falha ao enviar: %s", e)
     resumo = os.getenv("GITHUB_STEP_SUMMARY")
     if resumo:
         # O repositório é público: o resumo do Actions só mostra a tabela de vagas se pedido.

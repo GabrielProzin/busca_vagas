@@ -1,8 +1,11 @@
-name: Coleta diária de vagas
+name: Coleta de vagas (11:00 e 18:30)
 
 on:
   schedule:
-    - cron: "17 10 * * *"   # 07:17 em Brasília, todo dia
+    # Horários em UTC (Brasília = UTC-3). O GitHub costuma atrasar alguns minutos os agendamentos,
+    # então eles estão marcados um pouco antes: rodam por volta das 11:00 e das 18:30.
+    - cron: "52 13 * * *"   # ~11:00 em Brasília
+    - cron: "22 21 * * *"   # ~18:30 em Brasília
   workflow_dispatch:
     inputs:
       resumo_detalhado:
@@ -52,6 +55,11 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESUMO_DETALHADO: ${{ inputs.resumo_detalhado && '1' || '0' }}
+          # Email de resumo (vagas novas com nota 85+)
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          RESUMO_PARA: ${{ secrets.RESUMO_PARA }}
         shell: bash   # com "shell: bash" o Actions usa pipefail, então o tee não esconde falhas
         run: python -m coletor.pipeline 2>&1 | tee saida_log.txt
 

@@ -43,6 +43,16 @@ class Supabase:
         url, chave = os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_ROLE_KEY")
         return cls(url, chave) if url and chave else None
 
+    def ids_existentes(self, ids: list[str]) -> set[str]:
+        """Quais destas vagas já estavam no banco (para saber o que é novidade nesta coleta)."""
+        existentes: set[str] = set()
+        for i in range(0, len(ids), 100):
+            lote = ",".join('"' + x.replace('"', '') + '"' for x in ids[i:i + 100])
+            r = requests.get(f"{self.base}/vagas", headers=self.h, params={"select": "id", "id": f"in.({lote})"}, timeout=30)
+            r.raise_for_status()
+            existentes |= {linha["id"] for linha in r.json()}
+        return existentes
+
     def upsert_vagas(self, vagas: list[Vaga]) -> None:
         agora = datetime.now(timezone.utc).isoformat()
         linhas = []

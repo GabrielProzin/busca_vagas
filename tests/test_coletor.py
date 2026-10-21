@@ -96,3 +96,19 @@ def test_ranking_ordena_por_aderencia():
     assert media.lista in ("vale_tentar", "descartada")
     assert "spark" in media.habilidades_faltando
     assert any("Power" in m or "power" in m for m in boa.motivos)
+
+
+def test_resumo_email():
+    from coletor.resumo import montar
+
+    a = vaga("Analista de BI Júnior", emails=["rh@x.com.br"])
+    a.nota, a.habilidades_ok = 92.4, ["power_bi", "sql"]
+    b = vaga("Engenheiro de Dados Jr")
+    b.nota = 87
+    msg = montar([b, a], "https://exemplo.vercel.app/", 85)
+    assert msg["Subject"] == "busca_vagas: 2 vagas novas com nota 85+"
+    texto = msg.get_body(("plain",)).get_content()
+    assert texto.index("Analista de BI") < texto.index("Engenheiro")  # ordenado pela nota
+    assert "https://exemplo.vercel.app/vaga/teste%3AAnalista%20de%20BI%20J%C3%BAnior" in texto
+    html = msg.get_body(("html",)).get_content()
+    assert "Tem email do recrutador" in html and "power bi" in html

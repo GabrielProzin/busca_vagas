@@ -60,5 +60,8 @@ requisitos_ausentes_pesados: ['spark', 'databricks', 'aws', 'azure', 'scala', 'k
 
 # Corte de nota (0-100). Abaixo disso a vaga não aparece.
 nota_minima: 50
+# Email de resumo depois de cada coleta: só vagas NOVAS com nota a partir deste valor.
+resumo:
+  nota_minima: 85
 # Só considera vagas publicadas nos últimos N dias.
 max_dias_publicacao: 14

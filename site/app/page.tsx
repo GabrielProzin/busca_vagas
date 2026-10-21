@@ -75,7 +75,7 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
             {novas.length === 0 && vagas.length === 0 ? (
               <>
                 <p><b>Nenhuma vaga coletada ainda.</b></p>
-                <p>A coleta roda todo dia às 07:17. Você também pode rodar agora em GitHub → Actions → Coleta diária de vagas.</p>
+                <p>A coleta roda todo dia por volta das 11:00 e das 18:30. Para rodar agora: GitHub → Actions → Coleta de vagas → Run workflow.</p>
               </>
             ) : (
               <p>Nada novo nesta lista. Veja a outra aba ou o que você já aplicou em Candidaturas.</p>

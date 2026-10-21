@@ -9,7 +9,7 @@ envia emails de candidatura personalizados a partir de um site privado.
 ## Como funciona
 
 ```
-GitHub Actions (todo dia, 07:17)
+GitHub Actions (todo dia, ~11:00 e ~18:30)
   └─ coletor/pipeline.py
        1. Coleta     Gupy (rota do portal) + Remotar (API do site) + issues de repositórios de vagas no GitHub
                      e deduplica entre fontes (links da Gupy carregam o jobId em base64)
@@ -19,6 +19,7 @@ GitHub Actions (todo dia, 07:17)
                      e senioridade escrita na descrição
        5. Ranqueia   nota 0–100 com motivos
        6. Grava      Supabase (Postgres) + JSON
+       7. Avisa      email de resumo com as vagas novas de nota 85+ (coletor/resumo.py)
 ```
 
 ### A nota de compatibilidade
