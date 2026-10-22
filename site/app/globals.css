@@ -776,3 +776,13 @@ a.faixa:hover { filter: brightness(0.97); }
   .medidor-detalhes { font-size: 11.5px; }
   .medidor-rodape { flex-direction: column; align-items: center; font-size: 11.5px; gap: 4px; }
 }
+
+/* Tela Mais (celular) */
+.mais-lista { display: flex; flex-direction: column; overflow: hidden; }
+.mais-lista a { display: grid; grid-template-columns: 40px minmax(0, 1fr) 18px; gap: 12px; align-items: center; padding: 14px 16px; text-decoration: none; color: var(--ink); min-height: 64px; }
+.mais-lista a + a { border-top: 1px solid var(--line); }
+.mais-lista a:hover { background: var(--surface-2); }
+.mais-lista a > svg:last-child { transform: rotate(180deg); color: var(--muted); }
+.mais-icone { width: 40px; height: 40px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; }
+.mais-texto { display: flex; flex-direction: column; min-width: 0; }
+.mais-texto b { font-weight: 600; }

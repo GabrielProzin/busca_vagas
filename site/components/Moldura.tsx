@@ -1,24 +1,11 @@
 import Link from "next/link";
-import Icone, { type NomeIcone } from "./Icone";
+import Icone from "./Icone";
+import { SECOES, SECOES_MAIS } from "@/lib/navegacao";
 import { sair } from "@/app/acoes";
 import { enviadosHoje, listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
 import { PERFIL } from "@/lib/gerado/perfil";
 import { situacaoFollowup } from "@/lib/followup";
 import { ehNova } from "@/lib/tipos";
-
-type Secao = { href: string; rotulo: string; curto: string; icone: NomeIcone; conta?: "novas" | "candidaturas" | "fila"; baixo: boolean };
-// "baixo": aparece também na barra de baixo do celular (cabem 6).
-const SECOES: Secao[] = [
-  { href: "/", rotulo: "Hoje", curto: "Hoje", icone: "inicio", baixo: true },
-  { href: "/vagas", rotulo: "Vagas", curto: "Vagas", icone: "vagas", conta: "novas", baixo: true },
-  { href: "/triagem", rotulo: "Triagem rápida", curto: "Triagem", icone: "triagem", baixo: true },
-  { href: "/lote", rotulo: "Envio em lote", curto: "Lote", icone: "lote", conta: "fila", baixo: false },
-  { href: "/adicionar", rotulo: "Adicionar vaga", curto: "Adicionar", icone: "adicionar", baixo: false },
-  { href: "/candidaturas", rotulo: "Candidaturas", curto: "Quadro", icone: "candidaturas", conta: "candidaturas", baixo: true },
-  { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel", baixo: true },
-  { href: "/uso", rotulo: "Uso dos serviços", curto: "Uso", icone: "medidor", baixo: false },
-  { href: "/configuracoes", rotulo: "Configurações", curto: "Ajustes", icone: "config", baixo: true },
-];
 
 const fmtHora = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 
@@ -141,6 +128,11 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
             <span>{s.curto}</span>
           </Link>
         ))}
+        {/* No celular, as outras seções (Painel, Uso dos serviços, Configurações...) ficam na tela Mais. */}
+        <Link href="/mais" aria-current={atual === "/mais" || SECOES_MAIS.some((s) => s.href === atual) ? "page" : undefined}>
+          <span className="nav-baixo-icone"><Icone nome="mais" tamanho={22} /></span>
+          <span>Mais</span>
+        </Link>
       </nav>
     </div>
   );

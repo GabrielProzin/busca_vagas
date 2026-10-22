@@ -276,11 +276,27 @@ test("uso dos serviços: mostra cada plano grátis e conta Gmail e IA usados pel
   await expect(page.getByRole("region", { name: "Vercel" })).toContainText("Sem medição");
 });
 
+test("celular: a barra de baixo leva ao Envio em lote e o Mais leva ao Uso dos serviços", async ({ browser }) => {
+  const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const page = await contexto.newPage();
+  await entrar(page);
+  const barra = page.getByRole("navigation", { name: "Seções" });
+  await expect(barra.getByRole("link")).toHaveCount(6);
+  await barra.getByRole("link", { name: "Lote" }).click();
+  await expect(page).toHaveURL(/\/lote$/);
+  await barra.getByRole("link", { name: "Mais" }).click();
+  await page.getByRole("navigation", { name: "Outras seções" }).getByRole("link", { name: /Uso dos serviços/ }).click();
+  await expect(page).toHaveURL(/\/uso$/);
+  await expect(page.locator(".medidor").first()).toBeVisible();
+  await expect(barra.getByRole("link", { name: "Mais" })).toHaveAttribute("aria-current", "page");
+  await contexto.close();
+});
+
 test("celular: nenhuma página principal rola para o lado", async ({ browser }) => {
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);
