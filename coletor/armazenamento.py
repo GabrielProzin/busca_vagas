@@ -221,7 +221,8 @@ class Supabase:
         from datetime import timedelta
         desde = (datetime.now(timezone.utc) - timedelta(days=dias)).isoformat()
         r = requests.get(f"{self.base}/vagas", headers=self.h, timeout=60, params={
-            "select": "id,titulo,empresa,url,descricao,nota,lista,trilha", "atualizada_em": f"gte.{desde}", "limit": 1000})
+            "select": "id,fonte,titulo,empresa,url,descricao,cidade,modalidade,nota,lista,trilha,candidatura:candidaturas(status)",
+            "atualizada_em": f"gte.{desde}", "limit": 1000})
         r.raise_for_status()
         return r.json()
 
@@ -236,3 +237,14 @@ class Supabase:
                           params={"on_conflict": "nome"}, timeout=60, data=json.dumps(
                               {"nome": nome, "dados": dados, "atualizado_em": datetime.now(timezone.utc).isoformat()}, default=str))
         r.raise_for_status()
+
+    def tirar_da_lista(self, ids: list[str], motivo: str) -> int:
+        """Vagas que já estavam na lista e não passam mais num filtro: saem da lista (não são apagadas)."""
+        if not ids:
+            return 0
+        lote = ",".join('"' + x.replace('"', '') + '"' for x in ids)
+        r = requests.patch(f"{self.base}/vagas", headers={**self.h, "Prefer": "return=representation"},
+                           params={"id": f"in.({lote})"}, timeout=30,
+                           data=json.dumps({"lista": "descartada", "motivos": [motivo]}))
+        r.raise_for_status()
+        return len(r.json())

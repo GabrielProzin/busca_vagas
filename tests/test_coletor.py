@@ -249,6 +249,27 @@ def test_local_nao_informado_aceito_so_no_linkedin():
     assert F.filtrar_local(v) is None
 
 
+def test_post_presencial_em_outro_estado_sai():
+    # caso real: post do LinkedIn sem cidade estruturada, "100% presencial, Perus – SP"
+    v = vaga("Power BI", "Analista de qualidade logística. Condições: CLT, 100% presencial, Perus – SP. Envie para rh@x.com",
+             modalidade=None)
+    v.fonte = "linkedin"
+    assert F.filtrar_local(v) == "presencial em SP"
+    v = vaga("Analista de Dados", "Vaga presencial na Avenida Paulista, São Paulo. Envie para rh@x.com", modalidade=None)
+    v.fonte = "linkedin"
+    assert F.filtrar_local(v) == "presencial em SP"
+    # remoto continua valendo mesmo citando a cidade da empresa
+    v = vaga("Analista de Dados", "Empresa de São Paulo/SP contrata, 100% remoto.", modalidade=None)
+    assert F.filtrar_local(v) is None
+    # a sua região continua valendo
+    v = vaga("Analista de Dados", "Presencial em Goiânia - GO.", modalidade=None)
+    assert F.filtrar_local(v) is None
+    # palavra comum em maiúscula não vira estado ("SE" só conta colado num local)
+    v = vaga("Analista de Dados", "SE VOCÊ GOSTA DE DADOS, envie para rh@x.com", modalidade=None)
+    v.fonte = "linkedin"
+    assert F.filtrar_local(v) is None
+
+
 def test_linkedin_sem_token_nao_roda():
     vagas, info = linkedin_posts.coletar({"buscas": ["x"]}, TRILHAS, token="")
     assert vagas == [] and info["erro"] == "sem APIFY_TOKEN"

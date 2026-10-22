@@ -118,6 +118,28 @@ def _followups_pendentes(sb: Supabase) -> list[dict]:
     return pendentes
 
 
+def _revalidar_local(sb: Supabase, filtros: Filtros) -> int:
+    """Vagas da lista (últimos 3 dias, sem decisão sua) que o filtro de local atual reprova saem da lista.
+    Serve para quando o filtro melhora: as que entraram antes não ficam esperando sumir sozinhas."""
+    fora = []
+    for d in sb.vagas_recentes(3):
+        c = d.get("candidatura")
+        c = (c[0] if c else None) if isinstance(c, list) else c
+        if d.get("lista") not in ("principal", "vale_tentar") or (c and c.get("status") != "nova"):
+            continue
+        fonte, _, origem = d["id"].partition(":")
+        v = Vaga(fonte=fonte, id_origem=origem, titulo=d.get("titulo") or "", empresa=d.get("empresa") or "",
+                 url=d.get("url") or "", descricao=d.get("descricao") or "", cidade=d.get("cidade"),
+                 modalidade=d.get("modalidade"))
+        motivo = filtros.filtrar_local(v)
+        if motivo:
+            fora.append((d["id"], motivo))
+    por_motivo: dict[str, list[str]] = {}
+    for i, motivo in fora:
+        por_motivo.setdefault(motivo, []).append(i)
+    return sum(sb.tirar_da_lista(ids, f"Saiu da lista: {m} (filtro de local revisado)") for m, ids in por_motivo.items())
+
+
 def _vaga_do_banco(d: dict) -> Vaga:
     fonte, _, id_origem = d["id"].partition(":")
     return Vaga(fonte=fonte, id_origem=id_origem, titulo=d.get("titulo") or "", empresa=d.get("empresa") or "",
@@ -320,6 +342,12 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         corte = float(cfg.get("resumo", {}).get("nota_minima", 85))
         teste = os.getenv("RESUMO_TESTE") == "1"
         sb.upsert_vagas(aprovadas)
+        try:
+            n_fora = _revalidar_local(sb, filtros)
+            if n_fora:
+                _anotar(f"Local revisado: {n_fora} vaga(s) da lista eram de fora da sua região e saíram da lista")
+        except Exception as e:
+            log.warning("local: não revalidei as vagas do banco: %s", e)
         _anotar(f"Vagas novas nesta coleta: {sum(v.id not in existentes for v in aprovadas)} "
                 f"({sum(v.id not in existentes and bool(v.emails) for v in aprovadas)} com email)")
         fila = _para_fila(aprovadas, existentes, (cfg.get("envio") or {}).get("automatico") or {}, excluidos)

@@ -20,6 +20,21 @@ _ANOS = [
 _SENIOR_DESC = re.compile(r"\b(senior|pleno|sr\.?|mid[- ]level|especialista|experiencia solida|vasta experiencia)\b")
 _JUNIOR_DESC = re.compile(r"\b(junior|jr\.?|inicio de carreira|primeiro emprego|entry[- ]level|recem[- ]formad)")
 _PALAVRA = re.compile(r"[a-z]+")
+# Sigla de estado colada num local: "Perus – SP", "São Paulo/SP", "(RJ)", "em MG". Só em maiúsculas, no texto original.
+_UFS = "AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO"
+_UF_NO_TEXTO = re.compile(rf"(?:[-–—/(,|]|\bem)\s*({_UFS})\b")
+# Cidades grandes (sem acento, minúsculas) -> estado. Para posts que dizem a cidade sem a sigla.
+_CIDADES_UF = {
+    "sao paulo": "sp", "campinas": "sp", "barueri": "sp", "osasco": "sp", "santo andre": "sp", "sao bernardo": "sp",
+    "guarulhos": "sp", "sorocaba": "sp", "ribeirao preto": "sp", "sao jose dos campos": "sp", "jundiai": "sp",
+    "rio de janeiro": "rj", "niteroi": "rj", "belo horizonte": "mg", "uberlandia": "mg", "contagem": "mg",
+    "curitiba": "pr", "londrina": "pr", "maringa": "pr", "porto alegre": "rs", "caxias do sul": "rs",
+    "florianopolis": "sc", "joinville": "sc", "blumenau": "sc", "salvador": "ba", "recife": "pe", "fortaleza": "ce",
+    "brasilia": "df", "manaus": "am", "belem": "pa", "vitoria": "es", "natal": "rn", "joao pessoa": "pb",
+    "maceio": "al", "teresina": "pi", "sao luis": "ma", "cuiaba": "mt", "campo grande": "ms", "palmas": "to",
+    "uberaba": "mg", "anapolis": "go",
+}
+_PRESENCIAL = re.compile(r"\bpresencia(l|is)\b|\bon[- ]?site\b")
 _EN = {"the", "and", "you", "with", "will", "our", "your", "are", "for", "this", "team", "we", "of", "to", "is",
        "experience", "skills", "work", "working", "data", "requirements", "about"}
 _PT = {"de", "que", "para", "com", "voce", "uma", "dos", "das", "nos", "experiencia", "conhecimento", "dados",
@@ -98,6 +113,8 @@ class Filtros:
                 modalidade = "remoto"
             elif re.search(r"\bhibrid", texto):
                 modalidade = "hibrido"
+            elif _PRESENCIAL.search(texto):
+                modalidade = "presencial"
         v.modalidade = modalidade
         if modalidade == "remoto":
             return None if self.aceita_remoto else "remoto não aceito"
@@ -107,9 +124,23 @@ class Filtros:
         # Sem cidade estruturada: procura uma das cidades aceitas no texto.
         if any(c in texto for c in self.cidades):
             return None
+        # O texto cita outro estado ou uma cidade grande de outro estado ("Perus – SP", "São Paulo"): é fora da região.
+        fora = self.local_de_fora(f"{v.titulo} {v.descricao[:2000]}", texto)
+        if fora:
+            return f"{modalidade or 'presencial'} em {fora.upper()}"
         if not modalidade and v.fonte in self.local_livre_fontes:
             return None  # o pipeline avisa na vaga que o post não diz o local
         return "local não informado e não é remoto" if modalidade else "local não informado"
+
+    def local_de_fora(self, original: str, texto: str) -> str | None:
+        """Sigla do estado de fora da sua região citada no texto (ou None)."""
+        for uf in _UF_NO_TEXTO.findall(original):
+            if uf.lower() != self.estado:
+                return uf.lower()
+        for nome, uf in _CIDADES_UF.items():
+            if uf != self.estado and re.search(rf"\b{nome}\b", texto):
+                return uf
+        return None
 
     # --- filtros de descrição (rodam depois de baixar a descrição) ---
 
