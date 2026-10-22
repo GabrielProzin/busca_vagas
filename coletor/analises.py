@@ -1,13 +1,14 @@
-"""Análises do mercado para o site: "Mapa das vagas" e "O que estudar".
+"""Análises do mercado para o site: "Tipos de vaga" e "O que estudar".
 
 Roda nas coletas completas, sobre as vagas abertas que passaram pelos filtros de área, nível e local
 (as da lista e as que ficaram abaixo da nota mínima) mais as vagas da lista dos últimos 14 dias.
 
-Mapa das vagas
+Tipos de vaga
 - Cada vaga vira um vetor (embeddings do título e das frases da descrição, o mesmo modelo do ranking).
 - K-means agrupa as vagas parecidas; o número de grupos (3 a 6, uns 10 vagas por grupo) é o de melhor silhueta.
-- t-SNE leva os vetores para 2 dimensões (o gráfico). O currículo entra no mesmo espaço, como uma estrela.
-- Nome de cada grupo: a trilha de cargo mais comum + as 2 habilidades que mais se destacam nele (lift).
+- Nome de cada tipo: a trilha de cargo mais comum + as 2 habilidades que mais se destacam nele (lift).
+- Para cada tipo: quantas vagas, quantas na sua lista, nota média (o quanto combina com o seu currículo), o que você
+  já tem e o que mais falta.
 
 O que estudar
 - Para cada habilidade do catálogo (config/preferencias.yaml -> catalogo_habilidades): em quantas vagas ela é pedida,
@@ -74,7 +75,7 @@ def o_que_estudar(vagas: list[Vaga], cv_texto: str, catalogo: dict[str, re.Patte
     return {"vagas": n, "completas": completas, "habilidades": linhas}
 
 
-# ------------------------------------------------------------------ mapa
+# ------------------------------------------------------------------ tipos de vaga
 def _escolher_k(x: np.ndarray, minimo: int = 3, maximo: int = 6) -> tuple[int, np.ndarray]:
     from sklearn.cluster import KMeans
     from sklearn.metrics import silhouette_score
@@ -93,86 +94,62 @@ def _escolher_k(x: np.ndarray, minimo: int = 3, maximo: int = 6) -> tuple[int, n
     return melhor[0], melhor[2]
 
 
-def _em_2d(x: np.ndarray) -> np.ndarray:
-    if len(x) >= 12:
-        from sklearn.manifold import TSNE
-
-        p = max(5.0, min(30.0, (len(x) - 1) / 3))
-        xy = TSNE(n_components=2, perplexity=p, init="pca", metric="cosine", random_state=42).fit_transform(x)
-    else:
-        from sklearn.decomposition import PCA
-
-        xy = PCA(n_components=2, random_state=42).fit_transform(x)
-    lo, hi = xy.min(axis=0), xy.max(axis=0)
-    return (xy - lo) / np.where(hi - lo == 0, 1, hi - lo)
-
-
-def _nome_do_grupo(membros: list[int], vagas: list[Vaga], habs: list[set[str]], usados: set[str] | None = None) -> tuple[str, list[str]]:
+def _nome_do_grupo(membros: list[int], vagas: list[Vaga], habs: list[set[str]], usados: set[str]) -> tuple[str, list[str]]:
+    """(trilha, 2 termos): trilha de cargo mais comum + as habilidades que mais se destacam no grupo (lift)."""
     trilha = Counter(vagas[i].trilha or "Dados" for i in membros).most_common(1)[0][0]
     trilha = trilha.replace(" (genérico)", "").replace("Analista de Dados / BI", "Análise de dados e BI")
     total = Counter(h for hs in habs for h in hs)
     no_grupo = Counter(h for i in membros for h in habs[i])
     n, m = len(habs), len(membros)
-    # lift: quanto a habilidade aparece mais no grupo do que no conjunto (com um mínimo de presença)
     lift = sorted(((no_grupo[h] / m) / (total[h] / n), h) for h in no_grupo if no_grupo[h] >= max(2, 0.25 * m))
     candidatos = [h for _, h in reversed(lift)] or [h for h, _ in no_grupo.most_common(4)]
-    usados = usados or set()
-    # Dois grupos não podem ter o mesmo nome: se já existe, usa os próximos termos que mais se destacam.
+    # Dois tipos não podem ter o mesmo nome: se já existe, usa os próximos termos que mais se destacam.
+    termos = candidatos[:2]
     for i in range(0, max(1, len(candidatos) - 1)):
         termos = candidatos[i:i + 2]
-        nome = f"{trilha} · {' e '.join(termos)}" if termos else trilha
-        if nome not in usados:
+        if f"{trilha} · {' e '.join(termos)}" not in usados:
             break
-    if nome in usados:
-        nome = f"{nome} ({len(usados) + 1})"
-    return nome, [h for h, _ in no_grupo.most_common(5)]
+    return trilha, termos
 
 
-def mapa(vagas: list[Vaga], emb, cv_frases: list[str], catalogo: dict[str, re.Pattern], no_site: set[str]) -> dict:
+def tipos_de_vaga(vagas: list[Vaga], emb, catalogo: dict[str, re.Pattern], cv_texto: str, no_site: set[str]) -> dict:
+    """Tipos de vaga, do que mais combina com o seu currículo (nota média) para o que menos."""
     if len(vagas) < 6:
-        return {"pontos": [], "grupos": [], "cv": None, "vagas": len(vagas)}
+        return {"grupos": [], "vagas": len(vagas)}
     frases = [frases_relevantes(f"{v.titulo}.\n{v.descricao}")[:12] or [v.titulo] for v in vagas]
-    textos = cv_frases + [v.titulo for v in vagas] + [f for fs in frases for f in fs]
-    m = emb.codificar(textos)
-    cv = m[: len(cv_frases)].mean(axis=0)
-    cv = cv / max(float(np.linalg.norm(cv)), 1e-9)
-    pos = len(cv_frases)
-    titulos = m[pos: pos + len(vagas)]
-    pos += len(vagas)
-    vetores = []
-    for t, fs in zip(titulos, frases):
+    m = emb.codificar([v.titulo for v in vagas] + [f for fs in frases for f in fs])
+    pos, vetores = len(vagas), []
+    for t, fs in zip(m[: len(vagas)], frases):
         vetores.append(_vetor_vaga(t, m[pos: pos + len(fs)]))
         pos += len(fs)
-    x = np.stack(vetores)
-    k, rotulos = _escolher_k(x)
-    xy = _em_2d(np.vstack([x, cv]))
+    k, rotulos = _escolher_k(np.stack(vetores))
     habs = [habilidades_da_vaga(v, catalogo)[0] for v in vagas]
-    sim_cv = x @ cv
+    cv = normalizar(cv_texto)
+    tenho = {nome for nome, p in catalogo.items() if p.search(cv)}
 
-    grupos = []
+    grupos, usados = [], set()
     for g in range(k):
         membros = [i for i in range(len(vagas)) if rotulos[i] == g]
         if not membros:
             continue
-        nome, principais = _nome_do_grupo(membros, vagas, habs, {g["nome"] for g in grupos})
+        trilha, termos = _nome_do_grupo(membros, vagas, habs, usados)
+        nome = f"{trilha} · {' e '.join(termos)}" if termos else trilha
+        usados.add(nome)
+        pedidas = Counter(h for i in membros for h in habs[i])
         notas = [vagas[i].nota for i in membros if vagas[i].nota is not None]
-        grupos.append({"id": int(g), "nome": nome, "vagas": len(membros), "habilidades": principais,
-                       "proximidade": round(float(np.mean(sim_cv[membros])), 3),
-                       "nota_media": round(sum(notas) / len(notas), 1) if notas else None,
-                       "na_lista": sum(1 for i in membros if vagas[i].lista in ("principal", "vale_tentar"))})
-    # Grupos do mais perto do seu currículo para o mais longe (vira a ordem das cores e da legenda).
-    grupos.sort(key=lambda g: -g["proximidade"])
-    ordem = {g["id"]: i for i, g in enumerate(grupos)}
-    for g in grupos:
-        g["id"] = ordem[g["id"]]
-    pontos = [{
-        "id": v.id, "titulo": v.titulo[:120], "empresa": (v.empresa or "")[:80], "url": v.url, "nota": v.nota,
-        "lista": v.lista if v.lista in ("principal", "vale_tentar") else "fora",
-        "no_site": v.id in no_site, "x": round(float(xy[i, 0]), 4), "y": round(float(xy[i, 1]), 4),
-        "grupo": ordem[int(rotulos[i])],
-    } for i, v in enumerate(vagas)]
-    return {"pontos": pontos, "grupos": grupos, "cv": {"x": round(float(xy[-1, 0]), 4), "y": round(float(xy[-1, 1]), 4)},
-            "vagas": len(vagas), "k": k, "metodo": f"embeddings ({emb.backend}) + k-means + t-SNE"}
+        da_lista = sorted((i for i in membros if vagas[i].id in no_site), key=lambda i: -(vagas[i].nota or 0))
+        grupos.append({
+            "nome": nome, "trilha": trilha, "termos": " e ".join(termos), "vagas": len(membros),
+            "na_lista": sum(1 for i in membros if vagas[i].lista in ("principal", "vale_tentar")),
+            "nota_media": round(sum(notas) / len(notas), 1) if notas else None,
+            # o que esse tipo de vaga mais pede: o que você tem e o que falta (com % das vagas do tipo)
+            "tenho": [h for h, _ in pedidas.most_common() if h in tenho][:4],
+            "falta": [{"nome": h, "pct": round(100 * c / len(membros))} for h, c in pedidas.most_common() if h not in tenho][:3],
+            "exemplos": [{"id": vagas[i].id, "titulo": vagas[i].titulo[:120], "empresa": (vagas[i].empresa or "")[:80],
+                          "nota": vagas[i].nota} for i in da_lista[:5]],
+        })
+    grupos.sort(key=lambda x: -(x["nota_media"] or 0))
+    return {"grupos": grupos, "vagas": len(vagas), "k": k, "metodo": f"embeddings ({emb.backend}) + k-means (silhueta)"}
 
 
 # ------------------------------------------------------------------ juntando tudo
@@ -190,7 +167,7 @@ def conjunto(restantes: list[Vaga], recentes: list[dict]) -> list[Vaga]:
     return [*restantes, *extra]
 
 
-def gerar(sb, restantes: list[Vaga], emb, cv_frases: list[str], cv_texto: str, cfg: dict) -> dict:
+def gerar(sb, restantes: list[Vaga], emb, cv_texto: str, cfg: dict) -> dict:
     catalogo = carregar_catalogo(cfg)
     try:
         recentes = sb.vagas_recentes(14)
@@ -206,8 +183,8 @@ def gerar(sb, restantes: list[Vaga], emb, cv_frases: list[str], cv_texto: str, c
     except Exception:
         pass
     estudar = {**o_que_estudar(vagas, cv_texto, catalogo, anterior), "gerado_em": agora}
-    mapa_ = {**mapa(vagas, emb, cv_frases, catalogo, no_site), "gerado_em": agora}
+    tipos = {**tipos_de_vaga(vagas, emb, catalogo, cv_texto, no_site), "gerado_em": agora}
     sb.salvar_analise("estudar", estudar)
-    sb.salvar_analise("mapa", mapa_)
-    return {"vagas": len(vagas), "grupos": len(mapa_["grupos"]), "habilidades": len(estudar["habilidades"])}
+    sb.salvar_analise("tipos", tipos)
+    return {"vagas": len(vagas), "grupos": len(tipos["grupos"]), "habilidades": len(estudar["habilidades"])}
 

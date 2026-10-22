@@ -84,7 +84,7 @@ linkedin_posts:
     - vaga engenheiro de dados
     - vaga analista de dados
 
-# Catálogo de habilidades do mercado (tela "O que estudar" e nomes dos grupos do "Mapa das vagas").
+# Catálogo de habilidades do mercado (telas "O que estudar" e "Tipos de vaga").
 # Você "tem" a habilidade quando ela aparece no perfil/curriculo.md. Padrões em minúsculo e sem acento.
 catalogo_habilidades:
   Python: ['python']

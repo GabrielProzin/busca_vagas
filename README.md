@@ -17,8 +17,8 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
 - **Email de resumo**: duas vezes por dia, as vagas novas com nota alta e os follow-ups do dia.
 - **Posts do LinkedIn com email do recrutador**: busca automática (sem usar a sua conta) e uma extensão do
   Chrome que manda os posts que você está vendo.
-- **Mapa das vagas**: as vagas abertas viram pontos num gráfico (embeddings do texto, k-means e t-SNE); vagas
-  parecidas ficam juntas, em grupos com nome, e o seu currículo aparece como uma estrela.
+- **Tipos de vaga**: as vagas abertas agrupadas por semelhança do texto (embeddings e k-means), num ranking do tipo
+  que mais combina com você para o que menos, com quantas vagas há, o que você já tem e o que falta em cada tipo.
 - **O que estudar**: as habilidades que as vagas pedem e não estão no seu currículo, com quantas vagas cada uma
   destravaria (as em que é a única coisa que falta) e os seus pontos fortes no mercado.
 - **Uso dos serviços**: quanto de cada plano grátis já foi usado (GitHub, Supabase, Apify, Gemini, Gmail), com

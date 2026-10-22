@@ -28,7 +28,7 @@ const CAMINHOS = {
   copiar: <><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></>,
   lote: <><rect x="3" y="8" width="15" height="12" rx="2" /><path d="m3.5 10 7 5 7-5M7 5h12a2 2 0 0 1 2 2v9" /></>,
   medidor: <><path d="M4 18a8 8 0 1 1 16 0" /><path d="m12 18 4-5M7 18h0M17 18h0" /></>,
-  mapa: <><circle cx="6" cy="16" r="2" /><circle cx="10" cy="8" r="2" /><circle cx="17" cy="12" r="2" /><circle cx="18" cy="5" r="1.5" /><circle cx="14" cy="19" r="1.5" /></>,
+  ranking: <path d="M4 6h11M4 12h16M4 18h7" />,
   estudar: <><path d="M3 9.5 12 5l9 4.5-9 4.5z" /><path d="M7 11.5V16c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.5M21 9.5V15" /></>,
   sino: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0" />,
 } as const;

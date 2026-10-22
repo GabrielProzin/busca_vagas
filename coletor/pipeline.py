@@ -346,8 +346,8 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
                 log.warning("resumo: falha ao enviar: %s", e)
         if tipo == "completa":
             try:
-                a = analises.gerar(sb, restantes, ranker.emb, ranker.cv_frases, curriculo, cfg)
-                _anotar(f"Análises: mapa com {a['grupos']} grupos e o que estudar com {a['habilidades']} habilidades, "
+                a = analises.gerar(sb, restantes, ranker.emb, curriculo, cfg)
+                _anotar(f"Análises: {a['grupos']} tipos de vaga e o que estudar com {a['habilidades']} habilidades, "
                         f"sobre {a['vagas']} vagas")
             except Exception as e:  # extra: não derruba a coleta
                 log.warning("análises: falharam: %s", e)

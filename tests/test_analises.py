@@ -52,19 +52,20 @@ def test_o_que_estudar():
     assert por["Excel"]["destravaria"] == 7
 
 
-def test_mapa_agrupa_por_tema():
+def test_tipos_de_vaga_agrupa_por_tema():
     vs = vagas()
-    m = analises.mapa(vs, Embedder(forcar_tfidf=True), [CV], CAT, no_site={v.id for v in vs if v.lista == "principal"})
-    assert len(m["pontos"]) == 21 and 2 <= len(m["grupos"]) <= 7 and m["cv"]
-    assert all(0 <= p["x"] <= 1 and 0 <= p["y"] <= 1 for p in m["pontos"])
-    # vagas do mesmo tema caem no mesmo grupo
-    for tema in TEMAS:
-        assert len({p["grupo"] for p in m["pontos"] if p["id"].startswith(f"teste:{tema}")}) == 1
-    # grupos ordenados do mais perto do currículo para o mais longe, com nome legível
-    prox = [g["proximidade"] for g in m["grupos"]]
-    assert prox == sorted(prox, reverse=True) and all(" · " in g["nome"] or g["nome"] for g in m["grupos"])
-    assert sum(p["no_site"] for p in m["pontos"]) == 9
+    t = analises.tipos_de_vaga(vs, Embedder(forcar_tfidf=True), CAT, CV, no_site={v.id for v in vs if v.lista == "principal"})
+    assert len(t["grupos"]) == 3 and sum(g["vagas"] for g in t["grupos"]) == 21
+    # ordem: do que mais combina (nota média) para o que menos
+    notas = [g["nota_media"] for g in t["grupos"]]
+    assert notas == sorted(notas, reverse=True)
+    eng = next(g for g in t["grupos"] if g["trilha"] == "Engenharia de Dados")
+    # todas as vagas de engenharia pedem Spark, Databricks, AWS e data lake, que não estão no currículo
+    assert {f["nome"] for f in eng["falta"]} <= {"Spark", "Databricks", "AWS", "Data Warehouse"} and len(eng["falta"]) == 3
+    assert all(f["pct"] == 100 for f in eng["falta"]) and "Python" in eng["tenho"]
+    assert len(eng["exemplos"]) == 3 and eng["exemplos"][0]["nota"] >= eng["exemplos"][-1]["nota"]
+    assert len({g["nome"] for g in t["grupos"]}) == 3  # nomes diferentes
 
 
-def test_mapa_com_poucas_vagas_nao_quebra():
-    assert analises.mapa(vagas(1), Embedder(forcar_tfidf=True), [CV], CAT, set())["pontos"] == []
+def test_tipos_com_poucas_vagas_nao_quebra():
+    assert analises.tipos_de_vaga(vagas(1), Embedder(forcar_tfidf=True), CAT, CV, set())["grupos"] == []

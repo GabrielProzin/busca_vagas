@@ -42,7 +42,7 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 | Envio em lote (`/lote`) | Vagas novas com email acima de uma nota, cada uma com o email pronto; a fila (esperando, com erro); emails enviados hoje / limite | Marcar/desmarcar, ver e editar o email, colocar na fila, tirar da fila |
 | Candidaturas | Quadro (kanban) por etapa, avisos de follow-up | Arrastar cartão, menu "Mover para" |
 | Adicionar vaga | Colar texto de um post; buscas prontas de posts no LinkedIn | Enviar para a IA ler |
-| Mapa das vagas (`/mapa`) | Vagas abertas no seu nível e local como pontos (embeddings + k-means + t-SNE), cor por grupo, tamanho pela nota, o currículo como estrela; grupos do mais perto do currículo ao mais longe | Ligar/desligar grupos, só vagas da lista, abrir a vaga |
+| Tipos de vaga (`/tipos`) | Vagas abertas no seu nível e local agrupadas por semelhança (embeddings + k-means), do tipo com maior nota média ao menor: barra = quantas vagas, cor = o quanto combina | Abrir um tipo: o que você tem, o que falta (% das vagas do tipo), melhores vagas da lista |
 | O que estudar (`/estudar`) | Habilidades do catálogo pedidas nas vagas: % das vagas, quantas destravaria (única que falta), variação desde a análise anterior; top 3 para estudar; pontos fortes | — |
 | Uso dos serviços (`/uso`) | Cada serviço grátis contra o limite: GitHub Actions (minutos no mês), Supabase (banco e arquivos), Apify (crédito do mês), Gemini (pedidos do dia), Gmail (emails do dia), Vercel (só os limites) | Abrir o painel de cada serviço |
 | Painel | Números da última coleta, por que as vagas ficaram de fora, vagas novas por coleta, aprendizado do ranking | — |
@@ -124,8 +124,8 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 **Análises do mercado** (`coletor/analises.py`, tabela `analises`)
 - Na coleta completa, sobre as vagas que passaram pelos filtros de área, nível e local (da lista e abaixo da nota
   mínima) mais as da lista dos últimos 14 dias.
-- Mapa: k-means (3 a 6 grupos, o de melhor silhueta) sobre os embeddings; t-SNE para 2D; nome do grupo = trilha mais
-  comum + 2 habilidades com maior lift no grupo; proximidade = similaridade média com o currículo.
+- Tipos de vaga: k-means (3 a 6 grupos, o de melhor silhueta) sobre os embeddings; nome = trilha mais comum + 2
+  habilidades com maior lift no grupo; ordem pela nota média (≥70 combina muito, ≥60 bem, ≥50 em parte, abaixo, pouco).
 - O que estudar: catálogo em `catalogo_habilidades`; citação só como "diferencial" não conta; "tenho" = aparece no
   currículo; prioridade = 3 × destravaria + vagas.
 

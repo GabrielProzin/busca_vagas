@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { readFileSync } from "node:fs";
-import type { AnaliseEstudar, AnaliseMapa, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
+import type { AnaliseEstudar, AnaliseTipos, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
 
 // Acesso ao Supabase pela API REST (PostgREST), sempre no servidor, com a chave secreta.
 // Com DEMO_ARQUIVO definido, usa um JSON local em memória (para desenvolver sem banco).
@@ -452,17 +452,17 @@ export async function lerUso(): Promise<{ servicos: UsoServico[]; diario: UsoDia
 }
 
 // ---------------------------------------------------------------- análises do mercado
-/** Mapa das vagas ou O que estudar (gerados pela coleta completa). null = ainda não gerado ou tabela ausente. */
-export async function lerAnalise(nome: "mapa"): Promise<AnaliseMapa | null>;
+/** Tipos de vaga ou O que estudar (gerados pela coleta completa). null = ainda não gerado ou tabela ausente. */
+export async function lerAnalise(nome: "tipos"): Promise<AnaliseTipos | null>;
 export async function lerAnalise(nome: "estudar"): Promise<AnaliseEstudar | null>;
-export async function lerAnalise(nome: "mapa" | "estudar"): Promise<AnaliseMapa | AnaliseEstudar | null> {
+export async function lerAnalise(nome: "tipos" | "estudar"): Promise<AnaliseTipos | AnaliseEstudar | null> {
   if (process.env.DEMO_ARQUIVO) {
     const j = JSON.parse(readFileSync(process.env.DEMO_ARQUIVO, "utf-8"));
     const a = j.analises?.[nome];
     return a ? { ...a, gerado_em: new Date().toISOString() } : null;
   }
   try {
-    const linhas = await rest<{ dados: AnaliseMapa | AnaliseEstudar }[]>(`/analises?select=dados&nome=eq.${nome}`);
+    const linhas = await rest<{ dados: AnaliseTipos | AnaliseEstudar }[]>(`/analises?select=dados&nome=eq.${nome}`);
     return linhas[0]?.dados ?? null;
   } catch {
     return null;

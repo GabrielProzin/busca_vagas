@@ -99,9 +99,12 @@ export type Execucao = {
 };
 
 // Análises do mercado (coletor/analises.py), geradas na coleta completa.
-export type PontoMapa = { id: string; titulo: string; empresa: string; url: string | null; nota: number | null; lista: "principal" | "vale_tentar" | "fora"; no_site: boolean; x: number; y: number; grupo: number };
-export type GrupoMapa = { id: number; nome: string; vagas: number; habilidades: string[]; proximidade: number; nota_media: number | null; na_lista: number };
-export type AnaliseMapa = { pontos: PontoMapa[]; grupos: GrupoMapa[]; cv: { x: number; y: number } | null; vagas: number; k?: number; metodo?: string; gerado_em: string };
+export type TipoVaga = {
+  nome: string; trilha: string; termos: string; vagas: number; na_lista: number; nota_media: number | null;
+  tenho: string[]; falta: { nome: string; pct: number }[];
+  exemplos: { id: string; titulo: string; empresa: string; nota: number | null }[];
+};
+export type AnaliseTipos = { grupos: TipoVaga[]; vagas: number; k?: number; metodo?: string; gerado_em: string };
 export type HabilidadeMercado = { nome: string; tenho: boolean; vagas: number; pct: number; diferencial: number; destravaria: number; nota_media: number | null; variacao: number | null; exemplos: string[] };
 export type AnaliseEstudar = { vagas: number; completas: number; habilidades: HabilidadeMercado[]; gerado_em: string };
 
