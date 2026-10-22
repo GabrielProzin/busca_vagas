@@ -215,3 +215,24 @@ class Supabase:
                           data=json.dumps({"prefix": "", "limit": 1000}))
         r.raise_for_status()
         return sum(int((o.get("metadata") or {}).get("size") or 0) for o in r.json())
+
+    # ------------------------------------------------------------------ análises (mapa das vagas, o que estudar)
+    def vagas_recentes(self, dias: int = 14) -> list[dict]:
+        from datetime import timedelta
+        desde = (datetime.now(timezone.utc) - timedelta(days=dias)).isoformat()
+        r = requests.get(f"{self.base}/vagas", headers=self.h, timeout=60, params={
+            "select": "id,titulo,empresa,url,descricao,nota,lista,trilha", "atualizada_em": f"gte.{desde}", "limit": 1000})
+        r.raise_for_status()
+        return r.json()
+
+    def ler_analise(self, nome: str) -> dict | None:
+        r = requests.get(f"{self.base}/analises", headers=self.h, timeout=30, params={"select": "dados", "nome": f"eq.{nome}"})
+        r.raise_for_status()
+        linhas = r.json()
+        return linhas[0]["dados"] if linhas else None
+
+    def salvar_analise(self, nome: str, dados: dict) -> None:
+        r = requests.post(f"{self.base}/analises", headers={**self.h, "Prefer": "resolution=merge-duplicates"},
+                          params={"on_conflict": "nome"}, timeout=60, data=json.dumps(
+                              {"nome": nome, "dados": dados, "atualizado_em": datetime.now(timezone.utc).isoformat()}, default=str))
+        r.raise_for_status()

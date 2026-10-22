@@ -20,6 +20,8 @@ export const SECOES: Secao[] = [
   { href: "/adicionar", rotulo: "Adicionar vaga", curto: "Adicionar", icone: "adicionar", baixo: false, descricao: "Colar o texto de um post ou anúncio" },
   { href: "/candidaturas", rotulo: "Candidaturas", curto: "Quadro", icone: "candidaturas", conta: "candidaturas", baixo: true, descricao: "Quadro com cada etapa" },
   { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel", baixo: false, descricao: "Números das coletas e taxa de resposta" },
+  { href: "/mapa", rotulo: "Mapa das vagas", curto: "Mapa", icone: "mapa", baixo: false, descricao: "Vagas agrupadas por tipo, perto ou longe do seu currículo" },
+  { href: "/estudar", rotulo: "O que estudar", curto: "Estudar", icone: "estudar", baixo: false, descricao: "Habilidades que mais abririam vagas para você" },
   { href: "/uso", rotulo: "Uso dos serviços", curto: "Uso", icone: "medidor", baixo: false, descricao: "Quanto de cada plano grátis já foi usado" },
   { href: "/configuracoes", rotulo: "Configurações", curto: "Ajustes", icone: "config", baixo: false, descricao: "Currículo, primeiros passos e exportar dados" },
 ];

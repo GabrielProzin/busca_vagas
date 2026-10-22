@@ -42,6 +42,8 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 | Envio em lote (`/lote`) | Vagas novas com email acima de uma nota, cada uma com o email pronto; a fila (esperando, com erro); emails enviados hoje / limite | Marcar/desmarcar, ver e editar o email, colocar na fila, tirar da fila |
 | Candidaturas | Quadro (kanban) por etapa, avisos de follow-up | Arrastar cartão, menu "Mover para" |
 | Adicionar vaga | Colar texto de um post; buscas prontas de posts no LinkedIn | Enviar para a IA ler |
+| Mapa das vagas (`/mapa`) | Vagas abertas no seu nível e local como pontos (embeddings + k-means + t-SNE), cor por grupo, tamanho pela nota, o currículo como estrela; grupos do mais perto do currículo ao mais longe | Ligar/desligar grupos, só vagas da lista, abrir a vaga |
+| O que estudar (`/estudar`) | Habilidades do catálogo pedidas nas vagas: % das vagas, quantas destravaria (única que falta), variação desde a análise anterior; top 3 para estudar; pontos fortes | — |
 | Uso dos serviços (`/uso`) | Cada serviço grátis contra o limite: GitHub Actions (minutos no mês), Supabase (banco e arquivos), Apify (crédito do mês), Gemini (pedidos do dia), Gmail (emails do dia), Vercel (só os limites) | Abrir o painel de cada serviço |
 | Painel | Números da última coleta, por que as vagas ficaram de fora, vagas novas por coleta, aprendizado do ranking | — |
 | Configurações | Primeiros passos (o que está pronto e o que falta, com o link do passo no README), currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
@@ -118,6 +120,14 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - Coleta completa por volta das 11:00 e das 18:30 (com posts do LinkedIn, resumo por email e follow-ups na da manhã).
 - Coletas rápidas entre elas (por volta das 8:00, 14:00 e 22:00): só as plataformas, sem LinkedIn e sem email.
 - O resumo lista as vagas com nota ≥ `resumo.nota_minima` que chegaram desde a coleta completa anterior.
+
+**Análises do mercado** (`coletor/analises.py`, tabela `analises`)
+- Na coleta completa, sobre as vagas que passaram pelos filtros de área, nível e local (da lista e abaixo da nota
+  mínima) mais as da lista dos últimos 14 dias.
+- Mapa: k-means (3 a 6 grupos, o de melhor silhueta) sobre os embeddings; t-SNE para 2D; nome do grupo = trilha mais
+  comum + 2 habilidades com maior lift no grupo; proximidade = similaridade média com o currículo.
+- O que estudar: catálogo em `catalogo_habilidades`; citação só como "diferencial" não conta; "tenho" = aparece no
+  currículo; prioridade = 3 × destravaria + vagas.
 
 **Uso dos serviços** (`coletor/uso.py`, `site/lib/uso.ts`)
 - A cada coleta: minutos de Actions no mês (privado: 2.000; público: sem limite), tamanho do banco e dos arquivos do

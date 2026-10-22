@@ -557,5 +557,1093 @@
     "n": 1
    }
   ]
+ },
+ "analises": {
+  "mapa": {
+   "pontos": [
+    {
+     "id": "gupy:m00",
+     "titulo": "Analista de BI Júnior - Goiânia",
+     "empresa": "Fictícia Log",
+     "url": "https://exemplo.com/vaga",
+     "nota": 58.2,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.4016,
+     "y": 0.8896,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m01",
+     "titulo": "Analista de BI Júnior",
+     "empresa": "Fictícia Log",
+     "url": "https://exemplo.com/vaga",
+     "nota": 90.1,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.3317,
+     "y": 0.0718,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m02",
+     "titulo": "Analista de BI Júnior",
+     "empresa": "Rede Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 75.7,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.3192,
+     "y": 0.0016,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m03",
+     "titulo": "Analista de BI Júnior - Goiânia",
+     "empresa": "Fictícia Log",
+     "url": "https://exemplo.com/vaga",
+     "nota": 62.6,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.4079,
+     "y": 0.8935,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m04",
+     "titulo": "Analista de BI Júnior",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 74.4,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.3303,
+     "y": 0.06,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m05",
+     "titulo": "Analista de BI Júnior I",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 79.7,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.3731,
+     "y": 0.0306,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m06",
+     "titulo": "Analista de BI Júnior I",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 57.4,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.3776,
+     "y": 0.0024,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m07",
+     "titulo": "Analista de BI Júnior - Remoto",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 73.3,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.1492,
+     "y": 0.2181,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m08",
+     "titulo": "Analista de BI Júnior I",
+     "empresa": "Fictícia Log",
+     "url": "https://exemplo.com/vaga",
+     "nota": 87.7,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.3687,
+     "y": 0.0,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m09",
+     "titulo": "Analista de BI Júnior - Remoto",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 63.6,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.1586,
+     "y": 0.2159,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m010",
+     "titulo": "Analista de BI Júnior - Remoto",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 74.1,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.1617,
+     "y": 0.1951,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m011",
+     "titulo": "Analista de BI Júnior",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 62.1,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.328,
+     "y": 0.0301,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m012",
+     "titulo": "Analista de BI Júnior - Goiânia",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 68.5,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.4055,
+     "y": 0.8898,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m013",
+     "titulo": "Analista de BI Júnior - Goiânia",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 59.5,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.4064,
+     "y": 0.8861,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m10",
+     "titulo": "Analista de Dados Júnior",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 51.9,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.4043,
+     "y": 0.391,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m11",
+     "titulo": "Analista de Dados Júnior - Goiânia",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 57.2,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.436,
+     "y": 0.8369,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m12",
+     "titulo": "Analista de Dados Júnior - Remoto",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 64.2,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.1875,
+     "y": 0.3428,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m13",
+     "titulo": "Analista de Dados Júnior",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 86.3,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.3758,
+     "y": 0.3445,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m14",
+     "titulo": "Analista de Dados Júnior I",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 84.3,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.4589,
+     "y": 0.2894,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m15",
+     "titulo": "Analista de Dados Júnior - Remoto",
+     "empresa": "Nuvem Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 74.5,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.1903,
+     "y": 0.3443,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m16",
+     "titulo": "Analista de Dados Júnior - Remoto",
+     "empresa": "Rede Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 68.2,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.1721,
+     "y": 0.3365,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m17",
+     "titulo": "Analista de Dados Júnior",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 67.1,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.3657,
+     "y": 0.3719,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m18",
+     "titulo": "Analista de Dados Júnior (Home Office)",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 81.9,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.8373,
+     "y": 0.5139,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m19",
+     "titulo": "Analista de Dados Júnior I",
+     "empresa": "Rede Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 73.5,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.374,
+     "y": 0.3118,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m110",
+     "titulo": "Analista de Dados Júnior - Goiânia",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 79.7,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.4316,
+     "y": 0.8063,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m111",
+     "titulo": "Analista de Dados Júnior",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 84.8,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.4524,
+     "y": 0.362,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m112",
+     "titulo": "Analista de Dados Júnior I",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 60.2,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.4028,
+     "y": 0.2687,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m113",
+     "titulo": "Analista de Dados Júnior",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 53.7,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.4137,
+     "y": 0.3698,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m114",
+     "titulo": "Analista de Dados Júnior",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 65.7,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.4319,
+     "y": 0.3016,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m115",
+     "titulo": "Analista de Dados Júnior I",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 62.8,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.4325,
+     "y": 0.2601,
+     "grupo": 0
+    },
+    {
+     "id": "gupy:m20",
+     "titulo": "Engenheiro de Dados Júnior - Goiânia",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 51.2,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.9634,
+     "y": 0.1599,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m21",
+     "titulo": "Engenheiro de Dados Júnior I",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 72.0,
+     "lista": "principal",
+     "no_site": false,
+     "x": 1.0,
+     "y": 0.2267,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m22",
+     "titulo": "Engenheiro de Dados Júnior",
+     "empresa": "Nuvem Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 53.8,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.9872,
+     "y": 0.2306,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m23",
+     "titulo": "Engenheiro de Dados Júnior (Home Office)",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 63.8,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.9294,
+     "y": 0.3757,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m24",
+     "titulo": "Engenheiro de Dados Júnior",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 81.5,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.9946,
+     "y": 0.2266,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m25",
+     "titulo": "Engenheiro de Dados Júnior",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 74.1,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.9951,
+     "y": 0.2193,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m26",
+     "titulo": "Engenheiro de Dados Júnior (Home Office)",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 83.4,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.928,
+     "y": 0.3805,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m27",
+     "titulo": "Engenheiro de Dados Júnior",
+     "empresa": "Rede Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 56.5,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.994,
+     "y": 0.235,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m28",
+     "titulo": "Engenheiro de Dados Júnior",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 52.8,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.99,
+     "y": 0.2233,
+     "grupo": 3
+    },
+    {
+     "id": "gupy:m30",
+     "titulo": "Cientista de Dados Júnior - Remoto",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 57.1,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.7551,
+     "y": 1.0,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m31",
+     "titulo": "Cientista de Dados Júnior - Remoto",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 44.5,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.7533,
+     "y": 0.9914,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m32",
+     "titulo": "Cientista de Dados Júnior (Home Office)",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 61.3,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.8198,
+     "y": 0.6652,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m33",
+     "titulo": "Cientista de Dados Júnior",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 76.0,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.7369,
+     "y": 0.921,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m34",
+     "titulo": "Cientista de Dados Júnior - Goiânia",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 43.7,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.6373,
+     "y": 0.9428,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m35",
+     "titulo": "Cientista de Dados Júnior",
+     "empresa": "Nuvem Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 52.3,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.7353,
+     "y": 0.9173,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m36",
+     "titulo": "Cientista de Dados Júnior I",
+     "empresa": "Acme",
+     "url": "https://exemplo.com/vaga",
+     "nota": 53.6,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.729,
+     "y": 0.9144,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m37",
+     "titulo": "Cientista de Dados Júnior",
+     "empresa": "Nuvem Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 61.0,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.7353,
+     "y": 0.9162,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m38",
+     "titulo": "Cientista de Dados Júnior - Goiânia",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 79.2,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.6426,
+     "y": 0.9418,
+     "grupo": 2
+    },
+    {
+     "id": "gupy:m40",
+     "titulo": "Analista de Dados Jr - Azure - Goiânia",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 66.7,
+     "lista": "vale_tentar",
+     "no_site": false,
+     "x": 0.1165,
+     "y": 0.9135,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m41",
+     "titulo": "Analista de Dados Jr - Azure I",
+     "empresa": "Painel Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 39.1,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.015,
+     "y": 0.8711,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m42",
+     "titulo": "Analista de Dados Jr - Azure",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 39.1,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.0285,
+     "y": 0.8526,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m43",
+     "titulo": "Analista de Dados Jr - Azure I",
+     "empresa": "Nuvem Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 71.2,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.0013,
+     "y": 0.8579,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m44",
+     "titulo": "Analista de Dados Jr - Azure - Remoto",
+     "empresa": "Goiás Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 55.1,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.02,
+     "y": 0.7061,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m45",
+     "titulo": "Analista de Dados Jr - Azure",
+     "empresa": "Fictícia Log",
+     "url": "https://exemplo.com/vaga",
+     "nota": 73.5,
+     "lista": "principal",
+     "no_site": false,
+     "x": 0.0318,
+     "y": 0.8577,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m46",
+     "titulo": "Analista de Dados Jr - Azure I",
+     "empresa": "Correio Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 49.4,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.0,
+     "y": 0.8401,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m47",
+     "titulo": "Analista de Dados Jr - Azure",
+     "empresa": "Modelo Labs",
+     "url": "https://exemplo.com/vaga",
+     "nota": 45.0,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.0206,
+     "y": 0.8543,
+     "grupo": 1
+    },
+    {
+     "id": "gupy:m48",
+     "titulo": "Analista de Dados Jr - Azure - Remoto",
+     "empresa": "Nuvem Exemplo",
+     "url": "https://exemplo.com/vaga",
+     "nota": 45.5,
+     "lista": "fora",
+     "no_site": false,
+     "x": 0.0235,
+     "y": 0.7145,
+     "grupo": 1
+    }
+   ],
+   "grupos": [
+    {
+     "id": 0,
+     "nome": "Análise de dados e BI · Tableau e Power Query",
+     "vagas": 30,
+     "habilidades": [
+      "Excel",
+      "SQL",
+      "Looker",
+      "DAX",
+      "Power Query"
+     ],
+     "proximidade": 0.19,
+     "nota_media": 70.1,
+     "na_lista": 24
+    },
+    {
+     "id": 1,
+     "nome": "Engenharia de Dados · Azure e SQL Server",
+     "vagas": 9,
+     "habilidades": [
+      "Azure",
+      "SQL Server",
+      "SQL",
+      "Python",
+      "Power BI"
+     ],
+     "proximidade": 0.183,
+     "nota_media": 53.8,
+     "na_lista": 3
+    },
+    {
+     "id": 2,
+     "nome": "Ciência de Dados · Machine Learning e Scikit-learn",
+     "vagas": 9,
+     "habilidades": [
+      "Scikit-learn",
+      "NLP",
+      "Machine Learning",
+      "Python",
+      "Pandas"
+     ],
+     "proximidade": 0.183,
+     "nota_media": 58.7,
+     "na_lista": 4
+    },
+    {
+     "id": 3,
+     "nome": "Engenharia de Dados · Databricks e Data Warehouse",
+     "vagas": 9,
+     "habilidades": [
+      "Spark",
+      "Databricks",
+      "Airflow",
+      "Data Warehouse",
+      "SQL"
+     ],
+     "proximidade": 0.124,
+     "nota_media": 65.5,
+     "na_lista": 5
+    }
+   ],
+   "cv": {
+    "x": 0.5629,
+    "y": 0.3566
+   },
+   "vagas": 57,
+   "k": 4,
+   "metodo": "embeddings + k-means + t-SNE"
+  },
+  "estudar": {
+   "vagas": 57,
+   "completas": 1,
+   "habilidades": [
+    {
+     "nome": "SQL",
+     "tenho": true,
+     "vagas": 31,
+     "pct": 54.4,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 65.8,
+     "variacao": null,
+     "exemplos": [
+      "Analista de BI Júnior I",
+      "Analista de BI Júnior - Remoto",
+      "Analista de BI Júnior - Goiânia"
+     ]
+    },
+    {
+     "nome": "Python",
+     "tenho": true,
+     "vagas": 24,
+     "pct": 42.1,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 63.4,
+     "variacao": null,
+     "exemplos": [
+      "Analista de Dados Júnior I",
+      "Analista de Dados Júnior (Home Office)",
+      "Analista de Dados Júnior - Goiânia"
+     ]
+    },
+    {
+     "nome": "Excel",
+     "tenho": false,
+     "vagas": 23,
+     "pct": 40.4,
+     "diferencial": 0,
+     "destravaria": 8,
+     "nota_media": 70.7,
+     "variacao": null,
+     "exemplos": [
+      "Analista de BI Júnior - Goiânia",
+      "Analista de BI Júnior",
+      "Analista de BI Júnior I"
+     ]
+    },
+    {
+     "nome": "Looker",
+     "tenho": true,
+     "vagas": 13,
+     "pct": 22.8,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 66.9,
+     "variacao": null,
+     "exemplos": [
+      "Analista de Dados Júnior",
+      "Analista de Dados Júnior - Goiânia",
+      "Analista de Dados Júnior - Remoto"
+     ]
+    },
+    {
+     "nome": "DAX",
+     "tenho": true,
+     "vagas": 12,
+     "pct": 21.1,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 72.6,
+     "variacao": null,
+     "exemplos": [
+      "Analista de BI Júnior",
+      "Analista de BI Júnior - Goiânia",
+      "Analista de BI Júnior I"
+     ]
+    },
+    {
+     "nome": "Estatística",
+     "tenho": false,
+     "vagas": 12,
+     "pct": 21.1,
+     "diferencial": 0,
+     "destravaria": 3,
+     "nota_media": 64.5,
+     "variacao": null,
+     "exemplos": [
+      "Analista de Dados Júnior - Goiânia",
+      "Analista de Dados Júnior - Remoto",
+      "Analista de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "Power BI",
+     "tenho": true,
+     "vagas": 12,
+     "pct": 21.1,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 64.3,
+     "variacao": -18.9,
+     "exemplos": [
+      "Analista de BI Júnior - Goiânia",
+      "Analista de BI Júnior",
+      "Analista de BI Júnior I"
+     ]
+    },
+    {
+     "nome": "Azure",
+     "tenho": false,
+     "vagas": 9,
+     "pct": 15.8,
+     "diferencial": 0,
+     "destravaria": 9,
+     "nota_media": 53.8,
+     "variacao": -2.2,
+     "exemplos": [
+      "Analista de Dados Jr - Azure - Goiânia",
+      "Analista de Dados Jr - Azure I",
+      "Analista de Dados Jr - Azure"
+     ]
+    },
+    {
+     "nome": "Power Query",
+     "tenho": false,
+     "vagas": 9,
+     "pct": 15.8,
+     "diferencial": 0,
+     "destravaria": 2,
+     "nota_media": 70.7,
+     "variacao": null,
+     "exemplos": [
+      "Analista de BI Júnior",
+      "Analista de BI Júnior - Goiânia",
+      "Analista de BI Júnior I"
+     ]
+    },
+    {
+     "nome": "NLP",
+     "tenho": false,
+     "vagas": 8,
+     "pct": 14.0,
+     "diferencial": 0,
+     "destravaria": 6,
+     "nota_media": 59.5,
+     "variacao": null,
+     "exemplos": [
+      "Cientista de Dados Júnior - Remoto",
+      "Cientista de Dados Júnior (Home Office)",
+      "Cientista de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "SQL Server",
+     "tenho": true,
+     "vagas": 8,
+     "pct": 14.0,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 52.2,
+     "variacao": null,
+     "exemplos": [
+      "Analista de Dados Jr - Azure I",
+      "Analista de Dados Jr - Azure",
+      "Analista de Dados Jr - Azure - Remoto"
+     ]
+    },
+    {
+     "nome": "Scikit-learn",
+     "tenho": true,
+     "vagas": 8,
+     "pct": 14.0,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 60.6,
+     "variacao": null,
+     "exemplos": [
+      "Cientista de Dados Júnior - Remoto",
+      "Cientista de Dados Júnior (Home Office)",
+      "Cientista de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "Tableau",
+     "tenho": false,
+     "vagas": 8,
+     "pct": 14.0,
+     "diferencial": 0,
+     "destravaria": 1,
+     "nota_media": 68.1,
+     "variacao": null,
+     "exemplos": [
+      "Analista de Dados Júnior",
+      "Analista de Dados Júnior - Remoto",
+      "Analista de Dados Júnior I"
+     ]
+    },
+    {
+     "nome": "Machine Learning",
+     "tenho": true,
+     "vagas": 7,
+     "pct": 12.3,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 59.9,
+     "variacao": null,
+     "exemplos": [
+      "Cientista de Dados Júnior - Remoto",
+      "Cientista de Dados Júnior (Home Office)",
+      "Cientista de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "Pandas",
+     "tenho": true,
+     "vagas": 6,
+     "pct": 10.5,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 60.4,
+     "variacao": null,
+     "exemplos": [
+      "Cientista de Dados Júnior - Remoto",
+      "Cientista de Dados Júnior",
+      "Cientista de Dados Júnior I"
+     ]
+    },
+    {
+     "nome": "Spark",
+     "tenho": false,
+     "vagas": 6,
+     "pct": 10.5,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 67.0,
+     "variacao": -1.5,
+     "exemplos": [
+      "Engenheiro de Dados Júnior I",
+      "Engenheiro de Dados Júnior",
+      "Engenheiro de Dados Júnior (Home Office)"
+     ]
+    },
+    {
+     "nome": "Airflow",
+     "tenho": true,
+     "vagas": 5,
+     "pct": 8.8,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 63.6,
+     "variacao": null,
+     "exemplos": [
+      "Engenheiro de Dados Júnior - Goiânia",
+      "Engenheiro de Dados Júnior",
+      "Engenheiro de Dados Júnior (Home Office)"
+     ]
+    },
+    {
+     "nome": "Data Warehouse",
+     "tenho": false,
+     "vagas": 5,
+     "pct": 8.8,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 65.8,
+     "variacao": null,
+     "exemplos": [
+      "Engenheiro de Dados Júnior - Goiânia",
+      "Engenheiro de Dados Júnior (Home Office)",
+      "Engenheiro de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "Databricks",
+     "tenho": false,
+     "vagas": 5,
+     "pct": 8.8,
+     "diferencial": 0,
+     "destravaria": 1,
+     "nota_media": 61.0,
+     "variacao": null,
+     "exemplos": [
+      "Engenheiro de Dados Júnior - Goiânia",
+      "Engenheiro de Dados Júnior",
+      "Engenheiro de Dados Júnior (Home Office)"
+     ]
+    },
+    {
+     "nome": "AWS",
+     "tenho": false,
+     "vagas": 3,
+     "pct": 5.3,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 69.8,
+     "variacao": null,
+     "exemplos": [
+      "Engenheiro de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "dbt",
+     "tenho": false,
+     "vagas": 3,
+     "pct": 5.3,
+     "diferencial": 0,
+     "destravaria": 0,
+     "nota_media": 69.1,
+     "variacao": -4.7,
+     "exemplos": [
+      "Engenheiro de Dados Júnior I",
+      "Engenheiro de Dados Júnior"
+     ]
+    },
+    {
+     "nome": "Docker",
+     "tenho": true,
+     "vagas": 0,
+     "pct": 0.0,
+     "diferencial": 18,
+     "destravaria": 0,
+     "nota_media": null,
+     "variacao": null,
+     "exemplos": []
+    }
+   ]
+  }
  }
 }

@@ -98,6 +98,13 @@ export type Execucao = {
   tipo?: "completa" | "rapida" | null;
 };
 
+// Análises do mercado (coletor/analises.py), geradas na coleta completa.
+export type PontoMapa = { id: string; titulo: string; empresa: string; url: string | null; nota: number | null; lista: "principal" | "vale_tentar" | "fora"; no_site: boolean; x: number; y: number; grupo: number };
+export type GrupoMapa = { id: number; nome: string; vagas: number; habilidades: string[]; proximidade: number; nota_media: number | null; na_lista: number };
+export type AnaliseMapa = { pontos: PontoMapa[]; grupos: GrupoMapa[]; cv: { x: number; y: number } | null; vagas: number; k?: number; metodo?: string; gerado_em: string };
+export type HabilidadeMercado = { nome: string; tenho: boolean; vagas: number; pct: number; diferencial: number; destravaria: number; nota_media: number | null; variacao: number | null; exemplos: string[] };
+export type AnaliseEstudar = { vagas: number; completas: number; habilidades: HabilidadeMercado[]; gerado_em: string };
+
 export type UsoServico = { servico: "github" | "supabase" | "apify" | string; atualizado_em: string; dados: Record<string, unknown> };
 export type UsoDiario = { dia: string; chave: string; n: number };
 

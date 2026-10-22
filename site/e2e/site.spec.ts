@@ -26,7 +26,7 @@ test("login: senha errada não entra; certa entra", async ({ page }) => {
 });
 
 test("sem login: páginas e dados ficam fechados", async ({ request }) => {
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mapa", "/estudar", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
     const r = await request.get(rota, { maxRedirects: 0 });
     expect(r.status(), rota).toBeGreaterThanOrEqual(300);
     expect(r.status(), rota).toBeLessThan(400);
@@ -276,6 +276,40 @@ test("uso dos serviços: mostra cada plano grátis e conta Gmail e IA usados pel
   await expect(page.getByRole("region", { name: "Vercel" })).toContainText("Sem medição");
 });
 
+test("mapa das vagas: pontos por grupo, filtro e detalhe da vaga", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/mapa");
+  const pontos = page.locator(".mapa-ponto");
+  const total = await pontos.count();
+  expect(total).toBeGreaterThan(30);
+  await expect(page.locator(".mapa-cv")).toBeVisible(); // a estrela do currículo
+  await expect(page.getByText("Mais perto do seu currículo", { exact: true })).toBeVisible();
+  // desligar um grupo tira os pontos dele do mapa
+  const chip = page.locator(".mapa-chip").first();
+  const doGrupo = Number(await chip.locator("b").innerText());
+  await chip.click();
+  await expect(pontos).toHaveCount(total - doGrupo);
+  await chip.click();
+  await expect(pontos).toHaveCount(total);
+  // "só as vagas da sua lista" esconde as de nota baixa
+  await page.getByLabel("Só as vagas da sua lista").check();
+  expect(await pontos.count()).toBeLessThan(total);
+  // passar o mouse num ponto mostra a vaga
+  await pontos.last().hover(); // o último desenhado fica por cima dos vizinhos
+  await expect(page.locator(".mapa-dica")).toContainText(/nota \d+/);
+});
+
+test("o que estudar: prioridades, faltas e pontos fortes", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/estudar");
+  await expect(page.locator(".estudar-card")).toHaveCount(3);
+  await expect(page.locator(".estudar-card").first()).toContainText(/destravaria \d+ vaga/);
+  await expect(page.getByRole("region", { name: "Habilidades que faltam" })).toContainText("Azure");
+  const fortes = page.getByRole("region", { name: "Seus pontos fortes" });
+  await expect(fortes).toContainText("Python");
+  await expect(fortes).not.toContainText("Azure");
+});
+
 test("celular: a barra de baixo leva ao Envio em lote e o Mais leva ao Uso dos serviços", async ({ browser }) => {
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
@@ -296,7 +330,7 @@ test("celular: nenhuma página principal rola para o lado", async ({ browser }) 
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/mapa", "/estudar", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);

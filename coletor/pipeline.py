@@ -25,6 +25,7 @@ import yaml
 from . import alerta
 from . import followup
 from . import resumo as resumo_email
+from . import analises
 from .aprendizado import Aprendizado
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
@@ -343,6 +344,13 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
                 resumo_email.enviar(para_resumo, corte, pendentes, teste=teste)
             except Exception as e:  # o resumo é um extra: falha nele não pode derrubar a coleta
                 log.warning("resumo: falha ao enviar: %s", e)
+        if tipo == "completa":
+            try:
+                a = analises.gerar(sb, restantes, ranker.emb, ranker.cv_frases, curriculo, cfg)
+                _anotar(f"Análises: mapa com {a['grupos']} grupos e o que estudar com {a['habilidades']} habilidades, "
+                        f"sobre {a['vagas']} vagas")
+            except Exception as e:  # extra: não derruba a coleta
+                log.warning("análises: falharam: %s", e)
         sb.registrar_execucao(execucao)
         problemas = alerta.verificar_saude(execucao, anteriores)
         if li_info["erro"] and li_info["erro"] != "sem APIFY_TOKEN":

@@ -119,3 +119,13 @@ language sql security definer set search_path = public as $$
 $$;
 revoke execute on function somar_uso(date, text, bigint), tamanho_banco() from public, anon, authenticated;
 grant execute on function somar_uso(date, text, bigint), tamanho_banco() to service_role;
+
+-- 22/10/2026: análises do mercado para o site ("Mapa das vagas" e "O que estudar"), geradas na coleta completa.
+create table if not exists analises (
+  nome           text primary key,                    -- mapa | estudar
+  atualizado_em  timestamptz not null default now(),
+  dados          jsonb not null default '{}'
+);
+alter table analises enable row level security;
+grant select, insert, update, delete on analises to service_role;
+revoke all on analises from anon, authenticated;
