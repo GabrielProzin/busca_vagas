@@ -1,0 +1,60 @@
+2026-10-23 14:03:35,397 INFO coletor: Coleta rapida
+::notice title=coleta::Coleta rapida
+2026-10-23 14:03:36,602 INFO coletor.fontes.gupy: gupy: 'analista de dados' -> acumulado 100 vagas
+2026-10-23 14:03:37,564 INFO coletor.fontes.gupy: gupy: 'analista de bi' -> acumulado 138 vagas
+2026-10-23 14:03:38,430 INFO coletor.fontes.gupy: gupy: 'business intelligence' -> acumulado 159 vagas
+2026-10-23 14:03:40,097 INFO coletor.fontes.gupy: gupy: 'engenheiro de dados' -> acumulado 248 vagas
+2026-10-23 14:03:40,795 INFO coletor.fontes.gupy: gupy: 'engenharia de dados' -> acumulado 275 vagas
+2026-10-23 14:03:41,488 INFO coletor.fontes.gupy: gupy: 'analytics engineer' -> acumulado 278 vagas
+2026-10-23 14:03:42,272 INFO coletor.fontes.gupy: gupy: 'cientista de dados' -> acumulado 327 vagas
+2026-10-23 14:03:43,148 INFO coletor.fontes.gupy: gupy: 'ciência de dados' -> acumulado 337 vagas
+2026-10-23 14:03:43,834 INFO coletor.fontes.gupy: gupy: 'data analyst' -> acumulado 345 vagas
+2026-10-23 14:03:44,708 INFO coletor.fontes.gupy: gupy: 'data engineer' -> acumulado 359 vagas
+2026-10-23 14:03:45,391 INFO coletor.fontes.gupy: gupy: 'power bi' -> acumulado 361 vagas
+2026-10-23 14:03:48,675 INFO coletor.fontes.remotar: remotar: 'analista de dados' -> acumulado 100 vagas
+2026-10-23 14:03:50,995 INFO coletor.fontes.remotar: remotar: 'analista de bi' -> acumulado 172 vagas
+2026-10-23 14:03:52,235 INFO coletor.fontes.remotar: remotar: 'business intelligence' -> acumulado 216 vagas
+2026-10-23 14:03:54,581 INFO coletor.fontes.remotar: remotar: 'engenheiro de dados' -> acumulado 315 vagas
+2026-10-23 14:03:57,134 INFO coletor.fontes.remotar: remotar: 'engenharia de dados' -> acumulado 377 vagas
+2026-10-23 14:03:59,241 INFO coletor.fontes.remotar: remotar: 'analytics engineer' -> acumulado 444 vagas
+2026-10-23 14:04:00,293 INFO coletor.fontes.remotar: remotar: 'cientista de dados' -> acumulado 477 vagas
+2026-10-23 14:04:02,561 INFO coletor.fontes.remotar: remotar: 'ciência de dados' -> acumulado 508 vagas
+2026-10-23 14:04:03,778 INFO coletor.fontes.remotar: remotar: 'data analyst' -> acumulado 541 vagas
+2026-10-23 14:04:06,033 INFO coletor.fontes.remotar: remotar: 'data engineer' -> acumulado 620 vagas
+2026-10-23 14:04:08,321 INFO coletor.fontes.remotar: remotar: 'power bi' -> acumulado 651 vagas
+2026-10-23 14:04:16,789 INFO coletor.fontes.solides: solides: 'dados' -> acumulado 78 vagas
+2026-10-23 14:04:24,877 INFO coletor.fontes.solides: solides: 'bi' -> acumulado 151 vagas
+2026-10-23 14:04:34,176 INFO coletor.fontes.solides: solides: 'data' -> acumulado 225 vagas
+2026-10-23 14:04:44,671 INFO coletor.fontes.solides: solides: 'analytics' -> acumulado 295 vagas
+2026-10-23 14:04:45,793 INFO coletor.fontes.github_issues: github: 'analista de dados' -> acumulado 0 vagas
+2026-10-23 14:04:46,656 INFO coletor.fontes.github_issues: github: 'analista de bi' -> acumulado 0 vagas
+2026-10-23 14:04:48,100 INFO coletor.fontes.github_issues: github: 'business intelligence' -> acumulado 0 vagas
+2026-10-23 14:04:49,140 INFO coletor.fontes.github_issues: github: 'engenheiro de dados' -> acumulado 1 vagas
+2026-10-23 14:04:49,964 INFO coletor.fontes.github_issues: github: 'engenharia de dados' -> acumulado 1 vagas
+2026-10-23 14:04:51,130 INFO coletor.fontes.github_issues: github: 'analytics engineer' -> acumulado 1 vagas
+2026-10-23 14:04:52,033 INFO coletor.fontes.github_issues: github: 'cientista de dados' -> acumulado 1 vagas
+2026-10-23 14:04:53,000 INFO coletor.fontes.github_issues: github: 'ciência de dados' -> acumulado 1 vagas
+2026-10-23 14:04:54,558 INFO coletor.fontes.github_issues: github: 'data analyst' -> acumulado 1 vagas
+2026-10-23 14:04:56,224 INFO coletor.fontes.github_issues: github: 'data engineer' -> acumulado 2 vagas
+2026-10-23 14:04:58,397 INFO coletor.fontes.github_issues: github: 'power bi' -> acumulado 2 vagas
+2026-10-23 14:04:58,403 INFO coletor: coleta: {'gupy': 361, 'remotar': 651, 'solides': 295, 'github': 2} -> 1249 únicas
+2026-10-23 14:04:58,416 INFO coletor: filtro de título/data: 70 candidatas
+[0;93m2026-10-23 14:05:00.122799591 [W:onnxruntime:Default, device_discovery.cc:95 GetPciBusId] Skipping pci_bus_id for PCI path at "/sys/devices/LNXSYSTM:00/LNXSYBUS:00/ACPI0004:00/MSFT1000:00/5620e0c7-8062-4dce-aeb7-520c7ef76171" because filename "5620e0c7-8062-4dce-aeb7-520c7ef76171" did not match expected pattern of [0-9a-f]+:[0-9a-f]+:[0-9a-f]+[.][0-9a-f]+[m
+2026-10-23 14:05:00,796 INFO coletor.ranking: ranking: 122 frases (21 do currículo, 0 do histórico) via fastembed
+2026-10-23 14:05:03,287 INFO coletor: Funil github: 2 únicas -> {'senioridade': 1, 'local não informado': 1}
+2026-10-23 14:05:03,287 INFO coletor: Funil gupy: 361 únicas -> {'senioridade': 237, 'publicada há mais de 14 dias': 79, 'hibrido': 24, 'presencial': 15, 'bloqueio': 4, 'aprovada': 2}
+2026-10-23 14:05:03,288 INFO coletor: Funil remotar: 596 únicas -> {'senioridade': 394, 'título fora das trilhas de dados': 111, 'bloqueio': 45, 'publicada há mais de 14 dias': 21, 'vaga': 15, 'presencial': 4, 'descrição indica pleno/sênior': 3, 'aprovada': 3}
+2026-10-23 14:05:03,288 INFO coletor: Funil solides: 290 únicas -> {'título fora das trilhas de dados': 144, 'senioridade': 128, 'bloqueio': 11, 'publicada há mais de 14 dias': 4, 'presencial': 2, 'hibrido': 1}
+2026-10-23 14:05:03,296 INFO coletor: Sólides, só cargos de dados: 30 -> {'senioridade': 23, 'publicada há mais de 14 dias': 4, 'presencial': 2, 'hibrido': 1}
+2026-10-23 14:05:03,296 INFO coletor: Sólides → Analista de Migração de Dados JR | hibrido Limeira | hibrido em Limeira
+2026-10-23 14:05:03,296 INFO coletor: Sólides → Operador de Data Center | 12X36 - Noturno | presencial Santana de Parnaíba | presencial em Santana de Parnaíba
+2026-10-23 14:05:03,296 INFO coletor: Sólides → Analista de Dados | presencial Campo Grande | presencial em Campo Grande
+2026-10-23 14:05:03,297 INFO coletor: Sólides → Engenheiro de Dados - Recife/PE (Júnior) | hibrido Recife | publicada há mais de 14 dias
+2026-10-23 14:05:03,297 INFO coletor: Aprovadas: 5 (0 do LinkedIn); com email: 0
+::notice title=coleta::Aprovadas: 5 (0 do LinkedIn); com email: 0
+2026-10-23 14:05:10,610 INFO coletor: contato: 2 emails achados em sites; 2 de 5 vagas com email
+2026-10-23 14:05:10,612 INFO coletor: json: saida/vagas_2026-10-23.json
+2026-10-23 14:05:11,921 INFO coletor.armazenamento: supabase: 5 vagas gravadas
+2026-10-23 14:05:12,329 INFO coletor: Vagas novas nesta coleta: 0 (0 com email)
+::notice title=coleta::Vagas novas nesta coleta: 0 (0 com email)
+2026-10-23 14:05:12,495 INFO coletor: fim: {'duracao_s': 95.2, 'coletadas': {'gupy': 361, 'remotar': 651, 'solides': 295, 'github': 2}, 'descartes': {'senioridade': 760, 'bloqueio': 60, 'publicada há mais de 14 dias': 104, 'título fora das trilhas de dados': 255, 'hibrido': 25, 'presencial': 21, 'descrição indica pleno/sênior': 3, 'vaga em inglês': 15, 'local não informado': 1}, 'principal': 1, 'vale_tentar': 4, 'backend': 'fastembed', 'aprendizado': {'positivos': 5, 'negativos': 2, 'ativo': False, 'minimo': 3, 'confianca': 0.23, 'acerto': None, 'max_pontos': 8.0}, 'tipo': 'rapida'}

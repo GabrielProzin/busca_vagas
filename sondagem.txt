@@ -1,0 +1,96 @@
+==================== SOLIDES: parâmetro de busca
+{'title': 'analista de dados'} 200 count 1587 pages 159 ['dsfgsg', 'Analista de Revops', 'analista administrativo', 'ANALISTA DE OPERAÇÕES COMERCIAIS - ITAJAÍ ', 'Analista de Sinistros - Ribeirão Preto/SP', 'ANALISTA DE MARKETING SÊNIOR']
+{'search': 'analista de dados'} 200 count 72534 pages 7254 ['Analista de Infraestrutura - Pleno ', 'ASSISTENTE DE VENDAS', 'VENDEDOR', 'Marceneiro', 'ASSISTENTE COMERCIAL - PEDRO MIRANDA', 'SERVENTE DE LIMPEZA ']
+{'jobTitle': 'analista de dados'} 200 count 72534 pages 7254 ['Analista de Infraestrutura - Pleno ', 'ASSISTENTE DE VENDAS', 'VENDEDOR', 'Marceneiro', 'ASSISTENTE COMERCIAL - PEDRO MIRANDA', 'SERVENTE DE LIMPEZA ']
+{'q': 'analista de dados'} 200 count 72534 pages 7254 ['Analista de Infraestrutura - Pleno ', 'ASSISTENTE DE VENDAS', 'VENDEDOR', 'Marceneiro', 'ASSISTENTE COMERCIAL - PEDRO MIRANDA', 'SERVENTE DE LIMPEZA ']
+{'keyword': 'analista de dados'} 200 count 72534 pages 7254 ['Analista de Infraestrutura - Pleno ', 'ASSISTENTE DE VENDAS', 'VENDEDOR', 'Marceneiro', 'ASSISTENTE COMERCIAL - PEDRO MIRANDA', 'SERVENTE DE LIMPEZA ']
+{'title': 'analista de dados', 'page': 2} 200 count 1587 pages 159 ['Analista de Dados ', 'Especialista de Controladoria ', 'ANALISTA DE EXCELÊNCIA OPERACIONAL', 'Especialista em CRM (HubSpot) ', 'Analista de Dados', 'Analista de Negócios e Receita Sr. (Business and Revenue Sr. analyst)']
+{'title': 'dados', 'locations': 'Goiânia'} 200 count 0 pages 0 []
+{'title': 'analista de dados', 'homeOffice': 'true'} 200 count 1587 pages 159 ['dsfgsg', 'Analista de Revops', 'analista administrativo', 'ANALISTA DE OPERAÇÕES COMERCIAIS - ITAJAÍ ', 'Analista de Sinistros - Ribeirão Preto/SP', 'ANALISTA DE MARKETING SÊNIOR']
+  state: {"id": 16, "name": "Bahia", "code": "BA"}
+  city: {"id": 2058, "name": "Lauro de Freitas", "stateId": 16}
+  address: {"id": 111531307, "neighborhood": "Recreio Ipitanga", "number": "3295", "latitude": null, "longitude": null, "city": {"id": 2058, "name": "Lauro de Freitas", "stateId": 16}, "state": {"id": 16, "name": "Bahia", "code": "BA"}, "country": {"id": 30, "n
+  salary: {"type": "simple", "showRangeToApplicant": false, "initialRange": null, "finalRange": null, "negotiable": false}
+  seniority: [{"id": 4, "name": "Junior", "level": null}]
+  occupationAreas: [{"id": 349593, "name": "Agronegócio", "level": null}]
+  hardSkills: [{"id": 42227, "name": "Comunicação", "level": 3}, {"id": 45273, "name": "Compreensão das necessidades do cliente", "level": 1}, {"id": 45382, "name": "Autodisciplina", "level": 3}, {"id": 45260, "name": "Disciplina pessoal", "level": 3}, {"id": 4699
+  recruitmentContractType: [{"id": 10, "name": "CLT", "level": null}]
+  slug/id/redirect: None 942808 https:///vacancies/942808?origem=portal
+   https://None.vagas.solides.com.br/vaga/942808 200 https://none.vagas.solides.com.br/vaga/942808 11336
+   https://vagas.solides.com.br/vaga/942808 200 https://vagas.solides.com.br/vaga/942808 145727
+
+==================== TRAMPOS: detalhe
+  títulos: ['Analista de Mídia', 'Planejamento Estratégico', 'Analista Administrativo Comercial', 'Analista de Mídia', 'Analista de Performance - Google e Meta Ads', 'Analista de Mídia Paga para E-commerce - Pleno/Sênior', 'Atendimento Publicitário', 'Analista de Marketing', 'Analista de Mídia - Tráfego Pago', 'Analista de Desenvolvimento', 'Analista de Marketing | Planejamento e Gestão', 'Analista Financeiro Pleno '] total {'total': 25, 'total_pages': 3, 'per_page': 12}
+  detalhe 200
+opportunity: dict 
+    id: int 774882
+    name: str 'Analista de Mídia'
+    type_name: str 'Emprego'
+    type_slug: str 'emprego'
+    apply_url: str ''
+    category_name: str 'Mídia'
+    category_slug: str 'midia'
+    state: str 'SP'
+    city: str 'São Paulo'
+    home_office: bool False
+    hybrid: bool True
+    published_at: str '2026-10-22T15:20:07.000-03:00'
+    highlight: bool True
+    badges: list 
+        [1 itens] primeiro:
+    already_applied: bool False
+    salary: str 'NÃO DIVULGADA'
+    hide_ads: bool False
+    regime: str 'PREST. DE SERVIÇO'
+    quantity: int 1
+    description: str 'A SA365 está em busca de um(a) Analista de Mídia com foco em Performance para integrar nosso time.\
+    perks: str 'Cartão de benefício iFood\r\nSubsídio para plano de saúde e odontológico\r\nWellhub\r\nDay off de a
+    prerequisite: str 'Ensino superior completo em Marketing, Publicidade e Propaganda, Comunicação Social, Administração,
+    desirable: str 'Experiência com outras plataformas de mídia, como LinkedIn Ads, TikTok Ads, DV360 e Retail Media;\r
+    other_info: str ''
+    comments: str ''
+    address: str 'Rua Pamplona, 518, Jardim Paulista - São Paulo, SP'
+    applies_count: int 30
+    facebook_shares: str '0'
+    facebook_share_url: str 'http://www.facebook.com/share.php?u=http://trampos.co/oportunidades/774882-analista-de-midia'
+    tweet_count: str '0'
+    twitter_share_url: str 'http://twitter.com/share?text=Oportunidade de Analista de Mídia @ SA365 (via @trampos)&url=http://t
+    email_shares: str '31'
+    email_share_url: str 'https://trampos.co/oportunidades/774882-analista-de-midia/share/email'
+    whatsapp_shares: str '1'
+    whatsapp_share_url: str 'https://trampos.co/oportunidades/774882-analista-de-midia/share/whatsapp'
+    custom_company_name: NoneType None
+    url: str 'http://trampos.co/oportunidades/774882-analista-de-midia'
+    apply_method: int 3
+    bitly_url: NoneType None
+    opportunity_questions: list 
+        [3 itens] primeiro:
+            id: int 94949
+            body: str 'Qual sua pretensão salarial (PJ)?\t\t'
+            question_type: str 'text'
+            required: bool True
+
+==================== GUPY: empresa e careerPage
+  company: {"id": 42442, "timezone": "America/Sao_Paulo", "subdomain": "afinz", "language": "pt"}
+  careerPage: {"name": "Afinz", "urlLogo": "https://attachments.gupy.io/production/companies/42442/career/98218/images/2022-09-15_19-51_logo.png", "urlSite": "", "companyDescriptionTitle": "Somos Afinz", "about": "<p>Toda história de sucesso começa com uma <strong>boa parceria</strong>.</p><p><br></p><p>É por isso que a Afinz existe. Para inspirarmos a busca por respostas criativas, eficientes e inovadoras todos os dias.</p><p><br></p><p>Isso quer dizer que quando <strong>seus objetivos</strong> encontram as soluções Afinz, o resultado é uma constante evolução.</p><p><br></p><p>Porque é com essa <strong>afi
+
+==================== COBERTURA DE EMAIL: empresas das vagas reais
+  'Afinz'                                  ''                                       -> None
+  'Spread Tecnologia'                      ''                                       -> None
+  'Grupo SysMap'                           ''                                       -> None
+  'Rodobens'                               ''                                       -> None
+  "Rede D'Or"                              ''                                       -> None
+  'Vagas Banco Sofisa'                     ''                                       -> None
+  'Vagas MRM Brasil'                       ''                                       -> None
+  'Freitas'                                ''                                       -> None
+  'Cruzeiro do Sul Educacional S/A'        ''                                       -> None
+  'Cruzeiro do Sul Educacional S/A'        ''                                       -> None
+  'EMPRESA CONFIDENCIAL'                   ''                                       -> None
+  'AZZAS 2154 / GRUPO SOMA'                ''                                       -> None
+  'Grupo SysMap'                           ''                                       -> None
+  'Leega Consultoria'                      ''                                       -> None
+  'Stefanini Group'                        ''                                       -> None
+  'Stefanini Group'                        ''                                       -> None
+  'Leega Consultoria'                      ''                                       -> None
+  'Leega Consultoria'                      ''                                       -> None
+  cobertura: 0/18
