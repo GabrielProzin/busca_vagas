@@ -3,10 +3,10 @@
 Python, SQL, Power BI, Apache Airflow. Goiânia, GO.
 
 ## Resumo
-Cientista de Dados com experiência de ponta a ponta no ciclo de dados: da ingestão e orquestração de pipelines em Python e Apache Airflow à modelagem e entrega de dashboards de KPIs no Power BI, sobre uma base de mais de 3,5 mil unidades, 400 redes de clientes e 2 milhões de alunos ativos. A experiência com relacionamento com clientes me dá facilidade para traduzir regras de negócio em soluções analíticas. Especialização em Ciência de Dados em andamento.
+Cientista de dados com quase 2 anos de experiência em dados, do SQL e relatórios gerenciais a pipelines e dashboards em produção. Na Pacto Soluções, construí pipelines em Python e Airflow que levam dados do Zendesk e do Jira ao BigQuery para 18 clientes e migrei mais de 20 dashboards de KPIs para o Power BI, conferindo cada número com a fonte. Busco vagas de dados em que análise e engenharia andem juntas.
 
 ## Habilidades
-Python, SQL, DAX, Pandas, NumPy, Scikit-learn, Machine Learning, Análise de Dados, Apache Airflow, ETL/ELT, Google BigQuery, MySQL HeatWave, PostgreSQL, SQL Server, Firebird, MongoDB, Power BI, Looker Studio, Modelagem de Dados, Oracle Cloud (OCI), Docker, Git/GitHub, LLMs e MCP.
+Python, SQL, DAX, Pandas, NumPy, Scikit-learn, Machine Learning, NLP (Embeddings), Análise de Dados, Apache Airflow, GitHub Actions, ETL/ELT, Google BigQuery, MySQL HeatWave, PostgreSQL, SQL Server, Firebird, MongoDB, Power BI, Looker Studio, Modelagem de Dados, Oracle Cloud (OCI), Docker, Git/GitHub, LLMs e MCP.
 
 ## Experiência
 
@@ -28,6 +28,7 @@ Python, SQL, DAX, Pandas, NumPy, Scikit-learn, Machine Learning, Análise de Dad
 - Levantamento de requisitos dos clientes, traduzidos em especificações para a equipe de desenvolvimento.
 
 ## Projetos
+- busca_vagas: pipeline ETL no GitHub Actions que coleta vagas de 5 fontes, dá nota contra o currículo com embeddings, agrupa com K-means e envia candidaturas (Python, GitHub Actions, PostgreSQL, Embeddings/NLP, Scikit-learn, Next.js).
 - Pipeline de Dados com Apache Airflow: DAG semanal que extrai dados de uma API e salva dados brutos e tabelas tratadas, em Docker Compose com CeleryExecutor (Python, Pandas, Airflow, Docker, PostgreSQL, Redis, ETL).
 - Detecção de Fraudes em Cartões de Crédito: classificação de transações fraudulentas comparando Logistic Regression e Random Forest, com resultados no Power BI.
 - Dashboard de Mercado de Ações: dashboards interativos no Power BI com dados reais da NASDAQ.
