@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { readFileSync } from "node:fs";
-import type { AnaliseEstudar, AnaliseTipos, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
+import type { AnaliseCV, AnaliseEstudar, AnaliseTipos, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
 
 // Acesso ao Supabase pela API REST (PostgREST), sempre no servidor, com a chave secreta.
 // Com DEMO_ARQUIVO definido, usa um JSON local em memória (para desenvolver sem banco).
@@ -30,7 +30,7 @@ async function rest<T>(caminho: string, init: RequestInit = {}): Promise<T> {
 }
 
 // ---------------------------------------------------------------- modo demo
-type Demo = { vagas: Vaga[]; candidaturas: Map<string, Candidatura>; execucoes: Execucao[]; servicos: UsoServico[]; diario: Map<string, number> };
+type Demo = { vagas: Vaga[]; candidaturas: Map<string, Candidatura>; execucoes: Execucao[]; servicos: UsoServico[]; diario: Map<string, number>; analisesCv: AnaliseCV[] };
 // globalThis: rotas de API e páginas podem carregar cópias separadas deste módulo.
 const G = globalThis as unknown as { __demoBV?: Demo };
 function emDemo(): Demo | null {
@@ -57,6 +57,10 @@ function emDemo(): Demo | null {
       diario: new Map(((j.uso?.diario ?? []) as { dias_atras: number; chave: string; n: number }[]).map((d) => [
         `${new Date(Date.now() - d.dias_atras * 864e5).toISOString().slice(0, 10)}|${d.chave}`, d.n,
       ])),
+      // Análises de CV prontas para ver o histórico; "dias_atras" vira a data.
+      analisesCv: ((j.analises_cv ?? []) as (Omit<AnaliseCV, "id" | "criada_em"> & { dias_atras: number })[]).map(({ dias_atras, ...a }, i) => ({
+        ...a, id: i + 1, criada_em: new Date(Date.now() - dias_atras * 864e5).toISOString(),
+      })),
     };
   }
   return G.__demoBV;
@@ -394,6 +398,7 @@ export async function schemaCompleto(): Promise<boolean> {
       rest(`/candidaturas?select=followup_em,followups,email_message_id&limit=1`),
       rest(`/execucoes?select=aprendizado,tipo&limit=1`),
       rest(`/candidaturas?select=fila_em,fila_erro,resposta_em,devolvido_em&limit=1`),
+      rest(`/analises_cv?select=id&limit=1`),
     ]);
     return true;
   } catch {
@@ -467,4 +472,48 @@ export async function lerAnalise(nome: "tipos" | "estudar"): Promise<AnaliseTipo
   } catch {
     return null;
   }
+}
+
+
+// ---------------------------------------------------------------- análises do currículo
+// Histórico de Meu perfil > Análise de CV. Sem a tabela (SQL antigo), a lista vem vazia e salvar avisa.
+
+export async function listarAnalisesCV(limite = 100): Promise<AnaliseCV[]> {
+  const d = emDemo();
+  if (d) return [...d.analisesCv].sort((a, b) => b.criada_em.localeCompare(a.criada_em)).slice(0, limite);
+  try {
+    return await rest<AnaliseCV[]>(`/analises_cv?select=*&order=criada_em.desc&limit=${limite}`);
+  } catch (e) {
+    console.error("analises_cv:", e);
+    return [];
+  }
+}
+
+export async function buscarAnaliseCV(id: number): Promise<AnaliseCV | null> {
+  const d = emDemo();
+  if (d) return d.analisesCv.find((a) => a.id === id) ?? null;
+  const linhas = await rest<AnaliseCV[]>(`/analises_cv?select=*&id=eq.${id}`);
+  return linhas[0] ?? null;
+}
+
+export async function salvarAnaliseCV(a: Omit<AnaliseCV, "id" | "criada_em">): Promise<number> {
+  const d = emDemo();
+  if (d) {
+    const id = Math.max(0, ...d.analisesCv.map((x) => x.id)) + 1;
+    d.analisesCv.push({ ...a, id, criada_em: new Date().toISOString() });
+    return id;
+  }
+  const linhas = await rest<{ id: number }[]>(`/analises_cv?select=id`, {
+    method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(a),
+  });
+  return linhas[0].id;
+}
+
+export async function excluirAnaliseCV(id: number): Promise<void> {
+  const d = emDemo();
+  if (d) {
+    d.analisesCv = d.analisesCv.filter((a) => a.id !== id);
+    return;
+  }
+  await rest(`/analises_cv?id=eq.${id}`, { method: "DELETE" });
 }

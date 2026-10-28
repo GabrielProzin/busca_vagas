@@ -29,8 +29,17 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - Como candidato, quero que o ranking aprenda com o que eu aplico e descarto, **para a lista ficar mais a minha cara**.
 - Como candidato, quero um email de resumo só com o que vale a pena, **para não precisar abrir o site todo dia**.
 - Como candidato, quero exportar meus dados quando quiser, **porque os dados são meus**.
+- Como candidato, quero uma nota explicável do meu currículo, com histórico, **para saber se cada versão ficou melhor**.
+- Como candidato, quero ver meu nível de mercado e o próximo passo mais útil, **para saber onde investir tempo**.
+- Como candidato, quero respostas prontas para as perguntas de formulário de uma vaga, só com fatos do meu currículo,
+  **para me candidatar mais rápido sem inventar nada**.
 
 ## 3. Telas
+
+O menu é dividido em módulos que abrem e fecham: **Início** (Hoje), **Vagas** (Vagas, Triagem rápida, Envio em lote,
+Candidaturas, Adicionar vaga), **Meu perfil** (Perfil profissional, Análise de CV, O que estudar), **Mercado**
+(Tipos de vaga, Painel) e **Sistema** (Uso dos serviços, Configurações). O módulo da página aberta fica aberto.
+No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a tela Mais lista o resto por módulo.
 
 | Tela | O que mostra | Ações |
 |---|---|---|
@@ -46,6 +55,9 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 | O que estudar (`/estudar`) | Habilidades do catálogo pedidas nas vagas: % das vagas, quantas destravaria (única que falta), variação desde a análise anterior; top 3 para estudar; pontos fortes | — |
 | Uso dos serviços (`/uso`) | Cada serviço grátis contra o limite: GitHub Actions (minutos no mês), Supabase (banco e arquivos), Apify (crédito do mês), Gemini (pedidos do dia), Gmail (emails do dia), Vercel (só os limites) | Abrir o painel de cada serviço |
 | Painel | Números da última coleta, por que as vagas ficaram de fora, vagas novas por coleta, aprendizado do ranking | — |
+| Perfil profissional (`/perfil`) | Nível de mercado (estágio, júnior, pleno, sênior) com o motivo e o que falta para o próximo; "seu próximo passo"; evolução das notas do CV; números do perfil (nota do CV, vagas que combinam, habilidade que mais abriria vagas) | Fazer o próximo passo, nova análise de CV |
+| Análise de CV (`/perfil/cv`) | Nota atual, variação e critério mais fraco; gráfico da evolução; histórico de análises (nota, tipo, conexão com a vaga, respostas, variação, data) com filtro Todas / Geral / Para vaga | Nova análise geral ou para uma vaga (escolher da lista ou colar o texto), com perguntas do formulário opcionais |
+| Análise (`/perfil/cv/[id]`) | Nota e os 4 critérios com o motivo de cada um, pontos fortes, melhorias (com o trecho do currículo), nível; para vaga: conexão, o que destacar, lacunas e as respostas do formulário | Copiar cada resposta, excluir a análise |
 | Configurações | Primeiros passos (o que está pronto e o que falta, com o link do passo no README), currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
 
 ## 4. Dados (Supabase / Postgres, `supabase/schema.sql`)
@@ -56,6 +68,8 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - **candidaturas**: o que o candidato fez com a vaga (1 para 1 com `vagas`, separada para a coleta nunca apagar).
   Situação, email (para, assunto, corpo, Message-ID), data de envio, follow-ups (quantos e o último), anotações.
 - **execucoes**: uma linha por coleta (contagens por fonte, descartes por motivo, aprendizado do ranking).
+- **analises_cv**: uma linha por análise do currículo (tipo `geral` ou `vaga`, título, nota, conexão com a vaga,
+  vaga analisada, nome da versão, e em `dados` os critérios, comentários, respostas e o texto analisado).
 - **Storage `privado/curriculo.pdf`**: o currículo anexado nos emails.
 - RLS ligado e nenhuma policy: só o servidor, com a chave secreta, lê e escreve.
 
@@ -135,6 +149,28 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
   contados a cada uso, em `uso_diario`.
 - 60% = atenção, 80% = perto do limite. Ao cruzar 80%, um email de alerta (uma vez) e um aviso na tela Hoje.
 
+**Análise de CV** (`site/lib/cv.ts`, `site/lib/ia.ts`)
+- Texto analisado: o currículo do perfil (`perfil/curriculo.md`) ou uma versão colada (até 15.000 caracteres).
+- Nota de 0 a 100 = média ponderada de 4 critérios, cada um de 0 a 100:
+  - **Habilidades que o mercado pede** (30%): soma do % de vagas das 25 habilidades mais pedidas (O que estudar) que
+    aparecem no texto, sobre a soma de todas. Sem a análise do mercado, o critério fica de fora.
+  - **Resultados com números** (25%): % dos tópicos de experiência e projetos com número; 60% ou mais vale 100.
+  - **Estrutura e tamanho** (20%): resumo no topo, seções de experiência, formação e habilidades, 300 a 800 palavras,
+    2 a 6 tópicos por experiência (20 pontos cada).
+  - **Clareza da escrita** (25%): nota da IA. Sem IA (sem chave ou sem cota), o critério fica de fora.
+  - Critério fora: os pesos dos outros são redistribuídos.
+- A IA também devolve nível de mercado, pontos fortes, melhorias e o que falta para o próximo nível. Uma melhoria só
+  mostra o trecho do currículo se ele existir de verdade no texto (senão, o trecho é descartado).
+- Para vaga: escolhida da lista, a conexão é a nota da própria vaga; colada, a IA dá a conexão. A IA lista o que
+  destacar e as lacunas (só habilidades que a vaga pede e o texto não mostra).
+- Perguntas do formulário (até 10, até 500 caracteres cada): respostas curtas, em primeira pessoa, só com fatos do
+  texto; quando a pergunta pede algo que o texto não tem (pretensão salarial, disponibilidade...), a resposta vem
+  marcada "Confira" com o que a pessoa precisa completar.
+- Texto da vaga e perguntas são dados, nunca instrução. Cada análise usa 1 pedido do Flash-Lite (mais 1 do Flash
+  quando há perguntas).
+- Nível e próximo passo do Perfil profissional vêm da análise geral mais recente; o próximo passo é a melhoria do
+  critério mais fraco, ou, se a nota do CV for 85 ou mais, a habilidade que mais destravaria vagas.
+
 **Segurança e dados**
 - Tudo exige login, menos: `/login`, `/api/capturar` e `/api/capturar/lote` (token da extensão), `/api/vigia`
   (segredo do cron) e `/api/saude` (pública, sem dados).
@@ -160,6 +196,10 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - [ ] Ao abrir uma vaga com email, o email já está preenchido.
 - [ ] O menu mostra o número de follow-ups pendentes.
 - [ ] Configurações mostra os primeiros passos, com o que falta.
+- [ ] Uma análise geral do CV aparece no histórico com nota, variação e os 4 critérios.
+- [ ] Uma análise para vaga com perguntas mostra a conexão e uma resposta para cada pergunta.
+- [ ] O Perfil profissional mostra o nível, o próximo passo e a evolução das notas.
+- [ ] O menu abre o módulo da página atual; no celular, Perfil está na barra de baixo.
 - [ ] Envio em lote: as vagas com email aparecem com o email pronto; as marcadas entram na fila e saem das listas de novas.
 - [ ] O envio da fila respeita horário, intervalo, limite diário e nunca envia duas vezes.
 - [ ] Uma resposta no Gmail move a candidatura para "Respondeu"; um email devolvido marca a candidatura.

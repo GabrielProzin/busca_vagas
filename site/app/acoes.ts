@@ -4,17 +4,18 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
-  buscarVaga, enfileirarVagas, enviadosHoje, filaPronta, followupPronto, mudarStatus, reservarEnvio, reservarFollowup,
-  salvarCandidatura, salvarMessageId, tirarVagaDaFila,
+  buscarVaga, enfileirarVagas, enviadosHoje, excluirAnaliseCV, filaPronta, followupPronto, lerAnalise, mudarStatus,
+  reservarEnvio, reservarFollowup, salvarAnaliseCV, salvarCandidatura, salvarMessageId, tirarVagaDaFila,
 } from "@/lib/db";
 import { dispararWorkflow } from "@/lib/github";
-import { ErroIA, emailModelo, followupModelo, gerarEmail, gerarFollowup } from "@/lib/ia";
+import { ErroIA, analisarParaVaga, avaliarCurriculo, emailModelo, followupModelo, gerarEmail, gerarFollowup, type AnaliseVagaIA, type AvaliacaoIA } from "@/lib/ia";
+import { LIMITE_TEXTO, PESOS, ROTULOS, criteriosSemIA, habilidadesNoTexto, notaFinal, trechoReal } from "@/lib/cv";
 import { enviarEmail, erroGmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
 import { capturar, dominioExcluido } from "@/lib/captura";
 import { PERFIL } from "@/lib/gerado/perfil";
 import { COOKIE_SESSAO, DURACAO_S, criarSessao, senhaCorreta, sessaoValida } from "@/lib/sessao";
-import type { Status } from "@/lib/tipos";
+import type { CriterioCV, DadosAnaliseCV, Status } from "@/lib/tipos";
 
 /** "Gabriel_Mendes_Cientista_de_Dados.pdf": nome e cargo do perfil, sem acentos nem espaços. */
 function nomeDoPdf(): string {
@@ -298,4 +299,117 @@ export async function marcarFollowup(id: string): Promise<string | null> {
   }
   revalidatePath("/", "layout");
   return null;
+}
+
+
+// ------------------------------------------------------------------ análise do currículo
+// Ver docs/spec.md, "Análise de CV". Valida tudo no servidor; a IA é opcional (sem ela, a nota usa 3 critérios).
+
+export type EstadoAnalise = { erro: string } | null;
+
+const MAX_PERGUNTAS = 10;
+const MAX_PERGUNTA = 500;
+
+export async function analisarCV(_: EstadoAnalise, form: FormData): Promise<EstadoAnalise> {
+  await exigirSessao();
+  const tipo = form.get("tipo") === "vaga" ? "vaga" : "geral";
+  const colado = form.get("fonte") === "colado";
+  const texto = colado ? String(form.get("texto") ?? "").trim() : PERFIL.curriculo;
+  if (colado && texto.length < 300) return { erro: "Cole o currículo inteiro (o texto está curto demais para avaliar)." };
+  if (texto.length > LIMITE_TEXTO) return { erro: `O currículo passou de ${LIMITE_TEXTO.toLocaleString("pt-BR")} caracteres. Cole só o texto, sem repetições.` };
+  const versao = colado ? String(form.get("versao") ?? "").trim().slice(0, 60) || null : null;
+
+  // Para vaga: da lista ou colada, mais as perguntas do formulário (uma por linha).
+  let vaga: { id: string | null; titulo: string; empresa: string | null; texto: string; nota: number | null } | null = null;
+  let perguntas: string[] = [];
+  if (tipo === "vaga") {
+    const vagaId = String(form.get("vaga_id") ?? "").trim();
+    if (vagaId && vagaId !== "colar") {
+      const v = await buscarVaga(vagaId);
+      if (!v) return { erro: "Não achei essa vaga. Recarregue a página e escolha de novo." };
+      vaga = { id: v.id, titulo: v.titulo, empresa: v.empresa, texto: `${v.titulo}${v.empresa ? ` (${v.empresa})` : ""}\n${v.descricao ?? ""}`, nota: v.nota };
+    } else {
+      const t = String(form.get("vaga_texto") ?? "").trim();
+      if (t.length < 80) return { erro: "Escolha uma vaga da lista ou cole o texto da vaga (ele está curto demais)." };
+      if (t.length > LIMITE_TEXTO) return { erro: "O texto da vaga está longo demais. Cole só a descrição." };
+      const primeira = t.split(/\r?\n/).find((l) => l.trim())?.trim() ?? "Vaga colada";
+      vaga = { id: null, titulo: primeira.slice(0, 90), empresa: null, texto: t, nota: null };
+    }
+    perguntas = String(form.get("perguntas") ?? "").split(/\r?\n/).map((p) => p.trim()).filter(Boolean);
+    if (perguntas.length > MAX_PERGUNTAS) return { erro: `Use até ${MAX_PERGUNTAS} perguntas por análise.` };
+    if (perguntas.some((p) => p.length > MAX_PERGUNTA)) return { erro: `Cada pergunta pode ter até ${MAX_PERGUNTA} caracteres.` };
+  }
+
+  // Critérios calculados (sempre) + leitura da IA (quando houver chave e cota).
+  const mercado = (await lerAnalise("estudar"))?.habilidades ?? null;
+  const criterios: CriterioCV[] = criteriosSemIA(texto, mercado);
+  let ia: AvaliacaoIA | null = null;
+  let semIa: string | null = null;
+  try {
+    ia = await avaliarCurriculo(texto);
+  } catch (e) {
+    console.error("analisarCV: avaliação", e);
+    semIa = e instanceof ErroIA ? e.message : "A IA não respondeu agora.";
+  }
+  criterios.push({
+    chave: "escrita", rotulo: ROTULOS.escrita, peso: PESOS.escrita, nota: ia ? ia.escrita : null,
+    motivo: ia ? ia.escrita_motivo || "Avaliado pela IA." : `Ficou de fora: ${semIa}`,
+  });
+
+  let paraVaga: AnaliseVagaIA | null = null;
+  if (vaga) {
+    try {
+      paraVaga = await analisarParaVaga(texto, vaga.texto, perguntas);
+    } catch (e) {
+      console.error("analisarCV: vaga", e);
+      semIa = semIa ?? (e instanceof ErroIA ? e.message : "A IA não respondeu agora.");
+    }
+  }
+  // Sem IA na parte da vaga: o que destacar e as lacunas saem do catálogo de habilidades.
+  const naVaga = vaga ? habilidadesNoTexto(vaga.texto) : new Set<string>();
+  const noCv = habilidadesNoTexto(texto);
+  const conexao = vaga ? (vaga.nota !== null ? Math.round(vaga.nota) : paraVaga?.conexao ?? Math.round((100 * [...naVaga].filter((h) => noCv.has(h)).length) / Math.max(1, naVaga.size))) : null;
+
+  const dados: DadosAnaliseCV = {
+    criterios,
+    nivel: ia?.nivel ?? null,
+    nivel_motivo: ia?.nivel_motivo || null,
+    proximo_nivel: ia?.proximo_nivel ?? [],
+    fortes: ia?.fortes ?? [],
+    melhorias: (ia?.melhorias ?? []).map((m) => ({ trecho: trechoReal(texto, m.trecho), sugestao: m.sugestao })),
+    resumo: ia?.resumo || null,
+    sem_ia: semIa,
+    texto,
+    ...(vaga
+      ? {
+          vaga: { titulo: vaga.titulo, empresa: vaga.empresa },
+          destacar: paraVaga?.destacar ?? [...naVaga].filter((h) => noCv.has(h)).slice(0, 4),
+          lacunas: paraVaga?.lacunas ?? [...naVaga].filter((h) => !noCv.has(h)).slice(0, 4),
+          respostas: paraVaga?.respostas ?? perguntas.map((p) => ({ pergunta: p, resposta: "", confirmar: "A IA não estava disponível para responder. Tente de novo mais tarde." })),
+        }
+      : {}),
+  };
+  const quando = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", timeZone: "America/Sao_Paulo" }).format(new Date()).replace(".", "");
+  const titulo = vaga
+    ? `${vaga.titulo}${vaga.empresa ? ` – ${vaga.empresa}` : ""}`.slice(0, 140)
+    : `CV · geral${versao ? ` · ${versao}` : ""} · ${quando}`;
+
+  let id: number;
+  try {
+    id = await salvarAnaliseCV({ tipo, titulo, nota: notaFinal(criterios), conexao, vaga_id: vaga?.id ?? null, versao, dados });
+  } catch (e) {
+    console.error("analisarCV: salvar", e);
+    return { erro: "Não consegui salvar a análise. Rode de novo o supabase/schema.sql no SQL Editor (tabela analises_cv)." };
+  }
+  revalidatePath("/perfil", "layout");
+  redirect(`/perfil/cv/${id}`);
+}
+
+export async function apagarAnaliseCV(form: FormData) {
+  await exigirSessao();
+  const id = Number(form.get("id"));
+  if (!Number.isInteger(id) || id <= 0) return;
+  await excluirAnaliseCV(id);
+  revalidatePath("/perfil", "layout");
+  redirect("/perfil/cv");
 }

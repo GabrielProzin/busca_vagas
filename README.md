@@ -21,6 +21,11 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
   que mais combina com você para o que menos, com quantas vagas há, o que você já tem e o que falta em cada tipo.
 - **O que estudar**: as habilidades que as vagas pedem e não estão no seu currículo, com quantas vagas cada uma
   destravaria (as em que é a única coisa que falta) e os seus pontos fortes no mercado.
+- **Perfil profissional**: o seu nível de mercado (estágio, júnior, pleno, sênior) com o motivo, o próximo passo
+  mais útil e a evolução das notas.
+- **Análise de CV**: nota de 0 a 100 do currículo em 4 critérios explicados (habilidades que o mercado pede,
+  resultados com números, estrutura e clareza da escrita), com histórico e variação. Para uma vaga, mostra a conexão,
+  o que destacar, as lacunas e responde às perguntas do formulário só com fatos do seu currículo.
 - **Uso dos serviços**: quanto de cada plano grátis já foi usado (GitHub, Supabase, Apify, Gemini, Gmail), com
   aviso por email ao passar de 80%.
 - **Ranking que aprende**: vagas parecidas com as que você aplica sobem; com as que descarta, descem.

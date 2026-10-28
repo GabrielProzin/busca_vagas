@@ -129,3 +129,20 @@ create table if not exists analises (
 alter table analises enable row level security;
 grant select, insert, update, delete on analises to service_role;
 revoke all on analises from anon, authenticated;
+
+-- 28/10/2026: análises do currículo (Meu perfil > Análise de CV), com histórico.
+create table if not exists analises_cv (
+  id          bigint generated always as identity primary key,
+  criada_em   timestamptz not null default now(),
+  tipo        text not null check (tipo in ('geral', 'vaga')),
+  titulo      text not null,
+  nota        integer not null check (nota between 0 and 100),
+  conexao     integer check (conexao between 0 and 100), -- só nas análises para vaga
+  vaga_id     text,                                        -- vaga da lista analisada (opcional)
+  versao      text,                                        -- nome da versão do currículo (opcional)
+  dados       jsonb not null default '{}'                  -- critérios, comentários, respostas e texto analisado
+);
+create index if not exists analises_cv_criada on analises_cv (criada_em desc);
+alter table analises_cv enable row level security;
+grant select, insert, update, delete on analises_cv to service_role;
+revoke all on analises_cv from anon, authenticated;

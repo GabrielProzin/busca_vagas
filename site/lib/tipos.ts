@@ -120,3 +120,36 @@ export type Aprendizado = {
   acerto: number | null;
   max_pontos: number;
 };
+
+// Análise do currículo (Meu perfil > Análise de CV). Ver docs/spec.md, "Análise de CV".
+export type CriterioCV = { chave: "mercado" | "resultados" | "estrutura" | "escrita"; rotulo: string; peso: number; nota: number | null; motivo: string };
+export type MelhoriaCV = { trecho: string | null; sugestao: string };
+export type RespostaFormulario = { pergunta: string; resposta: string; confirmar: string | null };
+export type NivelMercado = "estagio" | "junior" | "pleno" | "senior";
+export type DadosAnaliseCV = {
+  criterios: CriterioCV[];
+  nivel: NivelMercado | null;
+  nivel_motivo: string | null;
+  proximo_nivel: string[];
+  fortes: string[];
+  melhorias: MelhoriaCV[];
+  resumo: string | null;
+  sem_ia?: string | null; // por que a IA ficou de fora (sem chave, sem cota...)
+  texto: string;
+  // Só nas análises para vaga:
+  vaga?: { titulo: string; empresa: string | null } | null;
+  destacar?: string[];
+  lacunas?: string[];
+  respostas?: RespostaFormulario[];
+};
+export type AnaliseCV = {
+  id: number;
+  criada_em: string;
+  tipo: "geral" | "vaga";
+  titulo: string;
+  nota: number;
+  conexao: number | null;
+  vaga_id: string | null;
+  versao: string | null;
+  dados: DadosAnaliseCV;
+};

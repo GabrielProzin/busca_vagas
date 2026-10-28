@@ -26,7 +26,7 @@ test("login: senha errada não entra; certa entra", async ({ page }) => {
 });
 
 test("sem login: páginas e dados ficam fechados", async ({ request }) => {
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/tipos", "/estudar", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/tipos", "/estudar", "/candidaturas", "/painel", "/vaga/gupy%3A1", "/api/exportar", "/perfil", "/perfil/cv", "/perfil/cv/1"]) {
     const r = await request.get(rota, { maxRedirects: 0 });
     expect(r.status(), rota).toBeGreaterThanOrEqual(300);
     expect(r.status(), rota).toBeLessThan(400);
@@ -305,14 +305,21 @@ test("o que estudar: prioridades, faltas e pontos fortes", async ({ page }) => {
   await expect(fortes).not.toContainText("Azure");
 });
 
-test("celular: a barra de baixo leva ao Envio em lote e o Mais leva ao Uso dos serviços", async ({ browser }) => {
+test("celular: a barra de baixo leva ao Perfil e o Mais leva ao Envio em lote e ao Uso dos serviços", async ({ browser }) => {
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
   const barra = page.getByRole("navigation", { name: "Seções" });
   await expect(barra.getByRole("link")).toHaveCount(6);
-  await barra.getByRole("link", { name: "Lote" }).click();
+  await barra.getByRole("link", { name: "Perfil" }).click();
+  await expect(page).toHaveURL(/\/perfil$/);
+  // Análise de CV fica no Mais, mas acende o Perfil (mesmo módulo).
+  await page.goto("/perfil/cv");
+  await expect(barra.getByRole("link", { name: "Perfil" })).toHaveAttribute("aria-current", "page");
+  await barra.getByRole("link", { name: "Mais" }).click();
+  await page.getByRole("navigation", { name: "Outras seções" }).getByRole("link", { name: /Envio em lote/ }).click();
   await expect(page).toHaveURL(/\/lote$/);
+  await expect(barra.getByRole("link", { name: "Vagas" })).toHaveAttribute("aria-current", "page");
   await barra.getByRole("link", { name: "Mais" }).click();
   await page.getByRole("navigation", { name: "Outras seções" }).getByRole("link", { name: /Uso dos serviços/ }).click();
   await expect(page).toHaveURL(/\/uso$/);
@@ -325,10 +332,62 @@ test("celular: nenhuma página principal rola para o lado", async ({ browser }) 
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/tipos", "/estudar", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/tipos", "/estudar", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1", "/perfil", "/perfil/cv", "/perfil/cv/5"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);
   }
   await contexto.close();
+});
+
+
+// ------------------------------------------------------------------ Meu perfil (docs/spec.md, "Análise de CV")
+
+test("menu: o módulo da página atual fica aberto", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/perfil/cv");
+  const menu = page.getByRole("navigation", { name: "Menu" });
+  await expect(menu.locator("details", { hasText: "Meu perfil" })).toHaveAttribute("open", "");
+  await expect(menu.getByRole("link", { name: "Análise de CV" })).toHaveAttribute("aria-current", "page");
+  await expect(menu.locator("details", { hasText: "Mercado" })).not.toHaveAttribute("open", "");
+});
+
+test("Análise de CV: a análise geral entra no histórico com nota, variação e os 4 critérios", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/perfil/cv");
+  await page.getByRole("button", { name: "Analisar" }).click();
+  await page.waitForURL(/\/perfil\/cv\/\d+$/);
+  const criterios = page.getByRole("region", { name: "Como a nota foi calculada" });
+  for (const c of ["Habilidades que o mercado pede", "Resultados com números", "Estrutura e tamanho", "Clareza da escrita"]) {
+    await expect(criterios).toContainText(c);
+  }
+  await expect(page.getByText(/desde a anterior/)).toBeVisible();
+  // A melhoria com trecho que não existe no currículo aparece sem o trecho.
+  const melhorias = page.getByRole("region", { name: "O que melhorar primeiro" });
+  await expect(melhorias.locator("blockquote")).toHaveCount(1);
+  await expect(melhorias).not.toContainText("Liderei uma equipe"); // "trecho" inventado pela IA
+  await page.goto("/perfil/cv?filtro=geral");
+  await expect(page.locator(".cv-lista li").filter({ hasText: "CV · geral" })).toHaveCount(5);
+});
+
+test("Análise de CV: para vaga com perguntas mostra a conexão e uma resposta por pergunta", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/perfil/cv?vaga=gupy%3A1");
+  await page.fill("textarea[name=perguntas]", "Por que você quer essa vaga?\nQual sua pretensão salarial?");
+  await page.getByRole("button", { name: "Analisar" }).click();
+  await page.waitForURL(/\/perfil\/cv\/\d+$/);
+  await expect(page.getByRole("region", { name: "Conexão com a vaga" })).toContainText("96"); // nota da própria vaga
+  const respostas = page.getByRole("region", { name: "Respostas do formulário" });
+  await expect(respostas.locator("li")).toHaveCount(2);
+  await expect(respostas).not.toContainText("—"); // travessão some
+  await expect(respostas.locator(".resposta-confirmar")).toHaveCount(1); // só a pretensão pede para conferir
+});
+
+test("Perfil profissional: mostra o nível, o próximo passo e a evolução das notas", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/perfil");
+  await expect(page.locator(".selo-nivel")).toHaveText("Júnior");
+  await expect(page.getByRole("region", { name: "Seu próximo passo" }).getByRole("link")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Evolução das notas" }).locator(".serie-ponto")).toHaveCount(5);
+  await expect(page.getByRole("region", { name: "Nível de mercado" }).locator('[aria-current="step"]')).toHaveText("Júnior");
 });

@@ -38,6 +38,9 @@ const dados = {
     automatico: Boolean(preferencias?.envio?.automatico?.ligado),
     automaticoNota: Number(preferencias?.envio?.automatico?.nota_minima ?? 90),
   },
+  // Catálogo de habilidades (regex sobre texto minúsculo e sem acento), o mesmo do coletor (O que estudar).
+  // Usado na Análise de CV para conferir quais habilidades pedidas pelo mercado aparecem no texto.
+  catalogoHabilidades: preferencias?.catalogo_habilidades ?? {},
   dominiosExcluidos: (preferencias?.dominios_email_excluidos ?? []).map((d) => String(d).toLowerCase().replace(/^@/, "")),
 };
 

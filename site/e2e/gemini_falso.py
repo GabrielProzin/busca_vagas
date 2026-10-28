@@ -16,7 +16,25 @@ class H(BaseHTTPRequestHandler):
             self.send_response(404); self.end_headers(); return
         if modelo == "gemini-3.1-flash":
             self.send_response(429); self.end_headers(); return
-        if "Resuma esta vaga" in prompt:
+        if "Você revisa currículos" in prompt:
+            out = {"escrita": 78, "escrita_motivo": "Frases objetivas e com verbos de ação.", "nivel": "junior",
+                   "nivel_motivo": "Quase 2 anos em dados, com pipelines e dashboards em produção.",
+                   "proximo_nivel": ["Mostrar uma decisão técnica sua e o impacto dela"],
+                   "fortes": ["Resultados com números na experiência recente", "Mistura de engenharia e análise de dados"],
+                   "melhorias": [{"trecho": "Consultas SQL e relatórios gerenciais", "sugestao": "Diga para quem eram os relatórios e o que mudou."},
+                                 {"trecho": "Liderei uma equipe de dez analistas", "sugestao": "Conte o resultado do protótipo de NPS para o negócio, não só os testes."}],
+                   "resumo": "Currículo forte para júnior."}
+        elif "Compare o currículo com a vaga" in prompt:
+            perguntas = prompt.split("PERGUNTAS DO FORMULÁRIO")[1].strip().splitlines() if "PERGUNTAS DO FORMULÁRIO" in prompt else []
+            def responder(p):
+                if "salar" in p.lower():
+                    return {"pergunta": p, "resposta": "Minha pretensão é de R$ ____ no regime CLT, aberta a conversar conforme os benefícios.",
+                            "confirmar": "O currículo não tem pretensão salarial: preencha o valor antes de enviar."}
+                return {"pergunta": p, "resposta": "A vaga junta SQL e Power BI para montar dashboards — foi o que fiz na Pacto Soluções ao migrar mais de 20 dashboards de KPIs, conferindo cada número com a fonte.",
+                        "confirmar": None}
+            out = {"conexao": 81, "destacar": ["Migração de mais de 20 dashboards para o Power BI", "SQL e DAX no dia a dia"],
+                   "lacunas": ["Excel avançado"], "respostas": [responder(p) for p in perguntas]}
+        elif "Resuma esta vaga" in prompt:
             out = {"frase": "Criar dashboards e relatórios para a diretoria.", "atividades": ["Montar dashboards no Power BI"],
                    "obrigatorios": ["SQL", "Power BI"], "diferenciais": ["Python"], "contrato": "CLT", "salario": None,
                    "local": "Remoto", "beneficios": ["Plano de saúde"], "atencao": []}

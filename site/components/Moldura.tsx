@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Icone from "./Icone";
-import { SECOES, SECOES_MAIS } from "@/lib/navegacao";
+import { MODULOS, SECOES, secaoAtual, type Secao } from "@/lib/navegacao";
 import { sair } from "@/app/acoes";
 import { enviadosHoje, listarCandidaturas, listarExecucoes, listarVagas } from "@/lib/db";
 import { PERFIL } from "@/lib/gerado/perfil";
@@ -38,6 +38,10 @@ type Props = {
 
 export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar, larga, children }: Props) {
   const nav = await resumoNavegacao();
+  const ativa = secaoAtual(atual);
+  // No celular, uma seção que não está na barra de baixo acende a do mesmo módulo (Análise de CV -> Perfil);
+  // se o módulo não tem item na barra (Mercado, Sistema), acende o "Mais".
+  const baixoAtivo = ativa?.baixo ? ativa : SECOES.find((s) => s.baixo && s.modulo === ativa?.modulo && s.modulo !== "inicio");
   return (
     <div className="app">
       <aside className="lateral" aria-label="Navegação">
@@ -47,25 +51,23 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
           </span>
           busca_vagas
         </Link>
-        <nav className="lateral-nav">
-          {SECOES.map((s) => {
-            const n = s.conta ? nav[s.conta] : 0;
-            const fu = s.href === "/candidaturas" ? nav.followups : 0;
+        <nav className="lateral-nav" aria-label="Menu">
+          {MODULOS.map((m) => {
+            const itens = SECOES.filter((s) => s.modulo === m.id);
+            // Módulo de uma página só (Início): link direto, sem abrir e fechar.
+            if (itens.length === 1) return <ItemMenu key={m.id} s={itens[0]} ativo={ativa?.href === itens[0].href} nav={nav} />;
+            const aberto = itens.some((s) => s.href === ativa?.href);
             return (
-              <Link key={s.href} href={s.href} aria-current={atual === s.href ? "page" : undefined}>
-                <Icone nome={s.icone} />
-                <span>{s.rotulo}</span>
-                {fu ? (
-                  <span className="contador quente" title={`${fu} ${fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}`}>
-                    {fu}<span className="sr-only"> {fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}</span>
-                  </span>
-                ) : null}
-                {s.href === "/lote" ? (
-                  <span className={`contador envio${nav.enviados >= PERFIL.envio.limiteDiario ? " cheio" : ""}`} title="Emails enviados hoje / limite do dia">
-                    {nav.enviados}/{PERFIL.envio.limiteDiario}<span className="sr-only"> emails enviados hoje</span>
-                  </span>
-                ) : n ? <span className="contador">{n}</span> : null}
-              </Link>
+              <details key={m.id} className="modulo" open={aberto || undefined}>
+                <summary>
+                  <Icone nome={m.icone} />
+                  <span>{m.rotulo}</span>
+                  <Icone nome="abaixo" tamanho={16} className="modulo-seta" />
+                </summary>
+                <div className="modulo-itens">
+                  {itens.map((s) => <ItemMenu key={s.href} s={s} ativo={ativa?.href === s.href} nav={nav} />)}
+                </div>
+              </details>
             );
           })}
         </nav>
@@ -120,7 +122,7 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
 
       <nav className="nav-baixo" aria-label="Seções">
         {SECOES.filter((s) => s.baixo).map((s) => (
-          <Link key={s.href} href={s.href} aria-current={atual === s.href ? "page" : undefined}>
+          <Link key={s.href} href={s.href} aria-current={baixoAtivo?.href === s.href ? "page" : undefined}>
             <span className="nav-baixo-icone">
               <Icone nome={s.icone} tamanho={22} />
               {s.href === "/candidaturas" && nav.followups ? <span className="ponto-quente" aria-label={`${nav.followups} follow-ups pendentes`} /> : null}
@@ -129,11 +131,34 @@ export default async function Moldura({ atual, titulo, subtitulo, acoes, voltar,
           </Link>
         ))}
         {/* No celular, as outras seções (Painel, Uso dos serviços, Configurações...) ficam na tela Mais. */}
-        <Link href="/mais" aria-current={atual === "/mais" || SECOES_MAIS.some((s) => s.href === atual) ? "page" : undefined}>
+        <Link href="/mais" aria-current={atual === "/mais" || (ativa && !baixoAtivo) ? "page" : undefined}>
           <span className="nav-baixo-icone"><Icone nome="mais" tamanho={22} /></span>
           <span>Mais</span>
         </Link>
       </nav>
     </div>
+  );
+}
+
+type ResumoNav = Awaited<ReturnType<typeof resumoNavegacao>>;
+
+function ItemMenu({ s, ativo, nav }: { s: Secao; ativo: boolean; nav: ResumoNav }) {
+  const n = s.conta ? nav[s.conta] : 0;
+  const fu = s.href === "/candidaturas" ? nav.followups : 0;
+  return (
+    <Link href={s.href} aria-current={ativo ? "page" : undefined}>
+      <Icone nome={s.icone} />
+      <span>{s.rotulo}</span>
+      {fu ? (
+        <span className="contador quente" title={`${fu} ${fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}`}>
+          {fu}<span className="sr-only"> {fu === 1 ? "follow-up pendente" : "follow-ups pendentes"}</span>
+        </span>
+      ) : null}
+      {s.href === "/lote" ? (
+        <span className={`contador envio${nav.enviados >= PERFIL.envio.limiteDiario ? " cheio" : ""}`} title="Emails enviados hoje / limite do dia">
+          {nav.enviados}/{PERFIL.envio.limiteDiario}<span className="sr-only"> emails enviados hoje</span>
+        </span>
+      ) : n ? <span className="contador">{n}</span> : null}
+    </Link>
   );
 }
