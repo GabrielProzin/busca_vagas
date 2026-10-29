@@ -71,6 +71,19 @@ function Link({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
+/** Vídeo curto, sem som e em repetição, com o passo a passo na tela de verdade (public/tutorial). */
+function VerComoFazer({ video, titulo }: { video: string; titulo: string }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <details className="inst-tutorial" onToggle={(e) => setAberto(e.currentTarget.open)}>
+      <summary><Icone nome="triagem" tamanho={15} /> Ver como fazer</summary>
+      {aberto ? (
+        <video src={`/tutorial/${video}.mp4`} poster={`/tutorial/${video}.jpg`} autoPlay muted loop playsInline controls aria-label={titulo} />
+      ) : null}
+    </details>
+  );
+}
+
 // ------------------------------------------------------------------ 1. banco
 export function PassoBanco({ ok, podeCriar, sql, editor }: { ok: boolean; podeCriar: boolean; sql: string; editor: string | null }) {
   const [estado, acao, rodando] = useActionState<EstadoPassoAcao, FormData>(acaoCriarTabelas, null);
@@ -107,6 +120,7 @@ export function PassoGemini({ ok, fixo }: { ok: boolean; fixo: boolean }) {
         <li>Clique em <b>Create API key</b> (é grátis, sem cartão).</li>
         <li>Copie a chave e cole aqui.</li>
       </ol>
+      <VerComoFazer video="gemini" titulo="Como criar a chave do Gemini no Google AI Studio" />
       <Form acao={acao}>
         <label>
           Chave do Gemini {ok ? <small className="dica">(já salva; cole outra só se quiser trocar)</small> : null}
@@ -164,6 +178,7 @@ export function PassoGitHub({ ok, repo, link }: { ok: boolean; repo: string; lin
         <li>Em <b>Repository access</b>, escolha <b>Only select repositories</b> e marque <b>{nome}</b>. Assim o token só mexe nesse repositório.</li>
         <li>Clique em <b>Generate token</b>, copie e cole aqui.</li>
       </ol>
+      <VerComoFazer video="github" titulo="Como criar o token do GitHub" />
       <Form acao={acao}>
         <label>
           Token do GitHub {ok ? <small className="dica">(já salvo; cole outro só se quiser trocar)</small> : null}

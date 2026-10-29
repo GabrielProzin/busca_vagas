@@ -1221,3 +1221,7 @@ details.inst-bloco[open] summary { margin-bottom: 10px; }
   .pf-caixa input { min-width: 120px; }
   .pf-segmento span { padding: 0 12px; }
 }
+.inst-tutorial { max-width: 720px; }
+.inst-tutorial summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 550; list-style: none; padding: 4px 0; }
+.inst-tutorial summary::-webkit-details-marker { display: none; }
+.inst-tutorial video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; margin-top: 8px; border-radius: var(--r-m); border: 1px solid var(--line); background: #0b0f15; }

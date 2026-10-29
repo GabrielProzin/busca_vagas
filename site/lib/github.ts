@@ -72,7 +72,7 @@ export function linkNovoToken(): string {
   const p = new URLSearchParams({
     name: "PerfilUp",
     description: `Usado pelo site ${REPO || "do busca_vagas"} para ligar a coleta, guardar as chaves do GitHub Actions e se atualizar.`,
-    expires_in: "366",
+    expires_in: "365",
     actions: "write",
     secrets: "write",
     contents: "write",

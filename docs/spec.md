@@ -222,6 +222,8 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - Os segredos ficam na tabela `configuracao`, cifrados com uma chave tirada (HKDF) da chave secreta do Supabase.
   Variável da Vercel com o mesmo nome vale mais e não pode ser trocada pelo assistente. Nenhum segredo volta para a
   página depois de salvo, exceto o token da extensão (para colar nela) e a senha do backup, mostrada uma vez ao criar.
+- Os passos do Gemini e do GitHub têm "Ver como fazer": um vídeo curto, sem som e em repetição, montado de capturas
+  reais (`site/public/tutorial/`; no README, as mesmas animações em GIF em `docs/tutorial/`). Dados pessoais borrados.
 - O link do token do GitHub já vem com nome, validade (1 ano) e permissões (Actions, Contents, Pull requests,
   Secrets, Workflows: escrita); a pessoa só escolhe o repositório. Com o token, o site grava os secrets do Actions
   (Supabase, Gmail, telefone, endereço do site, senha do backup e o próprio token como `PERFILUP_TOKEN`), liga os
