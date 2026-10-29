@@ -81,7 +81,7 @@ Você precisa de uma conta no [GitHub](https://github.com/signup) e outra na [Ve
    [![Instalar na Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas&root-directory=site&project-name=perfilup&repository-name=perfilup&env=SITE_PASSWORD&envDescription=A%20senha%20para%20entrar%20no%20seu%20site%20%2812%20caracteres%20ou%20mais%29&envLink=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas%23jeito-f%C3%A1cil-uns-15-minutos&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%2C%22protocol%22%3A%22storage%22%7D%5D)
 
 2. Na Vercel, ligue a sua conta do GitHub e deixe o repositório **privado** (o seu currículo vai ficar nele).
-3. Em **Supabase**, aceite criar o banco (plano grátis, região São Paulo). A Vercel cria o banco e liga ao site sozinha.
+3. Em **Supabase**, aceite criar o banco (plano grátis, região Americas). A Vercel cria o banco e liga ao site sozinha.
 4. Em **SITE_PASSWORD**, escolha a senha do seu site (12 caracteres ou mais) e clique em **Deploy**.
 5. Abra o site, entre com a senha e siga o **assistente de instalação**. Ele pede, com o link de onde pegar cada
    coisa, e testa antes de salvar:
@@ -157,7 +157,7 @@ Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo
 
 ### 3. Crie o banco no Supabase
 
-1. Em [supabase.com](https://supabase.com), crie um projeto (região São Paulo). Guarde a senha do banco no seu gerenciador de senhas.
+1. Em [supabase.com](https://supabase.com), crie um projeto (região Americas). Guarde a senha do banco no seu gerenciador de senhas.
 2. Em **SQL Editor**, cole todo o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique em **Run**.
    Quando o sistema ganhar colunas novas, rode o arquivo inteiro de novo: ele não apaga nada.
 3. Em **Project Settings → API Keys**, copie a **Project URL** e a **secret key** (`sb_secret_…`). A secret key
