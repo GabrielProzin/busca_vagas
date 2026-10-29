@@ -77,7 +77,7 @@ Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo
 
 ### 3. Crie o banco no Supabase
 
-1. Em [supabase.com](https://supabase.com), crie um projeto (região São Paulo). Guarde a senha do banco no seu gerenciador de senhas.
+1. Em [supabase.com](https://supabase.com), crie um projeto (região Americas). Guarde a senha do banco no seu gerenciador de senhas.
 2. Em **SQL Editor**, cole todo o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique em **Run**.
    Quando o sistema ganhar colunas novas, rode o arquivo inteiro de novo: ele não apaga nada.
 3. Em **Project Settings → API Keys**, copie a **Project URL** e a **secret key** (`sb_secret_…`). A secret key
