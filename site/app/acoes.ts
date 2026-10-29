@@ -11,6 +11,7 @@ import { dispararWorkflow } from "@/lib/github";
 import { instalacaoPendente } from "@/lib/instalacao";
 import { ErroIA, analisarParaVaga, avaliarCurriculo, emailModelo, followupModelo, gerarEmail, gerarFollowup, type AnaliseVagaIA, type AvaliacaoIA } from "@/lib/ia";
 import { lerFormulario } from "@/lib/preferencias";
+import { municipioOficial } from "@/lib/municipios";
 import { LIMITE_TEXTO, PESOS, ROTULOS, criteriosSemIA, habilidadesNoTexto, notaFinal, trechoReal } from "@/lib/cv";
 import { enviarEmail, erroGmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
@@ -434,9 +435,9 @@ export async function salvarPreferenciasBusca(_: EstadoPreferencias, form: FormD
       return { erro: "Não consegui voltar ao padrão agora. Tente de novo." };
     }
     revalidatePath("/", "layout");
-    return { ok: "Voltou ao padrão do arquivo config/preferencias.yaml." };
+    return { ok: "Voltou ao padrão inicial." };
   }
-  const r = lerFormulario(form);
+  const r = lerFormulario(form, municipioOficial);
   if ("erro" in r) return { erro: r.erro };
   try {
     await salvarPreferencias(r.prefs);

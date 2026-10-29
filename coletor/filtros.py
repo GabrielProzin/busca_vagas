@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from .modelos import Vaga
-from .texto import compilar, normalizar
+from .texto import APELIDOS_CIDADE, compilar, normalizar, separar_cidade, texto_para_cidades
 
 _ANOS = [
     re.compile(r"(\d{1,2})\s*(?:\+|ou mais)?\s*anos? de experiencia"),
@@ -34,6 +34,8 @@ _CIDADES_UF = {
     "maceio": "al", "teresina": "pi", "sao luis": "ma", "cuiaba": "mt", "campo grande": "ms", "palmas": "to",
     "uberaba": "mg", "anapolis": "go",
 }
+_CLT = re.compile(r"\bclt\b|carteira assinada|regime efetivo")
+_PJ = re.compile(r"\bpj\b|pessoa juridica|contrato de prestacao de servicos")
 _PRESENCIAL = re.compile(r"\bpresencia(l|is)\b|\bon[- ]?site\b")
 _EN = {"the", "and", "you", "with", "will", "our", "your", "are", "for", "this", "team", "we", "of", "to", "is",
        "experience", "skills", "work", "working", "data", "requirements", "about"}
@@ -58,6 +60,9 @@ class Filtros:
     local_livre_fontes: tuple[str, ...] = ()
     aceita_hibrido: bool = True
     aceita_presencial: bool = True
+    estados: frozenset[str] = frozenset()  # estados das cidades aceitas (+ "estado" do YAML)
+    aceita_clt: bool = True
+    aceita_pj: bool = True
 
     @classmethod
     def de_config(cls, cfg: dict) -> "Filtros":
@@ -69,8 +74,14 @@ class Filtros:
             bloqueio_titulo=compilar(cfg.get("bloqueio_titulo", [])),
             empresas_bloqueadas=[normalizar(e) for e in cfg.get("empresas_bloqueadas", [])],
             aceita_remoto=loc.get("aceita_remoto", True),
-            cidades=[normalizar(c) for c in loc.get("cidades_presencial_hibrido", [])],
+            cidades=[c for c in (separar_cidade(x)[0] for x in loc.get("cidades_presencial_hibrido", [])) if c],
             estado=normalizar(loc.get("estado", "")),
+            estados=frozenset(
+                {uf for uf in (separar_cidade(x)[1] for x in loc.get("cidades_presencial_hibrido", [])) if uf}
+                | ({normalizar(loc["estado"])} if loc.get("estado") else set())
+            ),
+            aceita_clt=bool((cfg.get("contrato") or {}).get("clt", True)),
+            aceita_pj=bool((cfg.get("contrato") or {}).get("pj", True)),
             max_anos=int(cfg.get("max_anos_experiencia", 2)),
             max_dias=int(cfg.get("max_dias_publicacao", 14)),
             aceita_ingles=bool(loc.get("aceita_vagas_em_ingles", False)),
@@ -126,11 +137,13 @@ class Filtros:
             return "híbrido não aceito"
         if modalidade == "presencial" and not self.aceita_presencial:
             return "presencial não aceito"
-        cidade = normalizar(v.cidade)
+        # A cidade vem escrita de muitos jeitos ("Goiânia - GO", "goiania", "Gyn"): compara pelo nome-chave.
+        cidade, uf = separar_cidade(v.cidade)
         if cidade:
-            return None if any(c == cidade for c in self.cidades) else f"{modalidade or 'presencial'} em {v.cidade}"
-        # Sem cidade estruturada: procura uma das cidades aceitas no texto.
-        if any(c in texto for c in self.cidades):
+            mesmo_estado = not (uf and self.estados) or uf in self.estados  # Santa Luzia (MG) não é Santa Luzia (PB)
+            return None if cidade in self.cidades and mesmo_estado else f"{modalidade or 'presencial'} em {v.cidade}"
+        # Sem cidade estruturada: procura uma das cidades aceitas (ou o apelido dela) no texto, como palavra inteira.
+        if self.cidade_no_texto(f"{v.titulo} {v.descricao[:2000]}"):
             return None
         # O texto cita outro estado ou uma cidade grande de outro estado ("Perus – SP", "São Paulo"): é fora da região.
         fora = self.local_de_fora(f"{v.titulo} {v.descricao[:2000]}", texto)
@@ -140,13 +153,21 @@ class Filtros:
             return None  # o pipeline avisa na vaga que o post não diz o local
         return "local não informado e não é remoto" if modalidade else "local não informado"
 
+    def cidade_no_texto(self, original: str) -> bool:
+        t = texto_para_cidades(original)
+        nomes = set(self.cidades) | {ap for ap, nome in APELIDOS_CIDADE.items() if nome in self.cidades}
+        return any(re.search(rf"\b{re.escape(c)}\b", t) for c in nomes)
+
+    def _da_regiao(self, uf: str) -> bool:
+        return uf in self.estados if self.estados else uf == self.estado
+
     def local_de_fora(self, original: str, texto: str) -> str | None:
         """Sigla do estado de fora da sua região citada no texto (ou None)."""
         for uf in _UF_NO_TEXTO.findall(original):
-            if uf.lower() != self.estado:
+            if not self._da_regiao(uf.lower()):
                 return uf.lower()
         for nome, uf in _CIDADES_UF.items():
-            if uf != self.estado and re.search(rf"\b{nome}\b", texto):
+            if not self._da_regiao(uf) and re.search(rf"\b{nome}\b", texto):
                 return uf
         return None
 
@@ -170,6 +191,18 @@ class Filtros:
             return "descrição indica pleno/sênior"
         if junior > 0 and senior == 0:
             v.nivel = "junior"
+        return None
+
+    def filtrar_contrato(self, v: Vaga) -> str | None:
+        """Só descarta quando a vaga fala de um tipo de contrato não aceito e não oferece o outro."""
+        if self.aceita_clt and self.aceita_pj:
+            return None
+        texto = normalizar(f"{v.titulo} {v.descricao[:4000]}")
+        clt, pj = bool(_CLT.search(texto)), bool(_PJ.search(texto))
+        if pj and not clt and not self.aceita_pj:
+            return "contrato PJ"
+        if clt and not pj and not self.aceita_clt:
+            return "contrato CLT"
         return None
 
     def filtrar_experiencia(self, v: Vaga) -> str | None:

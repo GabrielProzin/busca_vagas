@@ -397,34 +397,59 @@ test("Perfil profissional: mostra o nível, o próximo passo e a evolução das 
 test("Preferências: sem forma de trabalho não salva; salvas, voltam preenchidas e mudam a lista", async ({ page }) => {
   await entrar(page);
   await page.goto("/preferencias");
-  await expect(page.getByText(/Ainda no padrão do arquivo/)).toBeVisible();
+  await expect(page.locator(".pf-resumo")).toContainText("padrão inicial");
+  const salvar = page.getByRole("button", { name: "Salvar preferências" });
+  await expect(salvar).toBeDisabled(); // nada mudou ainda
   for (const m of ["Remoto", "Híbrido", "Presencial"]) await page.getByRole("checkbox", { name: new RegExp(`^${m}`) }).uncheck();
-  await page.getByRole("button", { name: "Salvar preferências" }).click();
-  await expect(page.locator(".form-prefs [role=alert]")).toContainText("pelo menos uma forma de trabalho");
-  await expect(page.locator("textarea[name=cidades]")).not.toHaveValue(""); // o que estava digitado continua lá
+  await expect(page.locator(".pf-barra")).toContainText("Alterações não salvas");
+  await salvar.click();
+  await expect(page.locator(".pf-barra [role=alert]")).toContainText("pelo menos uma forma de trabalho");
 
+  // Cidades: busca sem acento acha "Goiânia"; as do padrão vêm com o estado.
   await page.getByRole("checkbox", { name: /^Híbrido/ }).check();
-  await page.fill("textarea[name=cidades]", "Brasília");
-  await page.fill("input[name=regiao]", "Brasília");
+  const cidades = page.locator(".pf-cidades");
+  await expect(cidades.locator(".pf-etiqueta", { hasText: "Goiânia" }).first()).toBeVisible();
+  for (const c of ["Aparecida de Goiânia", "Senador Canedo", "Trindade", "Goiânia"]) {
+    await cidades.getByRole("button", { name: `Tirar ${c} - GO` }).click();
+  }
+  await expect(cidades.locator(".pf-etiqueta")).toHaveCount(0);
+  const busca = page.getByRole("combobox");
+  await busca.fill("sao");
+  await expect(page.getByRole("option").first()).toContainText("São Paulo"); // as cidades grandes vêm primeiro
+  await busca.fill("brasilia");
+  await expect(page.getByRole("option", { name: /Brasília\s*DF/ })).toBeVisible();
+  await page.getByRole("option", { name: /Brasília\s*DF/ }).click();
+  await busca.fill("GOIANIA");
+  await busca.press("Enter"); // a primeira da lista: Goiânia
+  await page.getByRole("button", { name: "Pronto" }).click();
+  await expect(cidades.locator(".pf-etiqueta")).toHaveText([/Brasília\s*DF/, /Goiânia\s*GO/]);
+
   await page.getByRole("checkbox", { name: "Pleno" }).check();
-  await page.fill("textarea[name=palavras_bloqueadas]", "marketing");
-  await page.getByRole("button", { name: "Salvar preferências" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Preferências salvas" })).toBeVisible();
+  await page.getByRole("checkbox", { name: /^PJ/ }).uncheck();
+  await page.getByRole("textbox", { name: "Palavras no título" }).fill("marketing");
+  await page.getByRole("textbox", { name: "Palavras no título" }).press("Enter");
+  await page.getByRole("textbox", { name: "Empresas" }).fill("Empresa Chata, outra.com.br");
+  await page.getByRole("textbox", { name: "Empresas" }).press("Enter");
+  await expect(page.locator(".pf-resumo")).toContainText("híbrido em Brasília e mais 1");
+  await salvar.click();
+  await expect(page.locator(".pf-barra [role=status]")).toContainText("Preferências salvas");
 
   await page.reload();
-  await expect(page.getByText(/^Salvas em/)).toBeVisible();
+  await expect(page.locator(".pagina-sub")).toContainText("Salvas em");
   await expect(page.getByRole("checkbox", { name: /^Remoto/ })).not.toBeChecked();
   await expect(page.getByRole("checkbox", { name: /^Híbrido/ })).toBeChecked();
-  await expect(page.locator("textarea[name=cidades]")).toHaveValue("Brasília");
+  await expect(cidades.locator(".pf-etiqueta")).toHaveText([/Brasília\s*DF/, /Goiânia\s*GO/]);
   await expect(page.getByRole("checkbox", { name: "Pleno" })).toBeChecked();
+  await expect(page.getByRole("checkbox", { name: /^PJ/ })).not.toBeChecked();
+  await expect(page.locator(".pf-etiqueta", { hasText: "outra.com.br" })).toBeVisible();
   await page.goto("/vagas");
   await expect(page.locator(".pagina-sub")).toContainText("em Brasília");
   await expect(page.locator(".pagina-sub")).not.toContainText("remotas");
 
-  // Voltar ao padrão do arquivo
+  // Voltar ao padrão inicial
   await page.goto("/preferencias");
   await page.getByRole("button", { name: "Voltar ao padrão" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Voltou ao padrão" })).toBeVisible();
+  await expect(page.locator(".pf-barra [role=status]")).toContainText("Voltou ao padrão");
   await page.reload();
   await expect(page.getByRole("checkbox", { name: /^Remoto/ })).toBeChecked();
 });

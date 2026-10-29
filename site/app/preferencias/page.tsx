@@ -13,7 +13,7 @@ export default async function PaginaPreferencias() {
     <Moldura
       atual="/preferencias"
       titulo="Preferências da busca"
-      subtitulo={salvas_em ? `Salvas em ${fmt.format(new Date(salvas_em))}.` : "Ainda no padrão do arquivo config/preferencias.yaml. Ajuste e salve."}
+      subtitulo={`O que entra na sua lista de vagas.${salvas_em ? ` Salvas em ${fmt.format(new Date(salvas_em))}.` : ""}`}
     >
       <PainelPreferencias prefs={prefs} salvasEm={salvas_em} />
     </Moldura>

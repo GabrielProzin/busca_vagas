@@ -39,11 +39,18 @@ def aplicar(cfg: dict, prefs: dict | None) -> dict:
         loc["aceita_hibrido"] = bool(mod.get("hibrido", True))
         loc["aceita_presencial"] = bool(mod.get("presencial", True))
     if isinstance(prefs.get("cidades"), list):
-        loc["cidades_presencial_hibrido"] = [normalizar(c) for c in prefs["cidades"] if str(c).strip()]
+        # "Goiânia - GO": o filtro separa o nome do estado (coletor/texto.py, separar_cidade).
+        loc["cidades_presencial_hibrido"] = [str(c).strip() for c in prefs["cidades"] if str(c).strip()]
     if prefs.get("estado"):
         loc["estado"] = str(prefs["estado"]).upper()
     if prefs.get("regiao"):
         loc["rotulo"] = str(prefs["regiao"])
+    contratos = prefs.get("contratos")
+    if isinstance(contratos, dict) and (contratos.get("clt") or contratos.get("pj")):
+        novo["contrato"] = {"clt": bool(contratos.get("clt")), "pj": bool(contratos.get("pj"))}
+    empresas = [normalizar(e) for e in prefs.get("empresas_bloqueadas") or [] if str(e).strip()]
+    if empresas:
+        novo["empresas_bloqueadas"] = list(novo.get("empresas_bloqueadas") or []) + empresas
     if "aceita_ingles" in prefs:
         loc["aceita_vagas_em_ingles"] = bool(prefs["aceita_ingles"])
     niveis = [n for n in prefs.get("niveis") or [] if n in NIVEIS]

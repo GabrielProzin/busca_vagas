@@ -63,3 +63,47 @@ def test_palavras_termos_anos_e_ingles():
     assert novo["termos_busca"] == ["analista de dados"]
     assert f.max_anos == 3 and f.aceita_ingles is True
     assert CFG["max_anos_experiencia"] == 2  # o YAML original não muda
+
+
+# ---------------------------------------------------------------- cidades escritas de qualquer jeito
+def test_cidade_escrita_de_varios_jeitos_e_a_mesma():
+    from coletor.texto import separar_cidade
+    for escrita in ["Goiânia", "goiania", "GOIÂNIA", "Goiania - GO", "goiânia/go", "Goiânia (GO)", "Goiânia, Goiás",
+                    "Goiania-GO", "Goiânia - GO - Brasil", "Gyn"]:
+        assert separar_cidade(escrita)[0] == "goiania", escrita
+    assert separar_cidade("Santa Bárbara d'Oeste - SP") == separar_cidade("Santa Barbara D Oeste, SP") == ("santa barbara doeste", "sp")
+    assert separar_cidade("Mogi-Mirim")[0] == separar_cidade("Mogi Mirim")[0]
+    assert separar_cidade("Conceição do Pará")[0] == "conceicao do para"  # nome de estado no meio do nome fica
+
+
+def test_filtro_aceita_a_cidade_com_acento_ou_sem_e_com_estado():
+    f = Filtros.de_config(aplicar(CFG, {"modalidades": {"remoto": True, "hibrido": True, "presencial": True},
+                                        "cidades": ["Goiânia - GO", "Brasília - DF"]}))
+    for cidade in ["goiania", "GOIANIA - GO", "Goiânia/GO", "Brasilia", "Brasília, Distrito Federal"]:
+        assert f.filtrar_local(vaga(modalidade="presencial", cidade=cidade)) is None, cidade
+    # No texto, como palavra inteira e sem ligar para acento ou maiúscula.
+    assert f.filtrar_local(vaga(modalidade="hibrido", descricao="Atuação híbrida no escritório de GOIANIA.")) is None
+    assert f.filtrar_local(vaga(modalidade="hibrido", descricao="Escritório em GYN, 3x por semana.")) is None
+    # Dois estados aceitos (GO e DF): DF não é "de fora"; SP é.
+    assert f.filtrar_local(vaga(modalidade="presencial", descricao="Presencial em Taguatinga - DF")) != "presencial em DF"
+    assert f.filtrar_local(vaga(modalidade="presencial", descricao="Presencial em Campinas - SP")) == "presencial em SP"
+
+
+def test_mesmo_nome_em_outro_estado_nao_conta():
+    f = Filtros.de_config(aplicar(CFG, {"modalidades": {"remoto": True, "hibrido": True, "presencial": True},
+                                        "cidades": ["Santa Luzia - MG"]}))
+    assert f.filtrar_local(vaga(modalidade="presencial", cidade="Santa Luzia - MG")) is None
+    assert f.filtrar_local(vaga(modalidade="presencial", cidade="Santa Luzia - PB")) == "presencial em Santa Luzia - PB"
+    assert f.filtrar_local(vaga(modalidade="presencial", cidade="Santa Luzia")) is None  # sem estado: confia no nome
+
+
+def test_contrato_e_empresas_a_evitar():
+    so_clt = Filtros.de_config(aplicar(CFG, {"contratos": {"clt": True, "pj": False}, "empresas_bloqueadas": ["Empresa Chata"]}))
+    assert so_clt.filtrar_contrato(vaga(descricao="Contratação PJ, 100% remoto.")) == "contrato PJ"
+    assert so_clt.filtrar_contrato(vaga(descricao="Contratação CLT ou PJ, à escolha.")) is None  # oferece os dois
+    assert so_clt.filtrar_contrato(vaga(descricao="Sem falar de contrato.")) is None
+    so_pj = Filtros.de_config(aplicar(CFG, {"contratos": {"clt": False, "pj": True}}))
+    assert so_pj.filtrar_contrato(vaga(descricao="Regime CLT com benefícios.")) == "contrato CLT"
+    v = vaga(titulo="Analista de Dados Jr")
+    v.empresa = "EMPRESA CHATA LTDA"
+    assert so_clt.filtrar_titulo(v) == "empresa bloqueada: empresa chata"

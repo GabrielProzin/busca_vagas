@@ -11,6 +11,18 @@ const perfil = parse(readFileSync(join(raiz, "perfil", "perfil.yaml"), "utf-8"))
 const curriculo = readFileSync(join(raiz, "perfil", "curriculo.md"), "utf-8");
 const preferencias = parse(readFileSync(join(raiz, "config", "preferencias.yaml"), "utf-8"));
 
+// Cidades do YAML ("Goiânia") no formato da tela Preferências ("Goiânia - GO"), com o nome oficial do IBGE.
+const municipios = JSON.parse(readFileSync(join(aqui, "..", "lib", "dados", "municipios.json"), "utf-8"));
+const chave = (s) => String(s).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+function comEstado(cidade, estado) {
+  if (/ - [A-Z]{2}$/.test(cidade)) return cidade;
+  const uf = String(estado ?? "").toUpperCase();
+  const achar = (u) => (municipios[u] ?? []).find((n) => chave(n) === chave(cidade));
+  if (achar(uf)) return `${achar(uf)} - ${uf}`;
+  const outros = Object.keys(municipios).filter((u) => achar(u));
+  return outros.length === 1 ? `${achar(outros[0])} - ${outros[0]}` : cidade;
+}
+
 const dados = {
   nome: perfil.nome,
   nomeCurto: perfil.nome_curto ?? perfil.nome,
@@ -27,7 +39,7 @@ const dados = {
   // Nota mínima das vagas que entram no email de resumo (o painel mostra quantas chegaram).
   resumoNotaMinima: Number(preferencias?.resumo?.nota_minima ?? 85),
   // Para a captura em lote descartar vaga presencial/híbrida fora daqui (mesma regra do coletor).
-  cidadesAceitas: preferencias?.localizacao?.cidades_presencial_hibrido ?? [],
+  cidadesAceitas: (preferencias?.localizacao?.cidades_presencial_hibrido ?? []).map((c) => comEstado(c, preferencias?.localizacao?.estado)),
   // Padrão da tela Preferências (o que vale enquanto a pessoa não salvar nada lá).
   preferenciasYaml: {
     remoto: preferencias?.localizacao?.aceita_remoto ?? true,
@@ -38,6 +50,8 @@ const dados = {
     senioridadeBloqueada: preferencias?.senioridade_bloqueada ?? [],
     maxAnos: Number(preferencias?.max_anos_experiencia ?? 2),
     termosBusca: preferencias?.termos_busca ?? [],
+    contratoClt: preferencias?.contrato?.clt ?? true,
+    contratoPj: preferencias?.contrato?.pj ?? true,
   },
   notaMinimaPosts: Number(preferencias?.linkedin_posts?.nota_minima ?? 40),
   // Envio em lote (a fila é enviada pelo GitHub Actions: coletor/envio.py lê os mesmos valores).

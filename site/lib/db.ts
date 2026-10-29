@@ -3,6 +3,7 @@ import { cache } from "react";
 import { readFileSync } from "node:fs";
 import { preferenciasPadrao, type Preferencias } from "./preferencias";
 import { supabaseChave, supabaseUrl } from "./ambiente";
+import { resolverCidade } from "./municipios";
 import type { AnaliseCV, AnaliseEstudar, AnaliseTipos, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
 
 // Acesso ao Supabase pela API REST (PostgREST), sempre no servidor, com a chave secreta.
@@ -527,14 +528,21 @@ export async function excluirAnaliseCV(id: number): Promise<void> {
 // Uma linha (id = 1) com o que a pessoa salvou na tela Preferências. Sem linha (ou sem a tabela), vale o YAML.
 const GP = globalThis as unknown as { __prefsBV?: { prefs: Preferencias; salvas_em: string } | null };
 
+/** Preferências salvas antes de existirem campos novos (contrato, empresas) ou com cidade sem estado ("Goiânia"). */
+function completarPreferencias(salvas: Partial<Preferencias>): Preferencias {
+  const p = { ...preferenciasPadrao(), ...salvas };
+  p.cidades = p.cidades.map((c) => resolverCidade(c, p.estado));
+  return p;
+}
+
 export async function lerPreferencias(): Promise<{ prefs: Preferencias; salvas_em: string | null }> {
   if (process.env.DEMO_ARQUIVO) {
     const p = GP.__prefsBV;
-    return p ? { ...p } : { prefs: preferenciasPadrao(), salvas_em: null };
+    return p ? { prefs: completarPreferencias(p.prefs), salvas_em: p.salvas_em } : { prefs: preferenciasPadrao(), salvas_em: null };
   }
   try {
     const linhas = await rest<{ dados: Preferencias; atualizado_em: string }[]>(`/preferencias?select=dados,atualizado_em&id=eq.1`);
-    if (linhas[0]) return { prefs: { ...preferenciasPadrao(), ...linhas[0].dados }, salvas_em: linhas[0].atualizado_em };
+    if (linhas[0]) return { prefs: completarPreferencias(linhas[0].dados), salvas_em: linhas[0].atualizado_em };
   } catch (e) {
     console.error("preferencias:", e);
   }

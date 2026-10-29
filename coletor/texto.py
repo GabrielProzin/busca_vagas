@@ -24,6 +24,59 @@ def normalizar(s: str | None) -> str:
     return _ESPACOS.sub(" ", sem_acento(s).lower()).strip()
 
 
+# Cidades: a mesma cidade aparece escrita de muitos jeitos nas vagas ("Goiânia - GO", "goiania/go", "GOIÂNIA (GO)",
+# "Goiânia, Goiás", "Gyn"). Tudo vira o mesmo nome-chave. Ver docs/spec.md, "Preferências".
+UF_NOMES = {
+    "ac": "acre", "al": "alagoas", "ap": "amapa", "am": "amazonas", "ba": "bahia", "ce": "ceara", "df": "distrito federal",
+    "es": "espirito santo", "go": "goias", "ma": "maranhao", "mt": "mato grosso", "ms": "mato grosso do sul",
+    "mg": "minas gerais", "pa": "para", "pb": "paraiba", "pr": "parana", "pe": "pernambuco", "pi": "piaui",
+    "rj": "rio de janeiro", "rn": "rio grande do norte", "rs": "rio grande do sul", "ro": "rondonia", "rr": "roraima",
+    "sc": "santa catarina", "sp": "sao paulo", "se": "sergipe", "to": "tocantins",
+}
+_UF_DO_NOME = {nome: uf for uf, nome in UF_NOMES.items()}
+# Apelidos comuns em posts. Só os que não confundem com outra cidade.
+APELIDOS_CIDADE = {"bh": "belo horizonte", "poa": "porto alegre", "floripa": "florianopolis", "sampa": "sao paulo",
+                   "bsb": "brasilia", "gyn": "goiania", "sjc": "sao jose dos campos", "rp": "ribeirao preto"}
+# Separa nome de qualificadores: " - ", " | ", "/", ",", "(". Hífen sem espaço é parte do nome ("Mogi-Mirim").
+_SEPARADOR = re.compile(r"\s+[-–—|]\s+|\s*[/,;()|]\s*")
+_UF_COLADA = re.compile(r"^(.*\S)-(" + "|".join(UF_NOMES) + r")$")
+_NAO_LETRA = re.compile(r"[^a-z0-9 ]+")
+_D_APOSTROFO = re.compile(r"\bd (?=[aeiou])")  # "d'Oeste" e "D Oeste" viram "doeste"
+
+
+def separar_cidade(s: str | None) -> tuple[str, str | None]:
+    """'Goiânia - GO' -> ('goiania', 'go'). Nome sem acento, minúsculo, sem pontuação; estado se vier junto."""
+    t = normalizar(s)
+    if not t:
+        return "", None
+    partes = [p.strip() for p in _SEPARADOR.split(t) if p and p.strip()]
+    if not partes:
+        return "", None
+    nome, uf = partes[0], None
+    for p in partes[1:]:
+        p = _NAO_LETRA.sub("", p).strip()
+        if p in UF_NOMES or p in _UF_DO_NOME:
+            uf = p if p in UF_NOMES else _UF_DO_NOME[p]
+            break
+    m = _UF_COLADA.match(nome)
+    if m and uf is None:  # "Goiania-GO"
+        nome, uf = m.group(1), m.group(2)
+    nome = _ESPACOS.sub(" ", _NAO_LETRA.sub(" ", nome.replace("'", " ").replace("’", " "))).strip()
+    nome = _D_APOSTROFO.sub("d", nome)
+    return APELIDOS_CIDADE.get(nome, nome), uf
+
+
+def texto_para_cidades(s: str | None) -> str:
+    """Texto normalizado do jeito das chaves de cidade, para procurar a cidade no meio da descrição."""
+    t = _ESPACOS.sub(" ", _NAO_LETRA.sub(" ", normalizar(s).replace("'", " ").replace("’", " "))).strip()
+    return _D_APOSTROFO.sub("d", t)
+
+
+def chave_cidade(s: str | None) -> str:
+    """Só o nome-chave da cidade (ver separar_cidade)."""
+    return separar_cidade(s)[0]
+
+
 def limpar_html(s: str | None) -> str:
     """HTML -> texto com quebras de linha nos blocos (para separar requisitos)."""
     if not s:

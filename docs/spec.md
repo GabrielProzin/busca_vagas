@@ -62,7 +62,7 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 | Perfil profissional (`/perfil`) | Nível de mercado (estágio, júnior, pleno, sênior) com o motivo e o que falta para o próximo; "seu próximo passo"; evolução das notas do CV; números do perfil (nota do CV, vagas que combinam, habilidade que mais abriria vagas) | Fazer o próximo passo, nova análise de CV |
 | Análise de CV (`/perfil/cv`) | Nota atual, variação e critério mais fraco; gráfico da evolução; histórico de análises (nota, tipo, conexão com a vaga, respostas, variação, data) com filtro Todas / Geral / Para vaga | Nova análise geral ou para uma vaga (escolher da lista ou colar o texto), com perguntas do formulário opcionais |
 | Análise (`/perfil/cv/[id]`) | Nota e os 4 critérios com o motivo de cada um, pontos fortes, melhorias (com o trecho do currículo), nível; para vaga: conexão, o que destacar, lacunas e as respostas do formulário | Copiar cada resposta, excluir a análise |
-| Preferências da busca (`/preferencias`) | Onde aceita trabalhar (remoto, híbrido, presencial, cada um ligado ou não), cidades para híbrido/presencial, estado, nome da região; níveis aceitos e máximo de anos de experiência; termos de busca; palavras que eliminam a vaga pelo título; vagas em inglês | Salvar, Voltar ao padrão do arquivo |
+| Preferências da busca (`/preferencias`) | Resumo da busca numa frase (atualiza ao mexer); onde trabalhar (remoto, híbrido, presencial, em cartões); cidades para híbrido/presencial numa lista pesquisável dos 5.570 municípios do IBGE (várias de uma vez, com o estado); cargos (etiquetas, com sugestões); níveis e experiência máxima; contrato (CLT, PJ); palavras e empresas a evitar; vagas em inglês. Barra de salvar fixa embaixo quando há alteração | Salvar, Descartar alterações, Voltar ao padrão |
 | Instalação (`/instalar`) | Sete passos em ordem, cada um pronto / falta / depois (quando depende de outro): banco, Gemini, Gmail, GitHub, perfil, preferências, primeira coleta; o primeiro que falta abre sozinho | Criar as tabelas, testar e salvar cada chave, ler o currículo em PDF e revisar o perfil, rodar a primeira coleta |
 | Configurações | Primeiros passos (o que está pronto e o que falta, com link para a Instalação ou o passo no README), currículo em PDF, seus dados e backup, atualizações (versão nova e o resumo dela), extensão (com o token) | Enviar PDF, Exportar meus dados, Atualizar agora, Mostrar o token da extensão |
 
@@ -168,8 +168,20 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
   aceita ("híbrido não aceito"). Híbrido ou presencial ligado exige pelo menos uma cidade.
 - Níveis: os termos de título de cada nível não aceito descartam a vaga; cargos de liderança ficam sempre de fora.
   Aceitar pleno ou sênior desliga o descarte por "descrição indica pleno/sênior".
-- Palavras a evitar são texto simples (viram regex literal) e somam às do YAML. Limites: 15 cidades, 20 termos,
-  30 palavras, 60 caracteres cada; anos de experiência de 0 a 15. Tudo validado no servidor.
+- Cidades: escolhidas da lista do IBGE (`site/lib/dados/municipios.json`) e salvas como "Goiânia - GO"; o servidor
+  recusa o que não está na lista. O estado e o nome da região saem da primeira cidade; os estados de todas as cidades
+  contam como "da região" (citar outro estado tira a vaga).
+- A cidade da vaga é comparada pelo nome-chave (`coletor/texto.py`, `separar_cidade`; o mesmo em `site/lib/cidades.ts`):
+  sem acento, sem maiúscula, sem pontuação e sem o estado ("Goiânia - GO", "goiania/go", "GOIÂNIA (GO)",
+  "Goiânia, Goiás", "Goiania-GO" são a mesma), com apelidos comuns (Gyn, BH, Floripa, Sampa, BSB, POA, SJC, RP).
+  Se a vaga traz o estado e ele não é o da cidade escolhida, não conta (Santa Luzia - MG não é Santa Luzia - PB).
+  No texto da vaga, a cidade precisa aparecer como palavra inteira. Erro de digitação de verdade não é corrigido
+  (Goiana, em PE, é outra cidade).
+- Contrato: com só CLT, sai a vaga que fala de PJ e não de CLT ("contrato PJ"); com só PJ, o contrário. Vaga que não
+  diz o contrato ou oferece os dois sempre entra.
+- Palavras e empresas a evitar são texto simples e somam às do YAML (palavras viram regex literal no título; empresa
+  confere o nome e o domínio do email). Limites: 15 cidades, 20 cargos, 30 palavras, 30 empresas, 60 caracteres
+  cada; anos de experiência de 0 a 15. Tudo validado no servidor.
 - A captura pela extensão e pelo "Adicionar vaga" usa as mesmas preferências (forma de trabalho, cidade, nível).
 
 **Análise de CV** (`site/lib/cv.ts`, `site/lib/ia.ts`)
@@ -260,6 +272,9 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - [ ] O Perfil profissional mostra o nível, o próximo passo e a evolução das notas.
 - [ ] O menu abre o módulo da página atual; no celular, Perfil está na barra de baixo.
 - [ ] Preferências: sem nenhuma forma de trabalho não salva; salvas, voltam preenchidas e a lista de vagas usa o local novo.
+- [ ] Buscar "goiania" (sem acento) na lista de cidades acha Goiânia - GO; "sao" mostra São Paulo primeiro.
+- [ ] Vaga em "goiania", "GOIÂNIA - GO", "Goiânia/GO" ou "Gyn" conta como Goiânia; Santa Luzia - PB não conta como Santa Luzia - MG.
+- [ ] Com só CLT, vaga "PJ" sai e vaga "CLT ou PJ" fica.
 - [ ] Com híbrido ligado e presencial desligado, vaga presencial na cidade aceita sai ("presencial não aceito").
 - [ ] Envio em lote: as vagas com email aparecem com o email pronto; as marcadas entram na fila e saem das listas de novas.
 - [ ] O envio da fila respeita horário, intervalo, limite diário e nunca envia duas vezes.

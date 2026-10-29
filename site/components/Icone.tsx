@@ -32,7 +32,12 @@ const CAMINHOS = {
   estudar: <><path d="M3 9.5 12 5l9 4.5-9 4.5z" /><path d="M7 11.5V16c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.5M21 9.5V15" /></>,
   perfil: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
   sobe: <path d="M4 17l6-6 4 4 6-7M15 8h5v5" />,
-    filtro: <path d="M4 5h16l-6 7.5V19l-4 1.5v-8z" />,
+  filtro: <path d="M4 5h16l-6 7.5V19l-4 1.5v-8z" />,
+  globo: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.4 2.6 3.5 5.5 3.5 8.5s-1.1 5.9-3.5 8.5c-2.4-2.6-3.5-5.5-3.5-8.5s1.1-5.9 3.5-8.5z" /></>,
+  alternar: <path d="M4 8.5h14l-3.5-3.5M20 15.5H6l3.5 3.5" />,
+  idioma: <><path d="M3.5 6h9M8 4v2c0 4-2 7-4.5 8.5M5.5 10c1.2 2 3 3.4 5.5 4.3" /><path d="m13 20 4-9 4 9M14.4 17h5.2" /></>,
+  bloquear: <><circle cx="12" cy="12" r="8.5" /><path d="m6 6 12 12" /></>,
+  contrato: <><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5M9 17c1.5-2 2.5-2 3 0s1.5 1 3-1" /></>,
   sino: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0" />,
 } as const;
 

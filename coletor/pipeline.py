@@ -257,7 +257,7 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
     # 4. Filtros de local e experiência
     restantes = []
     for v in candidatas:
-        motivo = (filtros.filtrar_local(v) or filtros.filtrar_idioma(v)
+        motivo = (filtros.filtrar_local(v) or filtros.filtrar_idioma(v) or filtros.filtrar_contrato(v)
                   or filtros.filtrar_experiencia(v) or filtros.filtrar_senioridade_descricao(v))
         if motivo:
             v.lista, v.motivo_descarte = "descartada", motivo
