@@ -2,7 +2,7 @@
 # Sem telefone/email aqui: o contato fica nas variáveis de ambiente (CONTATO_TELEFONE, GMAIL_USER).
 
 nome: Gabriel Mendes Alexandrino       # nome completo (assinatura dos emails)
-nome_curto: Gabriel Mendes             # como aparece no remetente e no assunto ("Candidatura: <cargo> – Gabriel Mendes")
+nome_curto: Gabriel Mendes             # como aparece no remetente e no assunto ("Candidatura: <cargo> – Seu Nome")
 cargo: Cientista de Dados              # linha abaixo do nome na assinatura
 titulo: Cientista de Dados | Python | SQL | Power BI | Apache Airflow
 cidade: Goiânia, GO

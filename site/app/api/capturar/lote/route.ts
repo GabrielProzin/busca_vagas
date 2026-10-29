@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { capturar, type MotivoRecusa } from "@/lib/captura";
 import { ErroIA } from "@/lib/ia";
 import { iguais } from "@/lib/sessao";
+import { segredo } from "@/lib/segredos";
 
 // Captura em lote: a extensão manda os posts com email que estão na sua tela do LinkedIn.
 // Até 8 por chamada (a extensão divide), lidos 3 de cada vez para caber no tempo e no limite da IA.
@@ -12,7 +13,7 @@ export const maxDuration = 60;
 type Post = { id?: unknown; texto?: unknown; url?: unknown };
 
 export async function POST(req: NextRequest) {
-  const esperado = process.env.CAPTURA_TOKEN ?? "";
+  const esperado = (await segredo("CAPTURA_TOKEN")) ?? "";
   const recebido = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (esperado.length < 24 || !iguais(recebido, esperado)) {
     return NextResponse.json({ ok: false, erro: "Token inválido. Confira o CAPTURA_TOKEN nas opções da extensão." }, { status: 401 });

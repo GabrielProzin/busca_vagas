@@ -5,6 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Local: npm run build && npm run test:e2e
 
 const PORTA = 3123;
+const PORTA_INSTALAR = 3124; // cópia "recém-criada pelo botão da Vercel": sem Gemini, Gmail nem GitHub
 export const TOKEN_TESTE = "token-de-teste-com-mais-de-24-caracteres";
 export const CRON_TESTE = "segredo-do-cron-de-teste";
 
@@ -20,10 +21,16 @@ export default defineConfig({
     launchOptions: process.env.PW_CHROMIUM ? { executablePath: process.env.PW_CHROMIUM } : {},
   },
   projects: [
-    { name: "computador", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    { name: "computador", testIgnore: /instalar\.spec/, use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    {
+      name: "instalacao",
+      testMatch: /instalar\.spec/,
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1280, height: 900 }, baseURL: `http://localhost:${PORTA_INSTALAR}` },
+    },
   ],
   webServer: [
     { command: "python3 e2e/gemini_falso.py", port: 3999, reuseExistingServer: !process.env.CI },
+    { command: "python3 e2e/github_falso.py", port: 3998, reuseExistingServer: !process.env.CI },
     {
       command: `npx next start -p ${PORTA}`,
       port: PORTA,
@@ -38,6 +45,23 @@ export default defineConfig({
         GMAIL_APP_PASSWORD: "abcd efgh ijkl mnop",
         CAPTURA_TOKEN: TOKEN_TESTE,
         CRON_SECRET: CRON_TESTE,
+        NEXT_TELEMETRY_DISABLED: "1",
+      },
+    },
+    {
+      command: `npx next start -p ${PORTA_INSTALAR}`,
+      port: PORTA_INSTALAR,
+      reuseExistingServer: !process.env.CI,
+      env: {
+        SITE_PASSWORD: "senha-de-teste",
+        // Sem SESSION_SECRET: a sessão e a cifra dos segredos saem da chave do Supabase, como na instalação pelo botão.
+        SUPABASE_URL: "https://exemplo.supabase.co",
+        SUPABASE_SECRET_KEY: "sb_secret_chave-ficticia-so-para-os-testes",
+        DEMO_ARQUIVO: "e2e/demo.json",
+        GEMINI_BASE_URL: "http://127.0.0.1:3999",
+        GITHUB_API_URL: "http://127.0.0.1:3998",
+        VERCEL_GIT_REPO_OWNER: "exemplo",
+        VERCEL_GIT_REPO_SLUG: "perfilup",
         NEXT_TELEMETRY_DISABLED: "1",
       },
     },

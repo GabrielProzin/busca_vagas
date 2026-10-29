@@ -2,12 +2,27 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { PERFIL } from "./gerado/perfil";
 import { contarUso } from "./db";
+import { lerSegredos } from "./segredos";
 
 // Envio pelo Gmail do próprio usuário (SMTP + senha de app). Sai da conta dele
 // e fica na pasta Enviados, como um email escrito à mão.
 
-export function gmailConfigurado(): boolean {
-  return Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD);
+export async function gmailConfigurado(): Promise<boolean> {
+  const s = await lerSegredos();
+  return Boolean(s.GMAIL_USER && s.GMAIL_APP_PASSWORD);
+}
+
+/** Confere usuário e senha de app no SMTP do Gmail, sem enviar nada (assistente de instalação). */
+export async function testarGmail(usuario: string, senha: string): Promise<string | null> {
+  if (process.env.DEMO_ARQUIVO) return senha.replace(/\s+/g, "").length === 16 ? null : "A senha de app tem 16 letras.";
+  try {
+    const t = nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: usuario, pass: senha.replace(/\s+/g, "") } });
+    await t.verify();
+    return null;
+  } catch (e) {
+    console.error("testarGmail:", e);
+    return "O Gmail recusou o email e a senha. Confira se é a senha de app (16 letras), não a senha normal da conta.";
+  }
 }
 
 type Mensagem = {
@@ -25,8 +40,9 @@ export async function enviarEmail(m: Mensagem): Promise<string> {
     await contarUso("gmail:site");
     return "demo"; // modo demo nunca envia de verdade
   }
-  const usuario = process.env.GMAIL_USER;
-  const senha = process.env.GMAIL_APP_PASSWORD?.replace(/\s+/g, ""); // a senha de app vem com espaços
+  const s = await lerSegredos();
+  const usuario = s.GMAIL_USER;
+  const senha = s.GMAIL_APP_PASSWORD?.replace(/\s+/g, ""); // a senha de app vem com espaços
   if (!usuario || !senha) throw new Error("GMAIL_USER e GMAIL_APP_PASSWORD não configurados na Vercel.");
   const t = nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: usuario, pass: senha } });
   const info = await t.sendMail({

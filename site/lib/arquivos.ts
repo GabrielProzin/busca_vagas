@@ -3,13 +3,15 @@ import "server-only";
 // Currículo em PDF num bucket PRIVADO do Supabase Storage ("privado/curriculo.pdf").
 // Só o servidor, com a chave secreta, lê e escreve.
 
+import { supabaseChave, supabaseUrl } from "./ambiente";
+
 const BUCKET = "privado";
 export const ARQUIVO_CV = "curriculo.pdf";
 
 function storage(): { base: string; h: Record<string, string> } {
-  let raiz = (process.env.SUPABASE_URL ?? "").trim().replace(/\/+$/, "");
+  let raiz = supabaseUrl().replace(/\/+$/, "");
   if (raiz.endsWith("/rest/v1")) raiz = raiz.slice(0, -"/rest/v1".length);
-  const chave = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const chave = supabaseChave();
   const h: Record<string, string> = { apikey: chave };
   if (!chave.startsWith("sb_")) h.Authorization = `Bearer ${chave}`;
   return { base: `${raiz}/storage/v1`, h };

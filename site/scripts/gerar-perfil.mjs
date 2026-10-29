@@ -61,4 +61,17 @@ writeFileSync(
   `// Gerado por scripts/gerar-perfil.mjs a partir de perfil/. Não edite à mão.\n` +
     `export const PERFIL = ${JSON.stringify(dados, null, 2)} as const;\n`,
 );
+// O SQL do banco vai junto: o assistente de instalação cria as tabelas sozinho (quando há conexão direta).
+writeFileSync(
+  join(aqui, "..", "lib", "gerado", "schema.ts"),
+  `// Gerado por scripts/gerar-perfil.mjs a partir de supabase/schema.sql. Não edite à mão.\n` +
+    `export const SCHEMA_SQL = ${JSON.stringify(readFileSync(join(raiz, "supabase", "schema.sql"), "utf-8"))};\n`,
+);
+// Versão do código: o commit do repositório de origem desta cópia (escrito pelo workflow "Atualizar").
+let versao = "";
+try { versao = readFileSync(join(raiz, ".versao"), "utf-8").trim(); } catch {}
+writeFileSync(
+  join(aqui, "..", "lib", "gerado", "versao.ts"),
+  `// Gerado por scripts/gerar-perfil.mjs a partir de .versao. Não edite à mão.\nexport const VERSAO = ${JSON.stringify(versao)};\n`,
+);
 console.log("perfil gerado:", perfil.nome, `(${perfil.destaques.length} destaques)`);

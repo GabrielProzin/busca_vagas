@@ -8,8 +8,9 @@ Leia antes de mudar qualquer coisa. O que o sistema faz e as regras de negócio 
    depois o código; depois os testes. Mostre o plano antes de mexer em algo grande.
 2. **Um assunto por mudança.** Não "aproveite a viagem" para mexer no que não foi pedido.
 3. **Rode os testes e mostre o resultado** antes de dizer que terminou:
-   - Coletor: `python -m pytest -q` (na raiz).
-   - Site: `cd site && npm run build && npx playwright test` (modo demo, dados fictícios de `site/e2e/demo.json`).
+   - Coletor e atualização: `python -m pytest -q` (na raiz; perfil fictício de `tests/dados/`).
+   - Site: `cd site && npm run build && npx playwright test` (modo demo, dados fictícios de `site/e2e/demo.json`,
+     Gemini e GitHub falsos em `site/e2e/`).
    - Nunca mude um teste só para ele passar: explique a causa da falha primeiro.
 4. **Quando algo quebrar**, descubra a causa antes de corrigir e explique em uma frase.
 
@@ -19,8 +20,9 @@ Leia antes de mudar qualquer coisa. O que o sistema faz e as regras de negócio 
   candidaturas) em arquivo versionado, artefato do Actions, log aberto ou branch. Exceção consciente: o texto do
   currículo do dono em `perfil/` (sem telefone nem email), que ele decidiu deixar público. Testes usam só dados fictícios
   (`@exemplo.com`). O backup é cifrado.
-- **Segredos** só em variáveis da Vercel / Secrets do GitHub / `.env` local fora do Git. Nunca no código, nunca no
-  navegador (nada de `NEXT_PUBLIC_` com segredo), nunca colados em conversa.
+- **Segredos** só em variáveis da Vercel / Secrets do GitHub / tabela `configuracao` (cifrados pelo assistente de
+  instalação, `site/lib/segredos.ts`) / `.env` local fora do Git. Nunca no código, nunca no navegador (nada de
+  `NEXT_PUBLIC_` com segredo), nunca colados em conversa.
 - **Toda rota e Server Function confere a sessão no servidor** (`exigirSessao`, `proxy.ts`). Rotas abertas só as
   listadas na spec, cada uma com a própria autenticação.
 - **Valide no servidor** tudo que vem do navegador (situação, tamanhos, emails, arquivos).
@@ -39,8 +41,10 @@ perfil/                    currículo (texto) e perfil (habilidades, destaques, 
 coletor/                   fontes, filtros, ranking (+ aprendizado), resumo, alertas, follow-up, backup, envio da fila, respostas (IMAP)
 site/                      Next.js (App Router) na Vercel: páginas, Server Functions (app/acoes.ts), API, extensão
 extensao/                  extensão do Chrome (captura de posts)
-supabase/schema.sql        tabelas e ALTERs (rode no SQL Editor)
-.github/workflows/         coleta (5x/dia + backup), envio da fila (de hora em hora) e testes do site
+supabase/schema.sql        tabelas e ALTERs (o build na Vercel roda sozinho com a integração; ou rode no SQL Editor)
+site/app/instalar/         assistente de instalação (chaves, perfil a partir do PDF, primeira coleta)
+scripts/atualizar.sh       atualização das cópias (merge em 3 vias com a origem, sem tocar em perfil/)
+.github/workflows/         coleta (5x/dia + backup), envio da fila (de hora em hora), atualizar e testes do site
 docs/spec.md               a planta do sistema
 ```
 

@@ -9,7 +9,7 @@ export default async function ResumoVaga({ vaga }: { vaga: Vaga }) {
   let resumo: Resumo | null = vaga.resumo ?? null;
   let erro: string | null = null;
   if (!resumo) {
-    if (!iaConfigurada()) return null;
+    if (!(await iaConfigurada())) return null;
     if ((vaga.descricao ?? "").length < 120) return null; // pouco texto para resumir
     try {
       resumo = await resumirVaga(vaga);

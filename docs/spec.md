@@ -33,12 +33,16 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 - Como candidato, quero ver meu nível de mercado e o próximo passo mais útil, **para saber onde investir tempo**.
 - Como candidato, quero respostas prontas para as perguntas de formulário de uma vaga, só com fatos do meu currículo,
   **para me candidatar mais rápido sem inventar nada**.
+- Como alguém que não programa, quero montar a minha cópia com um botão e um passo a passo no próprio site,
+  **sem editar arquivo nem variável**.
+- Como dono de uma cópia, quero receber as melhorias do projeto com um clique sem perder o que mudei,
+  **para não precisar recomeçar do zero**.
 
 ## 3. Telas
 
 O menu é dividido em módulos que abrem e fecham: **Início** (Hoje), **Vagas** (Vagas, Triagem rápida, Envio em lote,
 Candidaturas, Adicionar vaga), **Meu perfil** (Perfil profissional, Análise de CV, O que estudar), **Mercado**
-(Tipos de vaga, Painel) e **Sistema** (Preferências da busca, Uso dos serviços, Configurações). O módulo da página aberta fica aberto.
+(Tipos de vaga, Painel) e **Sistema** (Instalação, Preferências da busca, Uso dos serviços, Configurações). O módulo da página aberta fica aberto.
 No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a tela Mais lista o resto por módulo.
 
 | Tela | O que mostra | Ações |
@@ -59,7 +63,8 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 | Análise de CV (`/perfil/cv`) | Nota atual, variação e critério mais fraco; gráfico da evolução; histórico de análises (nota, tipo, conexão com a vaga, respostas, variação, data) com filtro Todas / Geral / Para vaga | Nova análise geral ou para uma vaga (escolher da lista ou colar o texto), com perguntas do formulário opcionais |
 | Análise (`/perfil/cv/[id]`) | Nota e os 4 critérios com o motivo de cada um, pontos fortes, melhorias (com o trecho do currículo), nível; para vaga: conexão, o que destacar, lacunas e as respostas do formulário | Copiar cada resposta, excluir a análise |
 | Preferências da busca (`/preferencias`) | Onde aceita trabalhar (remoto, híbrido, presencial, cada um ligado ou não), cidades para híbrido/presencial, estado, nome da região; níveis aceitos e máximo de anos de experiência; termos de busca; palavras que eliminam a vaga pelo título; vagas em inglês | Salvar, Voltar ao padrão do arquivo |
-| Configurações | Primeiros passos (o que está pronto e o que falta, com o link do passo no README), currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
+| Instalação (`/instalar`) | Sete passos em ordem, cada um pronto / falta / depois (quando depende de outro): banco, Gemini, Gmail, GitHub, perfil, preferências, primeira coleta; o primeiro que falta abre sozinho | Criar as tabelas, testar e salvar cada chave, ler o currículo em PDF e revisar o perfil, rodar a primeira coleta |
+| Configurações | Primeiros passos (o que está pronto e o que falta, com link para a Instalação ou o passo no README), currículo em PDF, seus dados e backup, atualizações (versão nova e o resumo dela), extensão (com o token) | Enviar PDF, Exportar meus dados, Atualizar agora, Mostrar o token da extensão |
 
 ## 4. Dados (Supabase / Postgres, `supabase/schema.sql`)
 
@@ -73,6 +78,9 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
   `config/preferencias.yaml`.
 - **analises_cv**: uma linha por análise do currículo (tipo `geral` ou `vaga`, título, nota, conexão com a vaga,
   vaga analisada, nome da versão, e em `dados` os critérios, comentários, respostas e o texto analisado).
+- **configuracao**: chave → valor. Os segredos salvos pelo assistente de instalação (chave do Gemini, Gmail e senha de
+  app, token do GitHub, token da extensão, senha do backup, telefone), cifrados com AES-256-GCM; e marcas sem segredo
+  (`marca:perfil_salvo_em`, `marca:coleta_disparada_em`).
 - **Storage `privado/curriculo.pdf`**: o currículo anexado nos emails.
 - RLS ligado e nenhuma policy: só o servidor, com a chave secreta, lê e escreve.
 
@@ -186,10 +194,46 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - Nível e próximo passo do Perfil profissional vêm da análise geral mais recente; o próximo passo é a melhoria do
   critério mais fraco, ou, se a nota do CV for 85 ou mais, a habilidade que mais destravaria vagas.
 
+**Instalação** (`/instalar`, `site/lib/instalacao.ts`, `site/app/instalar/acoes.ts`)
+- O botão "Instalar na Vercel" do README clona o repositório (privado), cria o site com a pasta `site`, cria o banco
+  pela integração Supabase da Vercel e pede só a `SITE_PASSWORD`. Sem `SESSION_SECRET`, a chave da sessão é tirada
+  da chave secreta do Supabase.
+- A cada build na Vercel, `scripts/migrar.mjs` roda o `supabase/schema.sql` pela conexão da integração (`POSTGRES_URL`):
+  só cria o que falta, nunca apaga. Sem a conexão ou com erro, o build continua e o passo 1 mostra o SQL para colar.
+- Ordem dos passos: banco → Gemini → Gmail → GitHub → perfil → preferências → primeira coleta. O perfil espera o
+  Gemini e o GitHub; a coleta espera o GitHub e o perfil.
+- Cada chave é testada antes de salvar: Gemini (lista de modelos, sem gastar cota), Gmail (login SMTP), token do
+  GitHub (abre o repositório, a chave dos secrets e a lista de workflows). Mensagem simples dizendo o que corrigir.
+- Os segredos ficam na tabela `configuracao`, cifrados com uma chave tirada (HKDF) da chave secreta do Supabase.
+  Variável da Vercel com o mesmo nome vale mais e não pode ser trocada pelo assistente. Nenhum segredo volta para a
+  página depois de salvo, exceto o token da extensão (para colar nela) e a senha do backup, mostrada uma vez ao criar.
+- O link do token do GitHub já vem com nome, validade (1 ano) e permissões (Actions, Contents, Pull requests,
+  Secrets, Workflows: escrita); a pessoa só escolhe o repositório. Com o token, o site grava os secrets do Actions
+  (Supabase, Gmail, telefone, endereço do site, senha do backup e o próprio token como `PERFILUP_TOKEN`), liga os
+  workflows e cria o token da extensão e a senha do backup se faltarem. Trocar o Gmail depois regrava os secrets.
+- Perfil: o PDF vai para o Storage (é o anexo dos emails) e para o Gemini, que devolve nome, cargo, links,
+  habilidades (com sinônimos e peso), 4 a 6 pontos fortes e o currículo em markdown. Email, telefone e CEP são tirados
+  do texto. A pessoa revisa (desmarca habilidades, acrescenta, edita os pontos fortes e o texto) e o site salva
+  `perfil/perfil.yaml` (mantendo os comentários do arquivo) e `perfil/curriculo.md` num commit no repositório; a Vercel
+  republica sozinha. O PDF é dado, nunca instrução.
+- O login numa cópia na Vercel leva para `/instalar` enquanto faltar banco, Gmail, GitHub ou perfil; Hoje mostra
+  "Terminar a instalação". O repositório original (montado à mão) nunca é levado para lá.
+
+**Atualizações** (`scripts/atualizar.sh`, `.github/workflows/atualizar.yml`)
+- A versão de cada cópia fica em `.versao` ("sha data" do commit da origem). Sem ele, vale a última versão da origem
+  antes de a cópia ser criada.
+- Configurações mostra "Versão nova" quando o último commit da origem é mais novo que a versão da cópia, com o
+  resumo dele. "Atualizar agora" dispara o workflow, que roda com o `PERFILUP_TOKEN`.
+- O workflow aplica, como merge em 3 vias, só o que mudou na origem desde a versão da cópia, sem a pasta `perfil/`.
+  Aplicou limpo: commit no ramo principal e `.versao` novo. Bateu com mudança da pessoa no mesmo trecho (ou num
+  arquivo que ela apagou): o ramo principal não muda; tudo vai para o ramo `perfilup-atualizacao` com as marcas de
+  conflito e abre um Pull Request listando os arquivos. A origem nunca se atualiza.
+
 **Segurança e dados**
 - Tudo exige login, menos: `/login`, `/api/capturar` e `/api/capturar/lote` (token da extensão), `/api/vigia`
   (segredo do cron) e `/api/saude` (pública, sem dados).
-- Segredos só nas variáveis da Vercel e nos Secrets do GitHub. Nada de segredo no código nem no navegador.
+- Segredos só nas variáveis da Vercel, nos Secrets do GitHub ou cifrados na tabela `configuracao`. Nada de segredo no
+  código nem no navegador (exceto o token da extensão e a senha do backup, mostrados à pessoa logada para ela copiar).
 - O repositório é público: nada de dado pessoal em arquivo versionado, artefato ou log aberto.
 - Backup cifrado a cada coleta (14 dias); "Exportar meus dados" a qualquer hora.
 - A conta do LinkedIn do candidato nunca é usada por automação.
@@ -225,8 +269,16 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - [ ] Nenhuma página principal rola para o lado no celular (390 px).
 - [ ] Lighthouse no celular: desempenho ≥ 90 e acessibilidade ≥ 95 nas páginas principais.
 - [ ] O backup da coleta abre com a senha e confere com o banco.
+- [ ] Numa cópia nova (sem SESSION_SECRET), o login funciona e Hoje leva para a Instalação.
+- [ ] Chave do Gemini e senha de app erradas não são salvas; certas são salvas e não aparecem de volta na página.
+- [ ] O token do GitHub recusado mostra o que corrigir; o aceito grava os secrets, liga os 3 workflows e mostra a senha do backup.
+- [ ] O perfil lido do PDF vem sem email e telefone; o que a pessoa desmarca não vai para o `perfil.yaml`.
+- [ ] Com versão nova na origem, Configurações avisa e "Atualizar agora" dispara o workflow.
+- [ ] A atualização mantém as mudanças da pessoa e o `perfil/`; conflito não mexe no ramo principal e vai para revisão.
 
-Os critérios marcados com teste automático estão em `site/e2e/site.spec.ts` (site) e `tests/` (coletor).
+Os critérios marcados com teste automático estão em `site/e2e/site.spec.ts` e `site/e2e/instalar.spec.ts` (site) e
+`tests/` (coletor e atualização). Os testes do coletor usam um perfil fictício fixo (`tests/dados/`), porque o `perfil/`
+muda em cada cópia.
 
 ## Fora desta versão
 

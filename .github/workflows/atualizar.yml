@@ -1,0 +1,83 @@
+name: Atualizar o PerfilUp
+
+# Traz as melhorias do PerfilUp original para esta cópia (botão "Atualizar agora" em Configurações, no site).
+# Mantém o seu perfil e as suas mudanças no código; se uma mudança sua bater com uma mudança nova no mesmo
+# trecho, nada muda no site e abre um Pull Request para você decidir. Ver scripts/atualizar.sh e docs/spec.md.
+#
+# Usa o secret PERFILUP_TOKEN (o token que você colou no assistente de instalação): o token padrão do Actions
+# não pode mudar arquivos de workflow nem abrir Pull Request.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atualizar
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ORIGEM: ${{ vars.PERFILUP_ORIGEM || 'GabrielProzin/busca_vagas' }}
+    steps:
+      - name: Conferir o token
+        env:
+          TOKEN: ${{ secrets.PERFILUP_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Falta o secret PERFILUP_TOKEN. Ligue o GitHub no assistente de instalação do site (/instalar)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.PERFILUP_TOKEN }}
+          fetch-depth: 0
+
+      - name: Aplicar a versão nova
+        id: atualizar
+        env:
+          GH_TOKEN: ${{ secrets.PERFILUP_TOKEN }}
+        run: |
+          CRIADA_EM=$(gh api "repos/${{ github.repository }}" --jq .created_at)
+          bash scripts/atualizar.sh "https://github.com/${ORIGEM}.git" "$CRIADA_EM"
+
+      - name: Abrir Pull Request para revisar
+        if: ${{ steps.atualizar.outputs.resultado == 'conflito' }}
+        env:
+          GH_TOKEN: ${{ secrets.PERFILUP_TOKEN }}
+          VERSAO: ${{ steps.atualizar.outputs.versao }}
+          CONFLITOS: ${{ steps.atualizar.outputs.conflitos }}
+        run: |
+          {
+            echo "A versão nova do PerfilUp ($VERSAO) mexe em trechos que você também mudou nesta cópia."
+            echo "Nada mudou no seu site. Para trazer a atualização, resolva os conflitos abaixo e faça o merge."
+            echo
+            echo "**Arquivos com conflito:**"
+            for f in $CONFLITOS; do echo "- \`$f\`"; done
+            echo
+            echo "Em cada arquivo, o trecho entre \`<<<<<<<\` e \`=======\` é o seu e o trecho entre \`=======\` e \`>>>>>>>\` é o novo."
+            echo "Fique com o que quiser, apague as marcas e salve. Pelo GitHub: aba **Files changed** → **...** → **Edit file**."
+            echo
+            echo "Se a sua melhoria serve para todo mundo, considere mandá-la para o PerfilUp original: assim ela entra na próxima versão e o conflito não volta."
+          } > corpo.md
+          if gh pr view perfilup-atualizacao --json state --jq .state 2>/dev/null | grep -q OPEN; then
+            gh pr edit perfilup-atualizacao --title "Atualização do PerfilUp ($VERSAO): precisa de revisão" --body-file corpo.md
+          else
+            gh pr create --head perfilup-atualizacao --title "Atualização do PerfilUp ($VERSAO): precisa de revisão" --body-file corpo.md
+          fi
+
+      - name: Resumo
+        if: ${{ always() }}
+        env:
+          RESULTADO: ${{ steps.atualizar.outputs.resultado }}
+          VERSAO: ${{ steps.atualizar.outputs.versao }}
+        run: |
+          case "$RESULTADO" in
+            nada) echo "Esta cópia já está na versão mais nova." >> "$GITHUB_STEP_SUMMARY" ;;
+            aplicada) echo "Atualizada para a versão $VERSAO. A Vercel publica o site novo em 1 ou 2 minutos." >> "$GITHUB_STEP_SUMMARY" ;;
+            conflito) echo "A versão $VERSAO bate com mudanças suas: abri um Pull Request para você revisar. O site no ar não mudou." >> "$GITHUB_STEP_SUMMARY" ;;
+          esac

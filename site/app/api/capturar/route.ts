@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { capturar } from "@/lib/captura";
 import { ErroIA } from "@/lib/ia";
 import { iguais } from "@/lib/sessao";
+import { segredo } from "@/lib/segredos";
 
 // Recebe posts da extensão "Enviar para o busca_vagas".
 // Autenticação por token fixo (CAPTURA_TOKEN), porque a extensão não tem o cookie de login.
@@ -10,7 +11,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  const esperado = process.env.CAPTURA_TOKEN ?? "";
+  const esperado = (await segredo("CAPTURA_TOKEN")) ?? "";
   const recebido = (req.headers.get("authorization") ?? "").replace(/^Bearer\s+/i, "");
   if (esperado.length < 24 || !iguais(recebido, esperado)) {
     return NextResponse.json({ ok: false, erro: "Token inválido. Confira o CAPTURA_TOKEN nas opções da extensão." }, { status: 401 });

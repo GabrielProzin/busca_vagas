@@ -59,9 +59,35 @@ pela fila cabem no plano grátis. Para mais, diminua `envio.intervalo_segundos` 
 
 ---
 
-## Como montar a sua cópia (uns 40 minutos)
+## Jeito fácil (uns 15 minutos)
 
-> **Mais fácil:** abra a sua IA (Claude, ChatGPT, Codex…), cole o [prompt de configuração](#prompt-para-a-sua-ia)
+Você precisa de uma conta no [GitHub](https://github.com/signup) e outra na [Vercel](https://vercel.com/signup)
+(entre na Vercel com o GitHub). As duas são grátis.
+
+1. **Clique no botão:**
+
+   [![Instalar na Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas&root-directory=site&project-name=perfilup&repository-name=perfilup&env=SITE_PASSWORD&envDescription=A%20senha%20para%20entrar%20no%20seu%20site%20%2812%20caracteres%20ou%20mais%29&envLink=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas%23jeito-f%C3%A1cil-uns-15-minutos&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%2C%22protocol%22%3A%22storage%22%7D%5D)
+
+2. Na Vercel, ligue a sua conta do GitHub e deixe o repositório **privado** (o seu currículo vai ficar nele).
+3. Em **Supabase**, aceite criar o banco (plano grátis, região São Paulo). A Vercel cria o banco e liga ao site sozinha.
+4. Em **SITE_PASSWORD**, escolha a senha do seu site (12 caracteres ou mais) e clique em **Deploy**.
+5. Abra o site, entre com a senha e siga o **assistente de instalação**. Ele pede, com o link de onde pegar cada
+   coisa, e testa antes de salvar:
+   - a chave do **Gemini** (grátis, sem cartão);
+   - o seu **Gmail** e uma **senha de app**;
+   - um **token do GitHub**: o link já vem com tudo marcado, você só escolhe o repositório. Com ele, o site guarda as
+     chaves no GitHub Actions, liga a coleta e salva o seu perfil no repositório;
+   - o seu **currículo em PDF**: a IA monta o perfil (habilidades, pontos fortes e o texto) e você confere;
+   - as **preferências** (remoto, híbrido, cidades, nível) e a **primeira coleta**.
+
+As chaves ficam cifradas no seu banco, e ninguém além de você as vê. Se preferir fazer tudo à mão, siga o jeito
+manual abaixo; o que estiver nas variáveis da Vercel vale mais que o que foi salvo pelo assistente.
+
+---
+
+## Jeito manual (uns 40 minutos)
+
+> **Com ajuda:** abra a sua IA (Claude, ChatGPT, Codex…), cole o [prompt de configuração](#prompt-para-a-sua-ia)
 > do fim desta página e siga com ela, um passo por vez. Os passos abaixo são os mesmos que ela vai guiar.
 
 ### 1. Copie o repositório
@@ -123,6 +149,38 @@ Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo
 - **Extensão do Chrome (opcional, recomendada):** veja [A extensão do Chrome](#a-extensão-do-chrome), logo abaixo.
 - **Monitor externo (opcional):** no [UptimeRobot](https://uptimerobot.com), cadastre
   `https://SEU-SITE.vercel.app/api/saude` para receber um email se o site cair.
+
+---
+
+## Receber atualizações
+
+Quando o PerfilUp ganha melhorias, o site avisa em **Configurações → Atualizações**. Clique em **Atualizar agora**:
+em uns 3 minutos o site novo está no ar, e tabelas novas do banco são criadas sozinhas.
+
+- **Nunca são tocados:** a pasta `perfil/` (perfil e currículo) e o que você salvou no site (preferências, chaves,
+  candidaturas).
+- **Se você mudou o código:** a atualização funciona como um merge. Pega só o que mudou no PerfilUp desde a sua versão
+  e aplica por cima das suas mudanças. Se você e a versão nova mexeram no mesmo trecho, nada muda no site no ar: abre
+  um Pull Request no seu repositório (**Atualização do PerfilUp: precisa de revisão**) com os arquivos em conflito,
+  para você escolher o que fica.
+
+Para quase nunca ter conflito:
+
+1. Mude gostos pelas telas (**Preferências da busca**) ou em `perfil/`, e não no código.
+2. Para mudar o código, prefira arquivos novos a reescrever os que já existem.
+3. Se a sua melhoria serve para todo mundo, mande um Pull Request para o
+   [repositório original](https://github.com/GabrielProzin/busca_vagas). Quando ela entra, o conflito some na
+   próxima atualização.
+
+**Cópias feitas antes de 29/10/2026** não têm o botão. Para ganhar, uma vez só:
+
+1. No seu repositório, **Add file → Create new file**, com o nome `.github/workflows/atualizar.yml`, e cole o
+   conteúdo de [`atualizar.yml`](.github/workflows/atualizar.yml). Faça o mesmo com
+   [`scripts/atualizar.sh`](scripts/atualizar.sh).
+2. Crie um token como o do [assistente](#jeito-fácil-uns-15-minutos) (só o seu repositório, com **Actions**,
+   **Contents**, **Pull requests**, **Secrets** e **Workflows** em *Read and write*) e cadastre como secret
+   `PERFILUP_TOKEN` (Settings → Secrets and variables → Actions).
+3. **Actions → Atualizar o PerfilUp → Run workflow.** Depois disso, o assistente e o botão aparecem no site.
 
 ---
 
@@ -221,7 +279,7 @@ No Mac/Linux: `openssl rand -hex 32`. Use um diferente para cada segredo.
 | Nome | Obrigatória | O que colocar |
 |---|---|---|
 | `SITE_PASSWORD` | sim | A senha para entrar no seu site |
-| `SESSION_SECRET` | sim | Segredo aleatório (64 caracteres) |
+| `SESSION_SECRET` | recomendada | Segredo aleatório (64 caracteres). Sem ela, a sessão usa uma chave tirada da secret key do Supabase |
 | `SUPABASE_URL` | sim | Project URL do Supabase |
 | `SUPABASE_SERVICE_ROLE_KEY` | sim | Secret key do Supabase (`sb_secret_…`) |
 | `GEMINI_API_KEY` | sim | Chave do Google AI Studio |
@@ -248,6 +306,7 @@ e avisa por email. Com o mesmo token, o site começa o envio da fila assim que v
 | `RESUMO_PARA` | não | Para onde mandar o resumo (padrão: o próprio Gmail) |
 | `BACKUP_SENHA` | recomendado | Senha longa do backup cifrado. **Guarde no seu gerenciador de senhas**: sem ela o backup não abre |
 | `APIFY_TOKEN` | para posts do LinkedIn | Token do [Apify](https://console.apify.com) (Settings → API & Integrations) |
+| `PERFILUP_TOKEN` | para atualizar | O mesmo token do `GITHUB_DISPATCH_TOKEN`, com **Contents**, **Pull requests**, **Secrets** e **Workflows** também em *Read and write* |
 
 ---
 

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   poweredByHeader: false,
+  serverExternalPackages: ["pg"], // carregado pelo Node em tempo de execução (tem partes nativas opcionais)
   // Upload do currículo em PDF (a Vercel aceita no máximo 4,5 MB por requisição).
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
   async headers() {

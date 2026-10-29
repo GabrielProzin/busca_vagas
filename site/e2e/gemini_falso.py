@@ -8,15 +8,34 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 
 class H(BaseHTTPRequestHandler):
+    def do_GET(self):
+        # Teste da chave no assistente de instalação: só a chave "AIza...invalida" é recusada.
+        ok = self.path.startswith("/v1beta/models") and not self.headers.get("x-goog-api-key", "").endswith("invalida")
+        self.send_response(200 if ok else 400); self.send_header("Content-Type", "application/json"); self.end_headers()
+        self.wfile.write(b'{"models": []}' if ok else b'{"error": {"message": "API key not valid"}}')
+
     def do_POST(self):
         corpo = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-        prompt = corpo["contents"][0]["parts"][0]["text"]
+        partes = corpo["contents"][0]["parts"]
+        prompt = "\n".join(p.get("text", "") for p in partes)
         modelo = self.path.split("/models/")[1].split(":")[0]
         if modelo in ("gemini-3.5-flash", "gemini-3.5-flash-lite"):
             self.send_response(404); self.end_headers(); return
         if modelo == "gemini-3.1-flash":
             self.send_response(429); self.end_headers(); return
-        if "Você revisa currículos" in prompt:
+        if "currículo de uma pessoa que busca vaga" in prompt and any("inline_data" in p for p in partes):
+            # Perfil fictício; o texto traz email e telefone de propósito: o site precisa tirar antes de salvar.
+            out = {"nome": "Ana Exemplo da Silva", "nome_curto": "Ana Exemplo", "cargo": "Analista de Dados",
+                   "titulo": "Analista de Dados | SQL | Power BI | Python", "cidade": "Anápolis, GO",
+                   "experiencia_resumo": "o que fiz como analista de dados na Loja Exemplo",
+                   "links": {"linkedin": "linkedin.com/in/ana-exemplo", "github": "", "portfolio": ""},
+                   "habilidades": [{"nome": "SQL", "peso": 3, "padroes": ["\\bsql\\b"]}, {"nome": "Power BI", "peso": 3, "padroes": ["power ?bi"]},
+                                   {"nome": "Python", "peso": 3, "padroes": ["python"]}, {"nome": "Excel", "peso": 1, "padroes": ["excel"]},
+                                   {"nome": "Tableau", "peso": 2, "padroes": ["tableau"]}],
+                   "destaques": [{"texto": "Dashboards de vendas em Power BI para 12 lojas.", "quando": ["power_bi"], "frase": "Montei dashboards de vendas em Power BI usados por 12 lojas."},
+                                 {"texto": "Consultas SQL que cortaram o fechamento do mês de 3 dias para 1.", "quando": ["sql"], "frase": "Escrevi consultas SQL que reduziram o fechamento do mês de 3 dias para 1."}],
+                   "curriculo_md": "# Ana Exemplo da Silva — Analista de Dados\nana@exemplo.com | (62) 99999-1234\n\n## Resumo\nAnalista de dados com 1 ano de experiência em SQL, Power BI e Python, focada em relatórios de vendas e indicadores para a gestão de lojas de varejo.\n\n## Experiência\n### Analista de Dados — Loja Exemplo (2025 – 2026)\n- Dashboards de vendas em Power BI para 12 lojas.\n- Consultas SQL que cortaram o fechamento do mês de 3 dias para 1.\n\n## Formação\n- Sistemas de Informação (fictícia)"}
+        elif "Você revisa currículos" in prompt:
             out = {"escrita": 78, "escrita_motivo": "Frases objetivas e com verbos de ação.", "nivel": "junior",
                    "nivel_motivo": "Quase 2 anos em dados, com pipelines e dashboards em produção.",
                    "proximo_nivel": ["Mostrar uma decisão técnica sua e o impacto dela"],

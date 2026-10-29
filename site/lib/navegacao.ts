@@ -36,6 +36,7 @@ export const SECOES: Secao[] = [
   { href: "/estudar", rotulo: "O que estudar", curto: "Estudar", icone: "estudar", modulo: "perfil", baixo: false, descricao: "Habilidades que mais abririam vagas para você" },
   { href: "/tipos", rotulo: "Tipos de vaga", curto: "Tipos", icone: "ranking", modulo: "mercado", baixo: false, descricao: "Que tipos de vaga existem e quanto cada um combina com você" },
   { href: "/painel", rotulo: "Painel", curto: "Painel", icone: "painel", modulo: "mercado", baixo: false, descricao: "Números das coletas e taxa de resposta" },
+  { href: "/instalar", rotulo: "Instalação", curto: "Instalar", icone: "check", modulo: "sistema", baixo: false, descricao: "Chaves, perfil e primeira coleta, passo a passo" },
   { href: "/preferencias", rotulo: "Preferências da busca", curto: "Preferências", icone: "filtro", modulo: "sistema", baixo: false, descricao: "Remoto, híbrido ou presencial, cidades, nível e o que buscar" },
   { href: "/uso", rotulo: "Uso dos serviços", curto: "Uso", icone: "medidor", modulo: "sistema", baixo: false, descricao: "Quanto de cada plano grátis já foi usado" },
   { href: "/configuracoes", rotulo: "Configurações", curto: "Ajustes", icone: "config", modulo: "sistema", baixo: false, descricao: "Currículo, primeiros passos e exportar dados" },

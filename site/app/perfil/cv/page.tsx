@@ -67,7 +67,7 @@ export default async function PaginaAnaliseCV({ searchParams }: { searchParams: 
       <section className="cartao" aria-labelledby="nova-analise">
         <div className="cartao-cabecalho"><h2 id="nova-analise"><Icone nome="ia" /> Nova análise</h2></div>
         <div className="cartao-corpo">
-          <FormAnaliseCV vagas={opcoes} vagaInicial={vagaInicial} iaLigada={iaConfigurada()} />
+          <FormAnaliseCV vagas={opcoes} vagaInicial={vagaInicial} iaLigada={await iaConfigurada()} />
         </div>
       </section>
 

@@ -157,3 +157,17 @@ create table if not exists preferencias (
 alter table preferencias enable row level security;
 grant select, insert, update, delete on preferencias to service_role;
 revoke all on preferencias from anon, authenticated;
+
+-- 29/10/2026: segredos guardados pelo assistente de instalação (chave do Gemini, senha de app do Gmail, token do
+-- GitHub...), cifrados com AES-256-GCM pelo servidor. Variáveis da Vercel, quando existem, têm prioridade.
+create table if not exists configuracao (
+  chave          text primary key,
+  valor          text,
+  atualizado_em  timestamptz not null default now()
+);
+alter table configuracao enable row level security;
+grant select, insert, update, delete on configuracao to service_role;
+revoke all on configuracao from anon, authenticated;
+
+-- Avisa a API do Supabase (PostgREST) que as tabelas mudaram, para as novas valerem na hora.
+notify pgrst, 'reload schema';

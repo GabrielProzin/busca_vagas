@@ -8,6 +8,7 @@ import {
   reservarEnvio, reservarFollowup, salvarAnaliseCV, salvarPreferencias, salvarCandidatura, salvarMessageId, tirarVagaDaFila,
 } from "@/lib/db";
 import { dispararWorkflow } from "@/lib/github";
+import { instalacaoPendente } from "@/lib/instalacao";
 import { ErroIA, analisarParaVaga, avaliarCurriculo, emailModelo, followupModelo, gerarEmail, gerarFollowup, type AnaliseVagaIA, type AvaliacaoIA } from "@/lib/ia";
 import { lerFormulario } from "@/lib/preferencias";
 import { LIMITE_TEXTO, PESOS, ROTULOS, criteriosSemIA, habilidadesNoTexto, notaFinal, trechoReal } from "@/lib/cv";
@@ -39,7 +40,9 @@ export async function entrar(_: { erro: string } | null, form: FormData) {
   (await cookies()).set(COOKIE_SESSAO, await criarSessao(), {
     httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: DURACAO_S, path: "/",
   });
-  redirect("/");
+  // Cópia recém-criada pelo botão da Vercel: vai direto para o assistente de instalação.
+  const pendente = process.env.VERCEL ? await instalacaoPendente().catch(() => true) : false;
+  redirect(pendente ? "/instalar" : "/");
 }
 
 export async function sair() {
@@ -82,13 +85,13 @@ export async function gerarRascunho(_: EstadoEmail, form: FormData): Promise<Est
   let email;
   let aviso: string | undefined;
   if (modo === "modelo") {
-    email = emailModelo(v);
+    email = await emailModelo(v);
   } else {
     try {
       email = await gerarEmail(v);
     } catch (e) {
       // Sem IA (sem chave, limite do dia ou falha): cai no modelo pronto e avisa.
-      email = emailModelo(v);
+      email = await emailModelo(v);
       aviso = e instanceof ErroIA ? e.message : "A IA falhou.";
     }
   }
@@ -249,11 +252,11 @@ export async function gerarRascunhoFollowup(_: EstadoEmail, form: FormData): Pro
   await exigirSessao();
   const v = await buscarVaga(String(form.get("id") ?? ""));
   if (!v?.candidatura) return { erro: "Candidatura não encontrada." };
-  if (form.get("modo") === "modelo") return followupModelo(v);
+  if (form.get("modo") === "modelo") return await followupModelo(v);
   try {
     return { ...(await gerarFollowup(v)), ok: "Rascunho pronto. Revise antes de enviar." };
   } catch (e) {
-    return { ...followupModelo(v), erro: `${e instanceof ErroIA ? e.message : "A IA falhou."} Usei o modelo pronto no lugar.` };
+    return { ...(await followupModelo(v)), erro: `${e instanceof ErroIA ? e.message : "A IA falhou."} Usei o modelo pronto no lugar.` };
   }
 }
 

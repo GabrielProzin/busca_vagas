@@ -36,12 +36,12 @@ export default async function PaginaLote() {
 
   const comEmail = vagas.filter((v) => ehNova(v) && v.email_contato).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
   const excluidas = comEmail.filter((v) => dominioExcluido(v.email_contato!)).length;
-  const itens: ItemLoteTela[] = comEmail
+  const itens: ItemLoteTela[] = await Promise.all(comEmail
     .filter((v) => !dominioExcluido(v.email_contato!))
-    .map((v) => {
+    .map(async (v) => {
       const c = v.candidatura;
       const rascunho = Boolean(c?.email_assunto && c?.email_corpo);
-      const email = rascunho ? { assunto: c!.email_assunto!, corpo: c!.email_corpo! } : emailModelo(v);
+      const email = rascunho ? { assunto: c!.email_assunto!, corpo: c!.email_corpo! } : await emailModelo(v);
       return {
         id: v.id,
         titulo: v.titulo,
@@ -55,7 +55,7 @@ export default async function PaginaLote() {
         corpo: email.corpo,
         rascunho,
       };
-    });
+    }));
 
   return (
     <Moldura

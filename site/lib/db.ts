@@ -2,13 +2,14 @@ import "server-only";
 import { cache } from "react";
 import { readFileSync } from "node:fs";
 import { preferenciasPadrao, type Preferencias } from "./preferencias";
+import { supabaseChave, supabaseUrl } from "./ambiente";
 import type { AnaliseCV, AnaliseEstudar, AnaliseTipos, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
 
 // Acesso ao Supabase pela API REST (PostgREST), sempre no servidor, com a chave secreta.
 // Com DEMO_ARQUIVO definido, usa um JSON local em memória (para desenvolver sem banco).
 
 function base(): string {
-  const url = process.env.SUPABASE_URL;
+  const url = supabaseUrl();
   if (!url) throw new Error("SUPABASE_URL não configurada");
   let raiz = url.trim().replace(/\/+$/, "");
   if (raiz.endsWith("/rest/v1")) raiz = raiz.slice(0, -"/rest/v1".length);
@@ -16,7 +17,7 @@ function base(): string {
 }
 
 function cabecalhos(extra: Record<string, string> = {}): Record<string, string> {
-  const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const chave = supabaseChave();
   if (!chave) throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada");
   const h: Record<string, string> = { apikey: chave, "Content-Type": "application/json", ...extra };
   if (!chave.startsWith("sb_")) h.Authorization = `Bearer ${chave}`;
@@ -401,6 +402,7 @@ export async function schemaCompleto(): Promise<boolean> {
       rest(`/candidaturas?select=fila_em,fila_erro,resposta_em,devolvido_em&limit=1`),
       rest(`/analises_cv?select=id&limit=1`),
       rest(`/preferencias?select=id&limit=1`),
+      rest(`/configuracao?select=chave&limit=1`),
     ]);
     return true;
   } catch {
@@ -553,4 +555,32 @@ export async function salvarPreferencias(prefs: Preferencias | null): Promise<vo
     headers: { Prefer: "resolution=merge-duplicates" },
     body: JSON.stringify({ id: 1, dados: prefs, atualizado_em: new Date().toISOString() }),
   });
+}
+
+
+// ---------------------------------------------------------------- configuração (segredos cifrados)
+// Chave -> valor cifrado (lib/cripto.ts). Só o servidor lê; quem chama é lib/segredos.ts.
+const GC = globalThis as unknown as { __configBV?: Map<string, string> };
+
+export async function lerConfiguracao(): Promise<Record<string, string>> {
+  if (process.env.DEMO_ARQUIVO) return Object.fromEntries(GC.__configBV ?? new Map());
+  const linhas = await rest<{ chave: string; valor: string | null }[]>(`/configuracao?select=chave,valor`);
+  return Object.fromEntries(linhas.filter((l) => l.valor).map((l) => [l.chave, l.valor as string]));
+}
+
+export async function gravarConfiguracao(linhas: { chave: string; valor: string | null }[]): Promise<void> {
+  if (process.env.DEMO_ARQUIVO) {
+    GC.__configBV ??= new Map();
+    for (const l of linhas) (l.valor ? GC.__configBV.set(l.chave, l.valor) : GC.__configBV.delete(l.chave));
+    return;
+  }
+  const agora = new Date().toISOString();
+  const salvar = linhas.filter((l) => l.valor);
+  if (salvar.length) {
+    await rest(`/configuracao?on_conflict=chave`, {
+      method: "POST", headers: { Prefer: "resolution=merge-duplicates" },
+      body: JSON.stringify(salvar.map((l) => ({ ...l, atualizado_em: agora }))),
+    });
+  }
+  for (const l of linhas.filter((x) => !x.valor)) await rest(`/configuracao?chave=eq.${encodeURIComponent(l.chave)}`, { method: "DELETE" });
 }

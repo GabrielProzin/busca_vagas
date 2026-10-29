@@ -3,6 +3,7 @@ import { listarExecucoes } from "@/lib/db";
 import { enviarEmail } from "@/lib/email";
 import { iguais } from "@/lib/sessao";
 import { REPO, dispararWorkflow } from "@/lib/github";
+import { segredo as lerSegredo } from "@/lib/segredos";
 
 // Vigia da coleta (cron da Vercel, ~12h e ~19h). O agendamento do GitHub às vezes pula horários:
 // - última coleta com mais de 3h -> dispara a coleta no GitHub (precisa do GITHUB_DISPATCH_TOKEN);
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
       `Repositório: https://github.com/${REPO}/actions`,
     ];
     await enviarEmail({
-      para: process.env.ALERTA_PARA || process.env.GMAIL_USER || "",
+      para: (await lerSegredo("ALERTA_PARA")) || (await lerSegredo("GMAIL_USER")) || "",
       assunto: "busca_vagas: a coleta de vagas está atrasada",
       corpo: linhas.join("\n\n"),
     }).catch((e) => console.error("vigia: alerta não enviado:", e));

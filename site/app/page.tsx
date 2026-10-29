@@ -51,6 +51,7 @@ export default async function PaginaHoje() {
   const apertados = montarUso({ servicos: uso?.servicos ?? [], diario: uso?.diario ?? [], ultimaColeta: ultimas[0]?.iniciada_em ?? null, emailsCandidaturaHoje: hoje })
     .filter((c) => (c.fracao ?? 0) >= 0.8);
   const essenciais = passos.filter((p) => p.essencial && !p.ok);
+  const instalar = essenciais.some((p) => p.link === "/instalar");
 
   const novas = vagas.filter(ehNova);
   const comEmail = novas.filter((v) => v.email_contato).sort((a, b) => (b.nota ?? 0) - (a.nota ?? 0));
@@ -91,9 +92,9 @@ export default async function PaginaHoje() {
       }
     >
       {essenciais.length ? (
-        <Link href="/configuracoes" className="faixa aviso">
+        <Link href={instalar ? "/instalar" : "/configuracoes"} className="faixa aviso">
           <Icone nome="alerta" /> {essenciais.length === 1 ? "Falta 1 passo" : `Faltam ${essenciais.length} passos`} para o sistema ficar completo:{" "}
-          {essenciais.map((p) => p.rotulo.charAt(0).toLowerCase() + p.rotulo.slice(1)).join(", ")}. Ver em Configurações →
+          {essenciais.map((p) => p.rotulo.charAt(0).toLowerCase() + p.rotulo.slice(1)).join(", ")}. {instalar ? "Terminar a instalação →" : "Ver em Configurações →"}
         </Link>
       ) : null}
       {apertados.length ? (

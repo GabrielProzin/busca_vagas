@@ -14,8 +14,16 @@ function base64url(buf: ArrayBuffer): string {
 
 async function chave(): Promise<CryptoKey> {
   const segredo = process.env.SESSION_SECRET;
-  if (!segredo || segredo.length < 32) throw new Error("SESSION_SECRET ausente ou curto (mínimo 32 caracteres)");
-  return crypto.subtle.importKey("raw", enc.encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  if (segredo) {
+    if (segredo.length < 32) throw new Error("SESSION_SECRET curto (mínimo 32 caracteres)");
+    return crypto.subtle.importKey("raw", enc.encode(segredo), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  }
+  // Sem SESSION_SECRET (instalação pelo botão): a chave da sessão sai da chave secreta do Supabase, que só o servidor tem.
+  const base = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "").trim();
+  if (base.length < 20) throw new Error("SESSION_SECRET ausente (e sem chave do Supabase para derivar uma)");
+  const k = await crypto.subtle.importKey("raw", enc.encode(base), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const derivada = await crypto.subtle.sign("HMAC", k, enc.encode("busca_vagas-sessao-v1"));
+  return crypto.subtle.importKey("raw", derivada, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
 }
 
 async function assinar(valor: string): Promise<string> {

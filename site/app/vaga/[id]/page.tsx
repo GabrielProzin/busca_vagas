@@ -33,7 +33,8 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
   const descricaoLonga = (v.descricao ?? "").length > 900;
   // Sem rascunho salvo: o formulário já abre com o modelo pronto (instantâneo, sem gastar a cota da IA).
   const jaEnviou = status === "enviada" || Boolean(c?.email_para && c?.enviada_em && status !== "aplicada");
-  const modelo = !c?.email_corpo && !jaEnviou ? emailModelo(v) : null;
+  const modelo = !c?.email_corpo && !jaEnviou ? await emailModelo(v) : null;
+  const [iaPronta, gmailPronto] = await Promise.all([iaConfigurada(), gmailConfigurado()]);
   const fu = situacaoFollowup(c);
   const cartaoFollowup = fu ? (
     <section className={`cartao cartao-followup ${fu.estado}`} aria-label="Follow-up">
@@ -49,8 +50,8 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
           situacao={fu}
           linkedin={mensagemLinkedin(v)}
           naFonte={naFonte(v.fonte)}
-          iaPronta={iaConfigurada()}
-          gmailPronto={gmailConfigurado()}
+          iaPronta={iaPronta}
+          gmailPronto={gmailPronto}
         />
       </div>
     </section>
@@ -142,8 +143,8 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
                 preenchidoComModelo={Boolean(modelo)}
                 jaEnviada={jaEnviou}
                 enviadaEm={c?.enviada_em ?? null}
-                iaPronta={iaConfigurada()}
-                gmailPronto={gmailConfigurado()}
+                iaPronta={iaPronta}
+                gmailPronto={gmailPronto}
                 cvPronto={Boolean(cv)}
               />
               </div>
@@ -164,8 +165,8 @@ export default async function PaginaVaga({ params }: { params: Promise<{ id: str
                       preenchidoComModelo={Boolean(modelo)}
                       jaEnviada={jaEnviou}
                       enviadaEm={c?.enviada_em ?? null}
-                      iaPronta={iaConfigurada()}
-                      gmailPronto={gmailConfigurado()}
+                      iaPronta={iaPronta}
+                      gmailPronto={gmailPronto}
                       cvPronto={Boolean(cv)}
               />
                   </div>
