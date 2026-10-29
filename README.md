@@ -36,6 +36,18 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
 
 ---
 
+## Comece aqui
+
+Escolha um jeito de montar a sua cópia. Todos são grátis ([detalhes](#quanto-custa)).
+
+| Jeito | Para quem | Tempo |
+|---|---|---|
+| **[Jeito fácil](#jeito-fácil-uns-15-minutos)** (recomendado) | Qualquer pessoa: um botão cria tudo e o próprio site guia o resto | ~15 min |
+| **[Com a ajuda da sua IA](#com-a-ajuda-da-sua-ia)** | Quem quer alguém explicando cada clique: cole um prompt pronto na sua IA | ~20 min |
+| **[Jeito manual](#jeito-manual-uns-40-minutos)** | Quem quer entender cada peça ou o botão deu erro | ~40 min |
+
+---
+
 ## Quanto custa
 
 Nada, se você ficar nos planos grátis. Nenhum serviço abaixo pede cartão para o que usamos.
@@ -85,10 +97,45 @@ manual abaixo; o que estiver nas variáveis da Vercel vale mais que o que foi sa
 
 ---
 
+## Com a ajuda da sua IA
+
+Prefere ir com alguém do lado? Abra a IA que você usa (Claude, ChatGPT, Gemini, Codex…), cole o texto abaixo e siga
+com ela, um passo por vez. Serve para o jeito fácil e para o manual.
+
+```text
+Vou montar a minha cópia do busca_vagas (PerfilUp), um radar pessoal de vagas que roda grátis em
+GitHub Actions + Supabase + Vercel: https://github.com/GabrielProzin/busca_vagas
+O README e o docs/spec.md do repositório explicam tudo.
+
+Objetivo: terminar com o site no ar, a coleta rodando e o sistema configurado para o MEU perfil.
+
+Me guie um passo por vez. Comece pelo "Jeito fácil" do README: o botão "Instalar na Vercel" e,
+depois, o assistente de instalação dentro do próprio site (Gemini, Gmail, token do GitHub,
+currículo em PDF, preferências e primeira coleta). Só use o "Jeito manual" se o botão falhar.
+Em cada passo, diga exatamente onde clicar, espere eu confirmar que terminei e só então siga.
+Se eu travar, peça a mensagem de erro inteira (ou um print) e descubra a causa antes de sugerir
+a correção.
+
+Sobre o que eu procuro, me faça perguntas, uma por vez: área e cargos, nível (estágio, júnior,
+pleno, sênior) e quantos anos de experiência no máximo, se aceito remoto, híbrido e presencial,
+em quais cidades, CLT ou PJ, e que palavras ou empresas devo evitar. Depois me diga o que
+marcar na tela "Preferências da busca" do site. Se a minha área não for dados, os cargos que eu
+puser lá já valem: não precisa mexer em arquivo nenhum.
+
+Regras: nunca me peça para colar senhas, chaves ou tokens na conversa; eu colo direto no site,
+na Vercel ou no GitHub, onde você mandar. Não invente experiência que não está no meu currículo.
+Prefira o plano grátis de tudo e me avise antes de qualquer coisa que possa cobrar.
+
+No fim, confira comigo: entrei no site com a senha; a página Instalação mostra os passos prontos;
+a coleta rodou e as vagas apareceram; ao abrir uma vaga com email, o email já vem com o meu nome
+e a minha assinatura.
+```
+
+---
+
 ## Jeito manual (uns 40 minutos)
 
-> **Com ajuda:** abra a sua IA (Claude, ChatGPT, Codex…), cole o [prompt de configuração](#prompt-para-a-sua-ia)
-> do fim desta página e siga com ela, um passo por vez. Os passos abaixo são os mesmos que ela vai guiar.
+> Só se o [jeito fácil](#jeito-fácil-uns-15-minutos) não der certo. Dá para fazer [com a ajuda da sua IA](#com-a-ajuda-da-sua-ia).
 
 ### 1. Copie o repositório
 
@@ -307,46 +354,6 @@ e avisa por email. Com o mesmo token, o site começa o envio da fila assim que v
 | `BACKUP_SENHA` | recomendado | Senha longa do backup cifrado. **Guarde no seu gerenciador de senhas**: sem ela o backup não abre |
 | `APIFY_TOKEN` | para posts do LinkedIn | Token do [Apify](https://console.apify.com) (Settings → API & Integrations) |
 | `PERFILUP_TOKEN` | para atualizar | O mesmo token do `GITHUB_DISPATCH_TOKEN`, com **Contents**, **Pull requests**, **Secrets** e **Workflows** também em *Read and write* |
-
----
-
-## Prompt para a sua IA
-
-Cole o texto abaixo na IA que você usa. Se ela tiver acesso ao repositório (Claude Code, Codex), ela edita os
-arquivos; se for um chat, ela te entrega o conteúdo para colar no GitHub.
-
-```text
-Vou montar a minha cópia do busca_vagas, um radar pessoal de vagas que roda grátis em
-GitHub Actions + Supabase + Vercel. O README e o docs/spec.md do repositório explicam tudo.
-
-Objetivo: terminar com o site no ar, a coleta rodando e o sistema configurado para o MEU perfil.
-
-Me guie um passo por vez, na ordem do README (copiar o repositório, perfil, Supabase, Gmail e
-Gemini, Vercel, secrets do GitHub, primeira coleta, ajustes finais). Em cada passo, diga
-exatamente onde clicar, espere eu confirmar que terminei e só então siga. Se eu travar,
-peça a mensagem de erro inteira e descubra a causa antes de sugerir a correção.
-
-No passo do perfil, vou te mandar o meu currículo. A partir dele:
-1. Me faça perguntas, uma por vez, sobre o que procuro: área e cargos, nível (estágio, júnior,
-   pleno, sênior) e quantos anos de experiência no máximo, se aceito remoto, se aceito híbrido,
-   se aceito presencial, em quais cidades e estado, e que palavras no título eliminam a vaga.
-2. Gere perfil/curriculo.md (sem telefone nem email), perfil/perfil.yaml e
-   config/preferencias.yaml no MESMO formato dos arquivos que já estão no repositório,
-   trocando todo o conteúdo pelo meu. Em perfil.yaml: habilidades que eu realmente tenho, com
-   sinônimos como aparecem em vagas e peso de 1 a 3; destaques com "frase" em primeira pessoa,
-   só com fatos do meu currículo.
-3. Me mostre os arquivos para eu conferir antes de salvar. Lembre que depois eu ajusto remoto,
-   híbrido, presencial, cidades, nível e termos pelo próprio site, em Preferências da busca.
-
-Regras: nunca me peça para colar senhas, chaves ou tokens na conversa. Diga onde cada um vai
-(Vercel ou Secrets do GitHub) e eu mesmo colo lá. Não invente experiência que não está no meu
-currículo. Prefira o plano grátis de tudo e me avise antes de qualquer coisa que possa cobrar.
-
-No fim, confira comigo esta lista: entrei no site com a senha; a coleta rodou e as vagas
-apareceram; a página Configurações mostra todos os primeiros passos essenciais prontos; ao
-abrir uma vaga com email, o email já vem com o meu nome e a minha assinatura; instalei a
-extensão do Chrome e uma captura no LinkedIn trouxe vagas para o site.
-```
 
 ---
 
