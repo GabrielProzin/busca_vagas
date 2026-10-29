@@ -1,0 +1,96 @@
+==================== SOLIDES: parâmetro de busca
+{'title': 'analista de dados'} 200 count 1572 pages 158 ['ASSISTENTE DE CRÉDITO', 'Analista de PCM', 'ANALISTA ADMINISTRATIVO - FISCAL', 'BIOMÉDICO (MICROBIOLOGIA) - SANTARÉM ', 'Analista de Dados Sênior - SQL', 'Analista de Customer Experience Pleno']
+{'search': 'analista de dados'} 200 count 72400 pages 7240 ['COMPRADOR', 'TECNICO INST MANUTENCOES I', 'Operador de Caixa (CIDADE: garça | f. 509 )', 'Consultor de vendas', 'Balconista (cidade: garça | F. 509 ) ', 'Auxiliar de Serviços Gerais']
+{'jobTitle': 'analista de dados'} 200 count 72400 pages 7240 ['COMPRADOR', 'TECNICO INST MANUTENCOES I', 'Operador de Caixa (CIDADE: garça | f. 509 )', 'Consultor de vendas', 'Balconista (cidade: garça | F. 509 ) ', 'Auxiliar de Serviços Gerais']
+{'q': 'analista de dados'} 200 count 72400 pages 7240 ['COMPRADOR', 'TECNICO INST MANUTENCOES I', 'Operador de Caixa (CIDADE: garça | f. 509 )', 'Consultor de vendas', 'Balconista (cidade: garça | F. 509 ) ', 'Auxiliar de Serviços Gerais']
+{'keyword': 'analista de dados'} 200 count 72400 pages 7240 ['COMPRADOR', 'TECNICO INST MANUTENCOES I', 'Operador de Caixa (CIDADE: garça | f. 509 )', 'Consultor de vendas', 'Balconista (cidade: garça | F. 509 ) ', 'Auxiliar de Serviços Gerais']
+{'title': 'analista de dados', 'page': 2} 200 count 1572 pages 158 ['ANALISTA DE COMPLIANCE', 'Analista de Logística ( Armazém) - AVARÉ SP', 'Analista Sênior de Mídia Programática', 'Analista Administrativo PL - São Paulo - hibrido', 'Analista de Soluções Conectadas - Nissey Máquinas', 'ANALISTA DE LABORATORIO JR']
+{'title': 'dados', 'locations': 'Goiânia'} 200 count 0 pages 0 []
+{'title': 'analista de dados', 'homeOffice': 'true'} 200 count 1572 pages 158 ['ASSISTENTE DE CRÉDITO', 'Analista de PCM', 'ANALISTA ADMINISTRATIVO - FISCAL', 'BIOMÉDICO (MICROBIOLOGIA) - SANTARÉM ', 'Analista de Dados Sênior - SQL', 'Analista de Customer Experience Pleno']
+  state: {"name": "Goiás", "code": "GO"}
+  city: {"name": "Formosa", "stateId": 0}
+  address: {"neighborhood": "Formosinha", "number": "768", "latitude": -15.5444974, "longitude": -47.3313929, "city": {"name": "Formosa", "stateId": 0}, "state": {"name": "Goiás", "code": "GO"}, "country": {"name": "Brasil", "code": "BR"}, "zipCode": "73813120"
+  salary: {"type": "simple", "showRangeToApplicant": true, "initialRange": 0, "finalRange": 0, "negotiable": false}
+  seniority: []
+  occupationAreas: []
+  hardSkills: [{"name": "Ensino Médio Completo;", "level": null}, {"name": "Experiência em crédito/financeiro no agro;", "level": null}, {"name": "Noções de análise de crédito e documentação rural.", "level": null}]
+  recruitmentContractType: []
+  slug/id/redirect: charrua GBYYDBbFv9 https://charrua./vacancies/GBYYDBbFv9?origem=portal
+   https://charrua.vagas.solides.com.br/vaga/GBYYDBbFv9 404 https://charrua.vagas.solides.com.br/vaga/GBYYDBbFv9 74107
+   https://vagas.solides.com.br/vaga/GBYYDBbFv9 404 https://vagas.solides.com.br/vaga/GBYYDBbFv9 112090
+
+==================== TRAMPOS: detalhe
+  títulos: ['Analista de Mídia', 'Planejamento Estratégico', 'Analista de Mídia', 'Analista de Atendimento Publicitário | Customer Success', 'Analista de Jornadas e Comunicação com Cliente', 'Analista de Mídia Pleno (Online e Offline)', 'Coordenador(a) de Mídia', 'Assistente de Mídia ON', 'Desenvolvedor(a) Full Stack', 'Analista de BI', 'Analista de Mídia - Tráfego Pago', 'Atendimento Publicitário'] total {'total': 24, 'total_pages': 2, 'per_page': 12}
+  detalhe 200
+opportunity: dict 
+    id: int 774882
+    name: str 'Analista de Mídia'
+    type_name: str 'Emprego'
+    type_slug: str 'emprego'
+    apply_url: str ''
+    category_name: str 'Mídia'
+    category_slug: str 'midia'
+    state: str 'SP'
+    city: str 'São Paulo'
+    home_office: bool False
+    hybrid: bool True
+    published_at: str '2026-10-22T15:20:07.000-03:00'
+    highlight: bool True
+    badges: list 
+        [1 itens] primeiro:
+    already_applied: bool False
+    salary: str 'NÃO DIVULGADA'
+    hide_ads: bool False
+    regime: str 'PREST. DE SERVIÇO'
+    quantity: int 1
+    description: str 'A SA365 está em busca de um(a) Analista de Mídia com foco em Performance para integrar nosso time.\
+    perks: str 'Cartão de benefício iFood\r\nSubsídio para plano de saúde e odontológico\r\nWellhub\r\nDay off de a
+    prerequisite: str 'Ensino superior completo em Marketing, Publicidade e Propaganda, Comunicação Social, Administração,
+    desirable: str 'Experiência com outras plataformas de mídia, como LinkedIn Ads, TikTok Ads, DV360 e Retail Media;\r
+    other_info: str ''
+    comments: str ''
+    address: str 'Rua Pamplona, 518, Jardim Paulista - São Paulo, SP'
+    applies_count: int 54
+    facebook_shares: str '0'
+    facebook_share_url: str 'http://www.facebook.com/share.php?u=http://trampos.co/oportunidades/774882-analista-de-midia'
+    tweet_count: str '0'
+    twitter_share_url: str 'http://twitter.com/share?text=Oportunidade de Analista de Mídia @ SA365 (via @trampos)&url=http://t
+    email_shares: str '44'
+    email_share_url: str 'https://trampos.co/oportunidades/774882-analista-de-midia/share/email'
+    whatsapp_shares: str '20'
+    whatsapp_share_url: str 'https://trampos.co/oportunidades/774882-analista-de-midia/share/whatsapp'
+    custom_company_name: NoneType None
+    url: str 'http://trampos.co/oportunidades/774882-analista-de-midia'
+    apply_method: int 3
+    bitly_url: NoneType None
+    opportunity_questions: list 
+        [3 itens] primeiro:
+            id: int 94949
+            body: str 'Qual sua pretensão salarial (PJ)?\t\t'
+            question_type: str 'text'
+            required: bool True
+
+==================== GUPY: empresa e careerPage
+  company: {"id": 21652, "timezone": "America/Sao_Paulo", "subdomain": "motz", "language": "pt"}
+  careerPage: {"name": "Motz", "urlLogo": "https://attachments.gupy.io/production/companies/21652/career/48652/images/2022-02-04_22-40_logo.png", "urlSite": "", "companyDescriptionTitle": "Quer fazer parte da transportadora que está transformando o segmento no país? 🚚", "about": "<p>Somos a <strong>Motz</strong>, uma transportadora digital que conecta embarcadores e caminhoneiros de todo o país por meio da tecnologia, gerando renda e desburocratizando os processos do transporte rodoviário. <strong>Nascemos em 2020</strong>, trazendo estrutura e segurança como principais heranças da Votorantim Cimentos.</p><
+
+==================== COBERTURA DE EMAIL: empresas das vagas reais
+  'Motz'                                   ''                                       -> None
+  'Tauste Supermercados'                   ''                                       -> None
+  'PROSIN'                                 ''                                       -> None
+  'GPA'                                    ''                                       -> None
+  'Grupo Marista'                          ''                                       -> None
+  'MEGAG ALIMENTOS'                        ''                                       -> None
+  'Stefanini Group'                        ''                                       -> None
+  'Nomus'                                  ''                                       -> None
+  'Brasil Terrenos'                        ''                                       -> None
+  'Vagas MRM Brasil'                       ''                                       -> None
+  'Grupo SysMap'                           ''                                       -> None
+  'ESSENTIA GROUP'                         ''                                       -> None
+  'Grupo SysMap'                           ''                                       -> None
+  'Leega Consultoria'                      ''                                       -> None
+  'Leega Consultoria'                      ''                                       -> None
+  'VENHA SER #SANGUELARANJA 🧡🚀'            ''                                       -> None
+  'Vetta Tecnologia'                       ''                                       -> None
+  'Cruzeiro do Sul Educacional S/A'        ''                                       -> None
+  cobertura: 0/18
