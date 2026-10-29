@@ -268,14 +268,16 @@ exatamente onde clicar, espere eu confirmar que terminei e só então siga. Se e
 peça a mensagem de erro inteira e descubra a causa antes de sugerir a correção.
 
 No passo do perfil, vou te mandar o meu currículo. A partir dele:
-1. Me faça perguntas, uma por vez, sobre o que procuro: área e cargos, nível (júnior, pleno…),
-   se aceito remoto, quais cidades aceito para presencial/híbrido, o que quero evitar.
+1. Me faça perguntas, uma por vez, sobre o que procuro: área e cargos, nível (estágio, júnior,
+   pleno, sênior) e quantos anos de experiência no máximo, se aceito remoto, se aceito híbrido,
+   se aceito presencial, em quais cidades e estado, e que palavras no título eliminam a vaga.
 2. Gere perfil/curriculo.md (sem telefone nem email), perfil/perfil.yaml e
    config/preferencias.yaml no MESMO formato dos arquivos que já estão no repositório,
    trocando todo o conteúdo pelo meu. Em perfil.yaml: habilidades que eu realmente tenho, com
    sinônimos como aparecem em vagas e peso de 1 a 3; destaques com "frase" em primeira pessoa,
    só com fatos do meu currículo.
-3. Me mostre os arquivos para eu conferir antes de salvar.
+3. Me mostre os arquivos para eu conferir antes de salvar. Lembre que depois eu ajusto remoto,
+   híbrido, presencial, cidades, nível e termos pelo próprio site, em Preferências da busca.
 
 Regras: nunca me peça para colar senhas, chaves ou tokens na conversa. Diga onde cada um vai
 (Vercel ou Secrets do GitHub) e eu mesmo colo lá. Não invente experiência que não está no meu
