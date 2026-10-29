@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { readFileSync } from "node:fs";
+import { preferenciasPadrao, type Preferencias } from "./preferencias";
 import type { AnaliseCV, AnaliseEstudar, AnaliseTipos, Candidatura, Execucao, Status, UsoDiario, UsoServico, Vaga } from "./tipos";
 
 // Acesso ao Supabase pela API REST (PostgREST), sempre no servidor, com a chave secreta.
@@ -399,6 +400,7 @@ export async function schemaCompleto(): Promise<boolean> {
       rest(`/execucoes?select=aprendizado,tipo&limit=1`),
       rest(`/candidaturas?select=fila_em,fila_erro,resposta_em,devolvido_em&limit=1`),
       rest(`/analises_cv?select=id&limit=1`),
+      rest(`/preferencias?select=id&limit=1`),
     ]);
     return true;
   } catch {
@@ -516,4 +518,39 @@ export async function excluirAnaliseCV(id: number): Promise<void> {
     return;
   }
   await rest(`/analises_cv?id=eq.${id}`, { method: "DELETE" });
+}
+
+
+// ---------------------------------------------------------------- preferências da busca
+// Uma linha (id = 1) com o que a pessoa salvou na tela Preferências. Sem linha (ou sem a tabela), vale o YAML.
+const GP = globalThis as unknown as { __prefsBV?: { prefs: Preferencias; salvas_em: string } | null };
+
+export async function lerPreferencias(): Promise<{ prefs: Preferencias; salvas_em: string | null }> {
+  if (process.env.DEMO_ARQUIVO) {
+    const p = GP.__prefsBV;
+    return p ? { ...p } : { prefs: preferenciasPadrao(), salvas_em: null };
+  }
+  try {
+    const linhas = await rest<{ dados: Preferencias; atualizado_em: string }[]>(`/preferencias?select=dados,atualizado_em&id=eq.1`);
+    if (linhas[0]) return { prefs: { ...preferenciasPadrao(), ...linhas[0].dados }, salvas_em: linhas[0].atualizado_em };
+  } catch (e) {
+    console.error("preferencias:", e);
+  }
+  return { prefs: preferenciasPadrao(), salvas_em: null };
+}
+
+export async function salvarPreferencias(prefs: Preferencias | null): Promise<void> {
+  if (process.env.DEMO_ARQUIVO) {
+    GP.__prefsBV = prefs ? { prefs, salvas_em: new Date().toISOString() } : null;
+    return;
+  }
+  if (!prefs) {
+    await rest(`/preferencias?id=eq.1`, { method: "DELETE" });
+    return;
+  }
+  await rest(`/preferencias?on_conflict=id`, {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify({ id: 1, dados: prefs, atualizado_em: new Date().toISOString() }),
+  });
 }

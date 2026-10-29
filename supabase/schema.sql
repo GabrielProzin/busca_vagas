@@ -146,3 +146,14 @@ create index if not exists analises_cv_criada on analises_cv (criada_em desc);
 alter table analises_cv enable row level security;
 grant select, insert, update, delete on analises_cv to service_role;
 revoke all on analises_cv from anon, authenticated;
+
+-- 29/10/2026: preferências da busca editadas no site (tela Preferências). Uma linha só (id = 1);
+-- o coletor aplica por cima do config/preferencias.yaml. Sem linha, vale o YAML.
+create table if not exists preferencias (
+  id             smallint primary key default 1 check (id = 1),
+  atualizado_em  timestamptz not null default now(),
+  dados          jsonb not null default '{}'
+);
+alter table preferencias enable row level security;
+grant select, insert, update, delete on preferencias to service_role;
+revoke all on preferencias from anon, authenticated;

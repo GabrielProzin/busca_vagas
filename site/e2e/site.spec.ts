@@ -332,7 +332,7 @@ test("celular: nenhuma página principal rola para o lado", async ({ browser }) 
   const contexto = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   const page = await contexto.newPage();
   await entrar(page);
-  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/tipos", "/estudar", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1", "/perfil", "/perfil/cv", "/perfil/cv/5"]) {
+  for (const rota of ["/", "/vagas", "/triagem", "/lote", "/uso", "/mais", "/tipos", "/estudar", "/candidaturas", "/painel", "/configuracoes", "/adicionar", "/vaga/gupy%3A1", "/perfil", "/perfil/cv", "/perfil/cv/5", "/preferencias"]) {
     await page.goto(rota);
     const largura = await page.evaluate(() => document.documentElement.scrollWidth);
     expect(largura, rota).toBeLessThanOrEqual(390);
@@ -390,4 +390,41 @@ test("Perfil profissional: mostra o nível, o próximo passo e a evolução das 
   await expect(page.getByRole("region", { name: "Seu próximo passo" }).getByRole("link")).toBeVisible();
   await expect(page.getByRole("region", { name: "Evolução das notas" }).locator(".serie-ponto")).toHaveCount(5);
   await expect(page.getByRole("region", { name: "Nível de mercado" }).locator('[aria-current="step"]')).toHaveText("Júnior");
+});
+
+// ------------------------------------------------------------------ Preferências (docs/spec.md, "Preferências da busca")
+
+test("Preferências: sem forma de trabalho não salva; salvas, voltam preenchidas e mudam a lista", async ({ page }) => {
+  await entrar(page);
+  await page.goto("/preferencias");
+  await expect(page.getByText(/Ainda no padrão do arquivo/)).toBeVisible();
+  for (const m of ["Remoto", "Híbrido", "Presencial"]) await page.getByRole("checkbox", { name: new RegExp(`^${m}`) }).uncheck();
+  await page.getByRole("button", { name: "Salvar preferências" }).click();
+  await expect(page.locator(".form-prefs [role=alert]")).toContainText("pelo menos uma forma de trabalho");
+  await expect(page.locator("textarea[name=cidades]")).not.toHaveValue(""); // o que estava digitado continua lá
+
+  await page.getByRole("checkbox", { name: /^Híbrido/ }).check();
+  await page.fill("textarea[name=cidades]", "Brasília");
+  await page.fill("input[name=regiao]", "Brasília");
+  await page.getByRole("checkbox", { name: "Pleno" }).check();
+  await page.fill("textarea[name=palavras_bloqueadas]", "marketing");
+  await page.getByRole("button", { name: "Salvar preferências" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Preferências salvas" })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByText(/^Salvas em/)).toBeVisible();
+  await expect(page.getByRole("checkbox", { name: /^Remoto/ })).not.toBeChecked();
+  await expect(page.getByRole("checkbox", { name: /^Híbrido/ })).toBeChecked();
+  await expect(page.locator("textarea[name=cidades]")).toHaveValue("Brasília");
+  await expect(page.getByRole("checkbox", { name: "Pleno" })).toBeChecked();
+  await page.goto("/vagas");
+  await expect(page.locator(".pagina-sub")).toContainText("em Brasília");
+  await expect(page.locator(".pagina-sub")).not.toContainText("remotas");
+
+  // Voltar ao padrão do arquivo
+  await page.goto("/preferencias");
+  await page.getByRole("button", { name: "Voltar ao padrão" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Voltou ao padrão" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("checkbox", { name: /^Remoto/ })).toBeChecked();
 });

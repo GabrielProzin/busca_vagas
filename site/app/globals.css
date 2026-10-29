@@ -155,7 +155,7 @@ p { margin: 0; }
 .icone-botao.ok:hover { color: var(--ok); }
 .icone-botao.perigo:hover { color: var(--danger); }
 
-input[type="text"], input[type="email"], input[type="url"], input[type="search"], input[type="password"], input[type="file"], select, textarea {
+input[type="text"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="password"], input[type="file"], select, textarea {
   font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
   border: 1px solid var(--line-forte); border-radius: var(--r-s); padding: 8px 10px; width: 100%;
 }
@@ -1027,4 +1027,38 @@ a.cv-linha:hover { background: var(--surface-2); }
   .grafico-eixo { font-size: 22px; }
   .serie-valor { font-size: 24px; }
   .cartao-cabecalho { flex-wrap: wrap; row-gap: 4px; }
+}
+
+/* =========================================================================
+   Preferências da busca
+   ========================================================================= */
+.form-prefs { display: flex; flex-direction: column; gap: 16px; }
+.prefs-bloco { margin: 0; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.prefs-bloco legend { float: left; width: 100%; padding: 0; font-size: 14.5px; font-weight: 650; display: flex; align-items: center; gap: 8px; }
+.prefs-bloco legend svg { color: var(--muted); }
+.prefs-bloco label, .prefs-bloco .campo-rotulo { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: 13.5px; min-width: 0; }
+.prefs-bloco textarea { min-height: 120px; }
+.prefs-modos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.prefs-modo { flex-direction: row !important; align-items: flex-start; gap: 10px !important; padding: 12px 14px; border: 1px solid var(--line-forte); border-radius: var(--r-m); cursor: pointer; background: var(--surface); }
+.prefs-modo:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.prefs-modo span { display: flex; flex-direction: column; gap: 2px; }
+.prefs-modo small { font-weight: 400; color: var(--muted); font-size: 12.5px; }
+.prefs-modo input, .prefs-chip input, .prefs-check input { width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--accent); flex: none; }
+.prefs-cidades { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 14px; }
+.prefs-cidades.desligado { opacity: 0.55; }
+.prefs-lado { display: flex; flex-direction: column; gap: 14px; }
+.prefs-niveis { display: flex; flex-wrap: wrap; gap: 8px; }
+.prefs-chip { flex-direction: row !important; align-items: center; gap: 8px !important; padding: 8px 14px; border: 1px solid var(--line-forte); border-radius: 999px; cursor: pointer; }
+.prefs-chip:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.prefs-anos { flex-direction: row !important; align-items: center; flex-wrap: wrap; gap: 8px !important; font-weight: 500 !important; }
+.prefs-anos input { width: 72px; text-align: center; }
+.prefs-duas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.prefs-check { flex-direction: row !important; align-items: center; gap: 10px !important; font-weight: 500 !important; cursor: pointer; }
+.prefs-rodape { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.faixa.ok { color: var(--ok); background: var(--ok-soft); padding: 10px 14px; border-radius: var(--r-s); margin: 0; }
+@media (max-width: 760px) {
+  .prefs-modos, .prefs-cidades, .prefs-duas { grid-template-columns: minmax(0, 1fr); }
+  .prefs-rodape .linha-botoes { width: 100%; }
+  .prefs-rodape .botao { flex: 1; height: 44px; }
+  .prefs-modo, .prefs-chip { min-height: 44px; }
 }

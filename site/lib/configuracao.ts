@@ -1,5 +1,6 @@
 import "server-only";
-import { listarExecucoes, schemaCompleto } from "./db";
+import { lerPreferencias, listarExecucoes, schemaCompleto } from "./db";
+import { textoLocal } from "./preferencias";
 import { infoCurriculo } from "./arquivos";
 import { gmailConfigurado } from "./email";
 import { iaConfigurada } from "./ia";
@@ -15,6 +16,7 @@ export type Passo = {
   essencial: boolean;
   detalhe: string;
   ancora?: string; // âncora no README
+  link?: string; // página do próprio site onde se resolve
 };
 
 /** Endereço do repositório no GitHub (variáveis de sistema da Vercel), para os links do README. */
@@ -26,10 +28,11 @@ export function urlRepositorio(): string | null {
 }
 
 export async function passosConfiguracao(): Promise<Passo[]> {
-  const [execucoes, schema, cv] = await Promise.all([
+  const [execucoes, schema, cv, prefs] = await Promise.all([
     listarExecucoes(1).catch(() => null),
     schemaCompleto(),
     infoCurriculo().catch(() => null),
+    lerPreferencias(),
   ]);
   const dono = (process.env.VERCEL_GIT_REPO_OWNER ?? "").toLowerCase();
   const perfilDoDono = !dono || String(PERFIL.links.github ?? "").toLowerCase().includes(dono);
@@ -85,6 +88,13 @@ export async function passosConfiguracao(): Promise<Passo[]> {
       id: "extensao", rotulo: "Extensão do Chrome liberada", essencial: false, ok: (process.env.CAPTURA_TOKEN ?? "").length >= 24,
       detalhe: (process.env.CAPTURA_TOKEN ?? "").length >= 24 ? "CAPTURA_TOKEN configurado: instale a extensão e informe o mesmo valor nas opções." : "Para usar a extensão, crie CAPTURA_TOKEN (24+ caracteres) na Vercel.",
       ancora: "7-últimos-ajustes-no-site",
+    },
+    {
+      id: "preferencias", rotulo: "Preferências da busca revisadas", essencial: false, ok: Boolean(prefs.salvas_em),
+      detalhe: prefs.salvas_em
+        ? `Salvas no site: ${textoLocal(prefs.prefs) || "sem local"}.`
+        : "Confira remoto, híbrido ou presencial, as cidades, o nível e os termos de busca.",
+      link: "/preferencias",
     },
     {
       id: "vigia", rotulo: "Vigia da coleta", essencial: false,

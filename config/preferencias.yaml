@@ -56,7 +56,7 @@ empresas_bloqueadas: []
 localizacao:
   rotulo: Goiânia            # como a sua região aparece nos textos do site ("remotas ou em Goiânia")
   aceita_remoto: true
-  cidades_presencial_hibrido: ['goiania', 'aparecida de goiania', 'senador canedo', 'trindade']
+  cidades_presencial_hibrido: ['Goiânia', 'Aparecida de Goiânia', 'Senador Canedo', 'Trindade']  # comparadas sem acento
   estado: GO
   # Vagas com descrição em inglês (quase sempre empresa estrangeira pedindo inglês fluente).
   aceita_vagas_em_ingles: false

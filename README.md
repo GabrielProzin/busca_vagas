@@ -26,6 +26,8 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
 - **Análise de CV**: nota de 0 a 100 do currículo em 4 critérios explicados (habilidades que o mercado pede,
   resultados com números, estrutura e clareza da escrita), com histórico e variação. Para uma vaga, mostra a conexão,
   o que destacar, as lacunas e responde às perguntas do formulário só com fatos do seu currículo.
+- **Preferências da busca**: remoto, híbrido e presencial (cada um ligado ou não), cidades, nível, anos de experiência,
+  termos de busca e palavras a evitar, ajustados no site; valem a partir da próxima coleta.
 - **Uso dos serviços**: quanto de cada plano grátis já foi usado (GitHub, Supabase, Apify, Gemini, Gmail), com
   aviso por email ao passar de 80%.
 - **Ranking que aprende**: vagas parecidas com as que você aplica sobem; com as que descarta, descem.
@@ -76,7 +78,7 @@ a partir do seu currículo:
 |---|---|
 | `perfil/curriculo.md` | Seu currículo em texto (sem telefone nem email). É a base da nota e dos emails. |
 | `perfil/perfil.yaml` | Nome, cargo, links, suas habilidades (com sinônimos e peso) e 4 a 6 destaques do currículo em primeira pessoa. |
-| `config/preferencias.yaml` | O que buscar e o que descartar: termos de busca, tipos de cargo, senioridade, cidades aceitas para presencial/híbrido, nota mínima. |
+| `config/preferencias.yaml` | O que buscar e o que descartar: termos de busca, tipos de cargo, senioridade, cidades aceitas para presencial/híbrido, nota mínima. É o padrão inicial: depois, remoto/híbrido/presencial, cidades, nível, termos e palavras a evitar se ajustam no próprio site, em **Preferências da busca**. |
 
 Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo do formato e troque tudo pelo seu.
 

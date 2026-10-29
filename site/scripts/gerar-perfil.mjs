@@ -28,6 +28,17 @@ const dados = {
   resumoNotaMinima: Number(preferencias?.resumo?.nota_minima ?? 85),
   // Para a captura em lote descartar vaga presencial/híbrida fora daqui (mesma regra do coletor).
   cidadesAceitas: preferencias?.localizacao?.cidades_presencial_hibrido ?? [],
+  // Padrão da tela Preferências (o que vale enquanto a pessoa não salvar nada lá).
+  preferenciasYaml: {
+    remoto: preferencias?.localizacao?.aceita_remoto ?? true,
+    hibrido: preferencias?.localizacao?.aceita_hibrido ?? true,
+    presencial: preferencias?.localizacao?.aceita_presencial ?? true,
+    estado: String(preferencias?.localizacao?.estado ?? "").toUpperCase(),
+    aceitaIngles: Boolean(preferencias?.localizacao?.aceita_vagas_em_ingles),
+    senioridadeBloqueada: preferencias?.senioridade_bloqueada ?? [],
+    maxAnos: Number(preferencias?.max_anos_experiencia ?? 2),
+    termosBusca: preferencias?.termos_busca ?? [],
+  },
   notaMinimaPosts: Number(preferencias?.linkedin_posts?.nota_minima ?? 40),
   // Envio em lote (a fila é enviada pelo GitHub Actions: coletor/envio.py lê os mesmos valores).
   envio: {

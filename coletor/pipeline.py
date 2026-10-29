@@ -29,6 +29,7 @@ from . import analises
 from .aprendizado import Aprendizado
 from .armazenamento import Supabase, salvar_json
 from .filtros import Filtros
+from .preferencias import aplicar as aplicar_preferencias
 from .contato import buscar_email_empresa
 from .fontes import github_issues, gupy, linkedin_posts, remotar, solides
 from .http import Http
@@ -189,6 +190,13 @@ def _para_fila(aprovadas: list[Vaga], existentes: set[str], automatico: dict, ex
 def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: int = 4) -> dict:
     inicio = time.monotonic()
     cfg = yaml.safe_load((RAIZ / "config/preferencias.yaml").read_text(encoding="utf-8"))
+    # Preferências mudadas no site (remoto/híbrido/presencial, cidades, níveis...) valem por cima do YAML.
+    sb_pref = Supabase.do_ambiente()
+    if sb_pref:
+        try:
+            cfg = aplicar_preferencias(cfg, sb_pref.ler_preferencias())
+        except Exception as e:  # sem a tabela (SQL antigo) ou sem rede: segue com o YAML
+            log.warning("preferências do site: não li (%s); uso o config/preferencias.yaml", e)
     perfil = yaml.safe_load((RAIZ / "perfil/perfil.yaml").read_text(encoding="utf-8"))
     curriculo = (RAIZ / "perfil/curriculo.md").read_text(encoding="utf-8")
     filtros = Filtros.de_config(cfg)

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PERFIL } from "@/lib/gerado/perfil";
 import Moldura from "@/components/Moldura";
 import Icone from "@/components/Icone";
@@ -41,6 +42,9 @@ export default async function PaginaConfiguracoes() {
                     <b>{p.rotulo}</b>
                     {!p.ok && !p.essencial ? <span className="etiqueta" style={{ marginLeft: 8 }}>opcional</span> : null}
                     <p className="dica">{p.detalhe}</p>
+                    {!p.ok && p.link ? (
+                      <Link className="link-passo" href={p.link}>Ajustar agora <Icone nome="voltar" tamanho={13} className="seta-direita" /></Link>
+                    ) : null}
                     {!p.ok && p.ancora && repo ? (
                       <a className="link-passo" href={`${repo}#${p.ancora}`} target="_blank" rel="noopener noreferrer">
                         Como fazer <Icone nome="externo" tamanho={13} />

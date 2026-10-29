@@ -226,6 +226,13 @@ class Supabase:
         r.raise_for_status()
         return r.json()
 
+    def ler_preferencias(self) -> dict | None:
+        """Preferências editadas no site (tabela preferencias, linha 1). None = ainda não salvou nenhuma."""
+        r = requests.get(f"{self.base}/preferencias", headers=self.h, timeout=30, params={"select": "dados", "id": "eq.1"})
+        r.raise_for_status()
+        linhas = r.json()
+        return linhas[0]["dados"] if linhas else None
+
     def ler_analise(self, nome: str) -> dict | None:
         r = requests.get(f"{self.base}/analises", headers=self.h, timeout=30, params={"select": "dados", "nome": f"eq.{nome}"})
         r.raise_for_status()

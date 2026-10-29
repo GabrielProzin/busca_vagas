@@ -38,7 +38,7 @@ Documento vivo: toda mudança de comportamento começa aqui, depois vai para o c
 
 O menu é dividido em módulos que abrem e fecham: **Início** (Hoje), **Vagas** (Vagas, Triagem rápida, Envio em lote,
 Candidaturas, Adicionar vaga), **Meu perfil** (Perfil profissional, Análise de CV, O que estudar), **Mercado**
-(Tipos de vaga, Painel) e **Sistema** (Uso dos serviços, Configurações). O módulo da página aberta fica aberto.
+(Tipos de vaga, Painel) e **Sistema** (Preferências da busca, Uso dos serviços, Configurações). O módulo da página aberta fica aberto.
 No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a tela Mais lista o resto por módulo.
 
 | Tela | O que mostra | Ações |
@@ -58,6 +58,7 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 | Perfil profissional (`/perfil`) | Nível de mercado (estágio, júnior, pleno, sênior) com o motivo e o que falta para o próximo; "seu próximo passo"; evolução das notas do CV; números do perfil (nota do CV, vagas que combinam, habilidade que mais abriria vagas) | Fazer o próximo passo, nova análise de CV |
 | Análise de CV (`/perfil/cv`) | Nota atual, variação e critério mais fraco; gráfico da evolução; histórico de análises (nota, tipo, conexão com a vaga, respostas, variação, data) com filtro Todas / Geral / Para vaga | Nova análise geral ou para uma vaga (escolher da lista ou colar o texto), com perguntas do formulário opcionais |
 | Análise (`/perfil/cv/[id]`) | Nota e os 4 critérios com o motivo de cada um, pontos fortes, melhorias (com o trecho do currículo), nível; para vaga: conexão, o que destacar, lacunas e as respostas do formulário | Copiar cada resposta, excluir a análise |
+| Preferências da busca (`/preferencias`) | Onde aceita trabalhar (remoto, híbrido, presencial, cada um ligado ou não), cidades para híbrido/presencial, estado, nome da região; níveis aceitos e máximo de anos de experiência; termos de busca; palavras que eliminam a vaga pelo título; vagas em inglês | Salvar, Voltar ao padrão do arquivo |
 | Configurações | Primeiros passos (o que está pronto e o que falta, com o link do passo no README), currículo em PDF, seus dados e backup, extensão | Enviar PDF, Exportar meus dados |
 
 ## 4. Dados (Supabase / Postgres, `supabase/schema.sql`)
@@ -68,6 +69,8 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - **candidaturas**: o que o candidato fez com a vaga (1 para 1 com `vagas`, separada para a coleta nunca apagar).
   Situação, email (para, assunto, corpo, Message-ID), data de envio, follow-ups (quantos e o último), anotações.
 - **execucoes**: uma linha por coleta (contagens por fonte, descartes por motivo, aprendizado do ranking).
+- **preferencias**: uma linha (id = 1) com o que a pessoa salvou na tela Preferências (em `dados`). Sem linha, vale o
+  `config/preferencias.yaml`.
 - **analises_cv**: uma linha por análise do currículo (tipo `geral` ou `vaga`, título, nota, conexão com a vaga,
   vaga analisada, nome da versão, e em `dados` os critérios, comentários, respostas e o texto analisado).
 - **Storage `privado/curriculo.pdf`**: o currículo anexado nos emails.
@@ -149,6 +152,18 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
   contados a cada uso, em `uso_diario`.
 - 60% = atenção, 80% = perto do limite. Ao cruzar 80%, um email de alerta (uma vez) e um aviso na tela Hoje.
 
+**Preferências da busca** (`site/lib/preferencias.ts`, `coletor/preferencias.py`)
+- O `config/preferencias.yaml` é o padrão inicial e guarda os ajustes avançados (trilhas, catálogo, regex). O que a
+  pessoa salva na tela vai para a tabela `preferencias`; o coletor aplica por cima do YAML antes de filtrar, a partir
+  da próxima coleta. Sem a tabela ou sem nada salvo, vale o YAML.
+- Remoto, híbrido e presencial ligam e desligam cada um: híbrido desligado descarta vaga híbrida mesmo numa cidade
+  aceita ("híbrido não aceito"). Híbrido ou presencial ligado exige pelo menos uma cidade.
+- Níveis: os termos de título de cada nível não aceito descartam a vaga; cargos de liderança ficam sempre de fora.
+  Aceitar pleno ou sênior desliga o descarte por "descrição indica pleno/sênior".
+- Palavras a evitar são texto simples (viram regex literal) e somam às do YAML. Limites: 15 cidades, 20 termos,
+  30 palavras, 60 caracteres cada; anos de experiência de 0 a 15. Tudo validado no servidor.
+- A captura pela extensão e pelo "Adicionar vaga" usa as mesmas preferências (forma de trabalho, cidade, nível).
+
 **Análise de CV** (`site/lib/cv.ts`, `site/lib/ia.ts`)
 - Texto analisado: o currículo do perfil (`perfil/curriculo.md`) ou uma versão colada (até 15.000 caracteres).
 - Nota de 0 a 100 = média ponderada de 4 critérios, cada um de 0 a 100:
@@ -200,6 +215,8 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - [ ] Uma análise para vaga com perguntas mostra a conexão e uma resposta para cada pergunta.
 - [ ] O Perfil profissional mostra o nível, o próximo passo e a evolução das notas.
 - [ ] O menu abre o módulo da página atual; no celular, Perfil está na barra de baixo.
+- [ ] Preferências: sem nenhuma forma de trabalho não salva; salvas, voltam preenchidas e a lista de vagas usa o local novo.
+- [ ] Com híbrido ligado e presencial desligado, vaga presencial na cidade aceita sai ("presencial não aceito").
 - [ ] Envio em lote: as vagas com email aparecem com o email pronto; as marcadas entram na fila e saem das listas de novas.
 - [ ] O envio da fila respeita horário, intervalo, limite diário e nunca envia duas vezes.
 - [ ] Uma resposta no Gmail move a candidatura para "Respondeu"; um email devolvido marca a candidatura.

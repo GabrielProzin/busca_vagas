@@ -56,6 +56,8 @@ class Filtros:
     aceita_ingles: bool = False
     min_mencoes_senioridade: int = 2
     local_livre_fontes: tuple[str, ...] = ()
+    aceita_hibrido: bool = True
+    aceita_presencial: bool = True
 
     @classmethod
     def de_config(cls, cfg: dict) -> "Filtros":
@@ -74,6 +76,8 @@ class Filtros:
             aceita_ingles=bool(loc.get("aceita_vagas_em_ingles", False)),
             min_mencoes_senioridade=int(cfg.get("min_mencoes_senioridade_descricao", 2)),
             local_livre_fontes=tuple(loc.get("local_nao_informado_aceito_em", [])),
+            aceita_hibrido=bool(loc.get("aceita_hibrido", True)),
+            aceita_presencial=bool(loc.get("aceita_presencial", True)),
         )
 
     # --- filtros de título (rodam antes de baixar a descrição completa) ---
@@ -118,6 +122,10 @@ class Filtros:
         v.modalidade = modalidade
         if modalidade == "remoto":
             return None if self.aceita_remoto else "remoto não aceito"
+        if modalidade == "hibrido" and not self.aceita_hibrido:
+            return "híbrido não aceito"
+        if modalidade == "presencial" and not self.aceita_presencial:
+            return "presencial não aceito"
         cidade = normalizar(v.cidade)
         if cidade:
             return None if any(c == cidade for c in self.cidades) else f"{modalidade or 'presencial'} em {v.cidade}"

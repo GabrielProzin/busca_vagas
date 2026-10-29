@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
   buscarVaga, enfileirarVagas, enviadosHoje, excluirAnaliseCV, filaPronta, followupPronto, lerAnalise, mudarStatus,
-  reservarEnvio, reservarFollowup, salvarAnaliseCV, salvarCandidatura, salvarMessageId, tirarVagaDaFila,
+  reservarEnvio, reservarFollowup, salvarAnaliseCV, salvarPreferencias, salvarCandidatura, salvarMessageId, tirarVagaDaFila,
 } from "@/lib/db";
 import { dispararWorkflow } from "@/lib/github";
 import { ErroIA, analisarParaVaga, avaliarCurriculo, emailModelo, followupModelo, gerarEmail, gerarFollowup, type AnaliseVagaIA, type AvaliacaoIA } from "@/lib/ia";
+import { lerFormulario } from "@/lib/preferencias";
 import { LIMITE_TEXTO, PESOS, ROTULOS, criteriosSemIA, habilidadesNoTexto, notaFinal, trechoReal } from "@/lib/cv";
 import { enviarEmail, erroGmail } from "@/lib/email";
 import { lerCurriculo, salvarCurriculo } from "@/lib/arquivos";
@@ -412,4 +413,34 @@ export async function apagarAnaliseCV(form: FormData) {
   await excluirAnaliseCV(id);
   revalidatePath("/perfil", "layout");
   redirect("/perfil/cv");
+}
+
+
+// ------------------------------------------------------------------ preferências da busca
+// Ver docs/spec.md, "Preferências". Valem a partir da próxima coleta (o coletor lê a tabela antes de filtrar).
+
+export type EstadoPreferencias = { erro?: string; ok?: string } | null;
+
+export async function salvarPreferenciasBusca(_: EstadoPreferencias, form: FormData): Promise<EstadoPreferencias> {
+  await exigirSessao();
+  if (form.get("acao") === "padrao") {
+    try {
+      await salvarPreferencias(null);
+    } catch (e) {
+      console.error("preferencias: voltar ao padrão", e);
+      return { erro: "Não consegui voltar ao padrão agora. Tente de novo." };
+    }
+    revalidatePath("/", "layout");
+    return { ok: "Voltou ao padrão do arquivo config/preferencias.yaml." };
+  }
+  const r = lerFormulario(form);
+  if ("erro" in r) return { erro: r.erro };
+  try {
+    await salvarPreferencias(r.prefs);
+  } catch (e) {
+    console.error("preferencias: salvar", e);
+    return { erro: "Não consegui salvar. Rode de novo o supabase/schema.sql no SQL Editor (tabela preferencias)." };
+  }
+  revalidatePath("/", "layout");
+  return { ok: "Preferências salvas. Valem a partir da próxima coleta." };
 }

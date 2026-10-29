@@ -1,8 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { buscarVaga, gravarVaga } from "./db";
+import { buscarVaga, gravarVaga, lerPreferencias } from "./db";
 import { extrairVaga } from "./ia";
-import { normalizarBusca } from "./formato";
+import { capturaNoPerfil } from "./preferencias";
 import { PERFIL } from "./gerado/perfil";
 
 /** O email é de um domínio da lista de excluídos? (mesma regra de coletor/envio.py) */
@@ -44,9 +44,9 @@ export async function capturar(texto: string, url: string | null, op: Opcoes = {
   if (!x.e_vaga) return { ok: false, motivo: "nao_vaga", erro: "Isso não parece uma vaga aberta (pode ser lista de candidatos ou divulgação)." };
   if (op.lote) {
     if (!x.emails.length) return { ok: false, motivo: "sem_email", erro: "Post sem email de contato." };
-    const cidade = normalizarBusca(x.cidade ?? "");
-    const longe = x.modalidade !== "remoto" && cidade && !PERFIL.cidadesAceitas.some((c: string) => normalizarBusca(c) === cidade);
-    if (["pleno", "senior", "estagio"].includes(x.nivel) || x.nota < PERFIL.notaMinimaPosts || longe) {
+    // Forma de trabalho, cidade e nível conforme a tela Preferências (ou o YAML, se nada foi salvo).
+    const { prefs } = await lerPreferencias();
+    if (!capturaNoPerfil(prefs, x) || x.nota < PERFIL.notaMinimaPosts) {
       return { ok: false, motivo: "fora_do_perfil", erro: "Fora do seu perfil (nível, local ou área)." };
     }
   }

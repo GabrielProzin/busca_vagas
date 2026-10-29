@@ -5,7 +5,8 @@ import { PERFIL } from "@/lib/gerado/perfil";
 import Nota from "@/components/Nota";
 import Icone from "@/components/Icone";
 import FiltroCargo from "@/components/FiltroCargo";
-import { listarVagas } from "@/lib/db";
+import { lerPreferencias, listarVagas } from "@/lib/db";
+import { textoLocal } from "@/lib/preferencias";
 import { fonte, habilidade, idUrl, local, normalizarBusca, origemEmail, quando } from "@/lib/formato";
 import { ehNova, type Vaga } from "@/lib/tipos";
 
@@ -15,6 +16,7 @@ type Busca = { lista?: string; trilha?: string; modalidade?: string; email?: str
 
 export default async function PaginaVagas({ searchParams }: { searchParams: Promise<Busca> }) {
   const busca = await searchParams;
+  const { prefs } = await lerPreferencias();
   const lista = busca.lista === "vale_tentar" ? "vale_tentar" : "principal";
 
   let vagas: Vaga[];
@@ -61,7 +63,7 @@ export default async function PaginaVagas({ searchParams }: { searchParams: Prom
     <Moldura
       atual="/vagas"
       titulo="Vagas"
-      subtitulo={`Vagas ${PERFIL.area}${PERFIL.regiao ? `, remotas ou em ${PERFIL.regiao}` : ""}, ordenadas pela nota contra o seu currículo.`}
+      subtitulo={`Vagas ${PERFIL.area}${textoLocal(prefs) ? `, ${textoLocal(prefs)}` : ""}, ordenadas pela nota contra o seu currículo.`}
       acoes={
         <>
         <Link className="botao primario" href="/triagem"><Icone nome="triagem" tamanho={16} /> Triagem rápida</Link>

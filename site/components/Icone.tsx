@@ -32,7 +32,8 @@ const CAMINHOS = {
   estudar: <><path d="M3 9.5 12 5l9 4.5-9 4.5z" /><path d="M7 11.5V16c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4.5M21 9.5V15" /></>,
   perfil: <><circle cx="12" cy="8.5" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>,
   sobe: <path d="M4 17l6-6 4 4 6-7M15 8h5v5" />,
-    sino: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0" />,
+    filtro: <path d="M4 5h16l-6 7.5V19l-4 1.5v-8z" />,
+  sino: <path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2.2 2.2 0 0 0 4 0" />,
 } as const;
 
 export type NomeIcone = keyof typeof CAMINHOS;
