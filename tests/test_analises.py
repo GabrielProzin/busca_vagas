@@ -10,7 +10,7 @@ from coletor.modelos import Vaga
 from coletor.ranking import Embedder
 
 RAIZ = Path(__file__).resolve().parent.parent
-CFG = yaml.safe_load((RAIZ / "config/preferencias.yaml").read_text(encoding="utf-8"))
+CFG = yaml.safe_load((RAIZ / "tests/dados/preferencias.yaml").read_text(encoding="utf-8"))
 CAT = analises.carregar_catalogo(CFG)
 CV = "Python, SQL, Power BI, DAX, Airflow, BigQuery, Docker. Pipelines ETL e dashboards de KPIs."
 

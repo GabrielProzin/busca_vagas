@@ -9,7 +9,7 @@ from coletor.modelos import Vaga
 from coletor.preferencias import aplicar, niveis_aceitos
 
 RAIZ = Path(__file__).resolve().parent.parent
-CFG = yaml.safe_load((RAIZ / "config/preferencias.yaml").read_text(encoding="utf-8"))
+CFG = yaml.safe_load((RAIZ / "tests/dados/preferencias.yaml").read_text(encoding="utf-8"))
 
 
 def vaga(titulo="Analista de Dados", descricao="", modalidade="remoto", cidade=None):

@@ -9,7 +9,7 @@ from coletor.ranking import Embedder, Ranker
 from coletor.texto import extrair_emails, limpar_html
 
 RAIZ = Path(__file__).resolve().parent.parent
-CFG = yaml.safe_load((RAIZ / "config/preferencias.yaml").read_text(encoding="utf-8"))
+CFG = yaml.safe_load((RAIZ / "tests/dados/preferencias.yaml").read_text(encoding="utf-8"))
 # Perfil fictício e fixo: o perfil/ de verdade muda em cada cópia (assistente de instalação) e não pode quebrar os testes.
 PERFIL = yaml.safe_load((RAIZ / "tests/dados/perfil.yaml").read_text(encoding="utf-8"))
 CV = (RAIZ / "tests/dados/curriculo.md").read_text(encoding="utf-8")

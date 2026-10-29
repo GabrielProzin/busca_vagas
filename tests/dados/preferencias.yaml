@@ -1,0 +1,168 @@
+# CÓPIA FIXA usada só nos testes (tests/). O config/preferencias.yaml de verdade muda em cada cópia do projeto
+# (outra área, outra cidade, outro idioma) e não pode quebrar os testes. Mude aqui só junto com os testes.
+
+# Preferências da busca. Tudo que muda o que entra (ou não) na lista diária fica aqui.
+
+# Como o tipo de vaga aparece nos textos do site ("vagas júnior de dados").
+area_rotulo: júnior de dados
+
+# Termos usados para buscar vagas nas fontes. Cada termo vira uma busca separada.
+termos_busca:
+  - analista de dados
+  - analista de bi
+  - business intelligence
+  - engenheiro de dados
+  - engenharia de dados
+  - analytics engineer
+  - cientista de dados
+  - ciência de dados
+  - data analyst
+  - data engineer
+  - power bi
+
+# Sólides: a busca por título casa qualquer palavra, então usamos termos curtos e específicos.
+termos_solides: [dados, bi, data, analytics]
+
+# Trilhas de cargo, na ordem de prioridade. O título da vaga é classificado
+# na primeira trilha cujo padrão (regex, sem acento, minúsculo) bater.
+trilhas:
+  - nome: Analista de Dados / BI
+    peso: 1.0
+    padroes: ['analista de (dados|bi|business intelligence|inteligencia)', 'data analyst', '\bbi\b', 'business intelligence', 'power ?bi', 'analytics(?! engineer)']
+  - nome: Engenharia de Dados
+    peso: 0.95
+    padroes: ['engenheir[oa] de dados', 'engenharia de dados', 'data engineer', 'analytics engineer', '\betl\b']
+  - nome: Ciência de Dados
+    peso: 0.85
+    padroes: ['cientista de dados', 'ciencia de dados', 'data scien', 'machine learning', '\bml\b']
+  - nome: Dados (genérico)
+    peso: 0.7
+    padroes: ['\bdados\b', '\bdata\b']
+
+# Senioridade. Vagas com estes termos no TÍTULO são descartadas.
+senioridade_bloqueada: ['senior', 'sênior', '\bsr\.?\b', 'pleno', '\bpl\b', 'especialista', 'specialist', 'expert', 'mid[- ]?level', 'lead', 'lider', 'líder', 'coordenador', 'gerente', 'manager', 'head', 'principal', 'staff', 'arquitet', 'architect', 'estagi', 'intern\b', 'trainee', 'aprendiz', '\biii\b', '\bii\b']
+# Vaga sem nível no título: descarta se a descrição falar em pleno/sênior
+# pelo menos este número de vezes e nunca em júnior.
+min_mencoes_senioridade_descricao: 2
+# Termos que marcam a vaga como júnior (sobem a nota).
+senioridade_alvo: ['junior', 'júnior', '\bjr\.?\b', '\bi\b', 'assistente', 'entry']
+# Descarta a vaga se a descrição pedir mais que isso de experiência.
+max_anos_experiencia: 2
+
+# Palavras que eliminam a vaga se aparecerem no título.
+bloqueio_titulo: ['\.net', '\bjava\b', 'security', 'seguranca','desenvolvedor', 'developer', 'programador', 'front[- ]?end', 'back[- ]?end', 'full[- ]?stack', 'mobile', '\bqa\b', 'suporte', 'help ?desk']
+
+# Empresas (nome ou domínio) para nunca enviar.
+empresas_bloqueadas: []
+
+# Localização. Remoto vale para o Brasil todo; híbrido/presencial só nestas cidades.
+localizacao:
+  rotulo: Goiânia            # como a sua região aparece nos textos do site ("remotas ou em Goiânia")
+  aceita_remoto: true
+  aceita_hibrido: true       # híbrido e presencial usam as cidades abaixo
+  aceita_presencial: true
+  cidades_presencial_hibrido: ['Goiânia', 'Aparecida de Goiânia', 'Senador Canedo', 'Trindade']  # comparadas sem acento
+  estado: GO
+  # Vagas com descrição em inglês (quase sempre empresa estrangeira pedindo inglês fluente).
+  aceita_vagas_em_ingles: false
+  # Posts do LinkedIn muitas vezes não dizem o local. Ficam na lista com um aviso, em vez de sumir.
+  local_nao_informado_aceito_em: [linkedin]
+
+# Posts de vaga do LinkedIn com email do recrutador (via Apify, sem usar a sua conta).
+# Precisa do secret APIFY_TOKEN. Custo ~US$ 2 por 1.000 posts, pago com o crédito grátis de US$ 5/mês:
+# 2 buscas x 20 posts x 2 coletas por dia = ~2.400 posts/mês. Mude com cuidado.
+linkedin_posts:
+  horas: 13                 # cada coleta olha só as últimas 13 horas (as duas coletas do dia não se repetem)
+  max_posts_por_busca: 15
+  # Post é texto curto: pontua menos em "parecido com o currículo" mesmo quando serve. E já vem com email.
+  nota_minima: 40
+  # Buscas curtas e simples: as booleanas (AND/OR) e as longas voltaram vazias no teste de 21/10.
+  # Rendimento medido numa semana de posts: "currículo + cargo" ~40% com email (poucos posts, baratos);
+  # "vaga engenheiro de dados" 15%; "vaga analista de dados/BI" ~5%. Sem email: "vaga power bi",
+  # "vaga cientista de dados", "analista de dados júnior".
+  # Estimativa: ~40 posts por coleta, ~2.400 por mês (dentro do crédito grátis de US$ 5).
+  buscas:
+    - currículo analista de dados
+    - currículo analista de BI
+    - currículo cientista de dados
+    - currículo engenheiro de dados
+    - vaga engenheiro de dados
+    - vaga analista de dados
+
+# Catálogo de habilidades do mercado (telas "O que estudar" e "Tipos de vaga").
+# Você "tem" a habilidade quando ela aparece no perfil/curriculo.md. Padrões em minúsculo e sem acento.
+catalogo_habilidades:
+  Python: ['python']
+  SQL: ['\bsql\b']
+  Power BI: ['power ?bi']
+  DAX: ['\bdax\b']
+  Power Query: ['power query', '\bm language']
+  Excel: ['excel']
+  Tableau: ['tableau']
+  Looker: ['looker']
+  Qlik: ['qlik']
+  Pandas: ['pandas']
+  Spark: ['spark', 'pyspark']
+  Databricks: ['databricks']
+  Airflow: ['airflow']
+  dbt: ['\bdbt\b']
+  Kafka: ['kafka']
+  Snowflake: ['snowflake']
+  BigQuery: ['bigquery', 'big query']
+  Redshift: ['redshift']
+  AWS: ['\baws\b', 'amazon web services', '\bs3\b', '\bglue\b', 'lambda']
+  Azure: ['azure', 'data factory', 'synapse']
+  Google Cloud: ['\bgcp\b', 'google cloud']
+  Docker: ['docker']
+  Kubernetes: ['kubernetes', '\bk8s\b']
+  Git: ['\bgit\b', 'github', 'gitlab']
+  Linux: ['linux']
+  Machine Learning: ['machine learning', 'aprendizado de maquina', '\bml\b']
+  Scikit-learn: ['scikit', 'sklearn']
+  Deep Learning: ['deep learning', 'tensorflow', 'pytorch', 'keras', 'redes neurais']
+  Estatística: ['estatistica', 'statistics', 'testes? de hipotese']
+  NLP: ['\bnlp\b', 'processamento de linguagem natural']
+  LLMs e IA generativa: ['\bllms?\b', 'ia generativa', 'genai', 'generative ai', '\brag\b']
+  R: ['linguagem r\b', '\brstudio\b', '\bem r\b', '\bou r\b']
+  SAS: ['\bsas\b']
+  Scala: ['scala']
+  Java: ['\bjava\b']
+  PostgreSQL: ['postgres']
+  SQL Server: ['sql server', 'mssql', '\bssis\b', '\bssrs\b']
+  Oracle: ['\boracle\b', 'pl/sql', 'plsql']
+  MongoDB / NoSQL: ['mongo', 'nosql', 'cassandra', 'dynamodb']
+  Data Warehouse: ['data warehouse', '\bdw\b', 'data lake', 'lakehouse']
+  Modelagem dimensional: ['modelagem (de dados|dimensional)', 'star schema', 'esquema estrela', 'kimball']
+  ETL / ELT: ['\betl\b', '\belt\b', 'pipelines? de dados', 'data pipelines?']
+  APIs: ['\bapis?\b', '\brest(ful)?\b']
+  Pentaho: ['pentaho']
+  VBA: ['\bvba\b', 'macros?']
+  Inglês: ['ingles (avancado|fluente|intermediario)', 'english', 'ingles tecnico']
+  Scrum / Ágil: ['scrum', 'metodologias? ageis', '\bagil\b', 'kanban']
+
+# Ferramentas que, se forem requisito central e você não tiver, mandam a vaga
+# para a lista "vale tentar" em vez da lista principal.
+requisitos_ausentes_pesados: ['spark', 'databricks', 'aws', 'azure', 'scala', 'kafka', 'snowflake', '\bsas\b', 'rstudio', 'linguagem r\b']
+
+# Corte de nota (0-100). Abaixo disso a vaga não aparece.
+nota_minima: 50
+# Envio em lote (fila). Quem envia é o GitHub Actions, em segundo plano.
+envio:
+  limite_diario: 40          # máximo de emails por dia (protege o seu Gmail de bloqueio)
+  max_por_execucao: 10       # por rodada (o envio roda de hora em hora e quando você coloca algo na fila)
+  intervalo_segundos: [60, 120]   # espera aleatória entre um email e outro
+  horario: [7, 21]           # só envia entre 7h e 21h (horário de Brasília)
+  # Modo automático: vagas novas com email e nota alta entram sozinhas na fila, com o modelo pronto.
+  automatico:
+    ligado: false
+    nota_minima: 90
+    so_lista_principal: true
+
+# Emails desses domínios nunca recebem candidatura (ex.: ['gmail.com'] para só mandar para emails de empresa).
+dominios_email_excluidos: []
+
+# Email de resumo depois de cada coleta completa: só vagas NOVAS com nota a partir deste valor.
+resumo:
+  nota_minima: 85
+# Só considera vagas publicadas nos últimos N dias.
+max_dias_publicacao: 14
