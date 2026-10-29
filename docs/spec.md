@@ -177,6 +177,9 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
   Se a vaga traz o estado e ele não é o da cidade escolhida, não conta (Santa Luzia - MG não é Santa Luzia - PB).
   No texto da vaga, a cidade precisa aparecer como palavra inteira. Erro de digitação de verdade não é corrigido
   (Goiana, em PE, é outra cidade).
+- Cargos: cada um vira uma busca. Cargo que nenhuma trilha do YAML reconhece vira a trilha "Cargos escolhidos" (peso 1),
+  e palavra do bloqueio de título que bate com um cargo escolhido deixa de bloquear. Assim a mesma cópia serve para
+  outra área (ex.: "analista de suporte" não é mais eliminado por "suporte") sem editar o YAML.
 - Contrato: com só CLT, sai a vaga que fala de PJ e não de CLT ("contrato PJ"); com só PJ, o contrário. Vaga que não
   diz o contrato ou oferece os dois sempre entra.
 - Palavras e empresas a evitar são texto simples e somam às do YAML (palavras viram regex literal no título; empresa

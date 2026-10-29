@@ -107,3 +107,14 @@ def test_contrato_e_empresas_a_evitar():
     v = vaga(titulo="Analista de Dados Jr")
     v.empresa = "EMPRESA CHATA LTDA"
     assert so_clt.filtrar_titulo(v) == "empresa bloqueada: empresa chata"
+
+
+def test_cargos_de_outra_area_viram_trilha_e_saem_do_bloqueio():
+    # Quem procura suporte técnico: o YAML de dados bloqueia "suporte" e não tem trilha para isso.
+    f = Filtros.de_config(aplicar(CFG, {"termos_busca": ["analista de suporte", "help desk", "analista de dados"]}))
+    assert f.filtrar_titulo(vaga("Analista de Suporte Júnior")) is None
+    assert f.filtrar_titulo(vaga("Analista de Help Desk Jr")) is None
+    assert f.filtrar_titulo(vaga("Analista de Dados Júnior")) is None  # o que já tinha trilha continua
+    assert f.filtrar_titulo(vaga("Desenvolvedor Python Jr")).startswith("bloqueio")  # o resto do bloqueio fica
+    novo = aplicar(CFG, {"termos_busca": ["analista de dados"]})
+    assert novo["trilhas"] == CFG["trilhas"]  # nada de trilha nova quando o YAML já cobre

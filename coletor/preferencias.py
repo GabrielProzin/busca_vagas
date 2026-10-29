@@ -64,8 +64,28 @@ def aplicar(cfg: dict, prefs: dict | None) -> dict:
     termos = [str(t).strip() for t in prefs.get("termos_busca") or [] if str(t).strip()]
     if termos:
         novo["termos_busca"] = termos
+        _cargos_viram_trilha(novo, termos)
     # Palavras simples digitadas na tela viram regex literal (sem acento, minúsculo, como o resto do filtro).
     extras = [re.escape(normalizar(p)) for p in prefs.get("palavras_bloqueadas") or [] if str(p).strip()]
     if extras:
         novo["bloqueio_titulo"] = list(novo.get("bloqueio_titulo") or []) + extras
     return novo
+
+
+def _cargos_viram_trilha(cfg: dict, termos: list[str]) -> None:
+    """Os cargos digitados na tela valem mesmo fora das trilhas do YAML (outra área, como suporte ou dev).
+
+    - Cargo que nenhuma trilha reconhece vira a trilha "Cargos escolhidos" (peso 1), com o próprio texto.
+    - Palavra do bloqueio_titulo que bate com um cargo escolhido sai do bloqueio ("suporte" deixa de eliminar
+      vaga de quem procura "analista de suporte").
+    """
+    nomes = [normalizar(t) for t in termos]
+    trilhas = list(cfg.get("trilhas") or [])
+    pegam = [re.compile(p) for t in trilhas for p in t.get("padroes", [])]
+    novos = [n for n in nomes if n and not any(p.search(n) for p in pegam)]
+    if novos:
+        literal = [r"\s+".join(re.escape(x) for x in n.split()) for n in novos]
+        trilhas.append({"nome": "Cargos escolhidos", "peso": 1.0, "padroes": literal})
+        cfg["trilhas"] = trilhas
+    bloq = cfg.get("bloqueio_titulo") or []
+    cfg["bloqueio_titulo"] = [b for b in bloq if not any(re.search(b, n) for n in nomes)]
