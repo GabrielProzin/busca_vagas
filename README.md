@@ -26,8 +26,11 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
 - **Análise de CV**: nota de 0 a 100 do currículo em 4 critérios explicados (habilidades que o mercado pede,
   resultados com números, estrutura e clareza da escrita), com histórico e variação. Para uma vaga, mostra a conexão,
   o que destacar, as lacunas e responde às perguntas do formulário só com fatos do seu currículo.
-- **Preferências da busca**: remoto, híbrido e presencial (cada um ligado ou não), cidades, nível, anos de experiência,
-  termos de busca e palavras a evitar, ajustados no site; valem a partir da próxima coleta.
+- **Preferências da busca**: remoto, híbrido e presencial, cidades (busca entre todas as do Brasil), cargos, nível,
+  anos de experiência, CLT ou PJ, palavras e empresas a evitar e vagas em inglês, tudo ajustado no site; serve para
+  qualquer área, não só dados.
+- **Instalação guiada e atualizações**: um botão cria tudo, o site guia o resto e avisa quando há versão nova,
+  que se instala com um clique sem apagar o que é seu.
 - **Uso dos serviços**: quanto de cada plano grátis já foi usado (GitHub, Supabase, Apify, Gemini, Gmail), com
   aviso por email ao passar de 80%.
 - **Ranking que aprende**: vagas parecidas com as que você aplica sobem; com as que descarta, descem.
@@ -36,15 +39,65 @@ Tudo roda em planos grátis, e cada pessoa tem a **própria cópia**: o seu banc
 
 ---
 
-## Comece aqui
+## Como instalar (uns 15 minutos)
 
-Escolha um jeito de montar a sua cópia. Todos são grátis ([detalhes](#quanto-custa)).
+Você precisa de uma conta no [GitHub](https://github.com/signup) e outra na [Vercel](https://vercel.com/signup)
+(entre na Vercel com o GitHub). As duas são grátis e nenhuma pede cartão.
 
-| Jeito | Para quem | Tempo |
-|---|---|---|
-| **[Jeito fácil](#jeito-fácil-uns-15-minutos)** (recomendado) | Qualquer pessoa: um botão cria tudo e o próprio site guia o resto | ~15 min |
-| **[Com a ajuda da sua IA](#com-a-ajuda-da-sua-ia)** | Quem quer alguém explicando cada clique: cole um prompt pronto na sua IA | ~20 min |
-| **[Jeito manual](#jeito-manual-uns-40-minutos)** | Quem quer entender cada peça ou o botão deu erro | ~40 min |
+1. **Clique no botão:**
+
+   [![Instalar na Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas&root-directory=site&project-name=perfilup&repository-name=perfilup&env=SITE_PASSWORD&envDescription=A%20senha%20para%20entrar%20no%20seu%20site%20%2812%20caracteres%20ou%20mais%29&envLink=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas%23como-instalar-uns-15-minutos&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%2C%22protocol%22%3A%22storage%22%7D%5D)
+
+2. Na Vercel, ligue a sua conta do GitHub e deixe o repositório **privado** (o seu currículo vai ficar nele).
+   Clique em **Create**.
+
+   <img src="docs/tutorial/vercel.gif" alt="Na Vercel: repositório privado e Create" width="640">
+
+3. Em **Supabase**, aceite criar o banco (plano grátis, região Americas). A Vercel cria o banco e liga ao site sozinha.
+4. Em **SITE_PASSWORD**, escolha a senha do seu site (12 caracteres ou mais) e clique em **Deploy**. Leva uns 2 minutos.
+5. Abra o endereço que a Vercel mostrar, entre com a senha e siga a tela **Instalação**. São 7 passos, e cada um
+   tem o link de onde pegar o que pede e testa antes de salvar:
+   1. **Banco de dados**: as tabelas já vêm criadas.
+   2. **Chave do Gemini** (a IA que lê o currículo e escreve os emails; grátis).
+   3. **Gmail e senha de app**, para enviar as candidaturas do seu email.
+   4. **Token do GitHub**: o link já vem com tudo marcado, você só escolhe o repositório. Com ele, o site liga a
+      coleta automática e guarda o seu perfil no repositório.
+   5. **Seu perfil**: envie o currículo em PDF; a IA monta habilidades, pontos fortes e o texto, e você confere.
+   6. **Preferências da busca**: onde trabalhar, cidades, cargos, nível, contrato e o que evitar, numa tela só.
+   7. **Primeira coleta**: um clique, e em uns 10 minutos as vagas aparecem.
+
+**Como criar a chave do Gemini** (passo 2):
+
+<img src="docs/tutorial/gemini.gif" alt="Criando a chave no Google AI Studio" width="640">
+
+**Como criar o token do GitHub** (passo 4):
+
+<img src="docs/tutorial/github.gif" alt="Criando o token no GitHub" width="640">
+
+Dentro do site, esses passos também têm um botão **Ver como fazer**. As chaves ficam cifradas no seu banco, e
+ninguém além de você as vê.
+
+### Travou em algum passo?
+
+Abra a IA que você usa (Claude, ChatGPT, Gemini…), cole o texto abaixo e siga com ela.
+
+```text
+Estou instalando a minha cópia do PerfilUp (busca_vagas), um radar pessoal de vagas que roda
+grátis em GitHub + Supabase + Vercel: https://github.com/GabrielProzin/busca_vagas
+O README ("Como instalar") e o docs/spec.md do repositório explicam tudo.
+
+A instalação é: o botão "Instalar na Vercel" do README e, depois, a tela "Instalação" dentro do
+próprio site, que guia 7 passos (banco, chave do Gemini, Gmail e senha de app, token do GitHub,
+currículo em PDF, preferências e primeira coleta). O que eu procuro (cidades, cargos, nível,
+contrato) eu mesmo marco na tela "Preferências da busca"; não precisa me perguntar nem editar
+arquivo nenhum.
+
+Me ajude só onde eu travar. Diga exatamente onde clicar, um passo por vez, e espere eu confirmar.
+Se der erro, peça a mensagem inteira (ou um print) e descubra a causa antes de sugerir a correção.
+
+Regras: nunca me peça para colar senhas, chaves ou tokens na conversa; eu colo direto no site.
+Prefira o plano grátis de tudo e me avise antes de qualquer coisa que possa cobrar.
+```
 
 ---
 
@@ -68,145 +121,6 @@ passar de 80%. A Vercel não dá para medir sem dar ao site um token da sua cont
 email enviado pela fila soma ~1,5 min, porque a pausa entre emails conta como tempo de Actions: uns 15 emails por dia
 pela fila cabem no plano grátis. Para mais, diminua `envio.intervalo_segundos` ou `envio.limite_diario` em
 `config/preferencias.yaml`. Se passar, o GitHub só para os workflows até o mês virar (não cobra sem cartão cadastrado).
-
----
-
-## Jeito fácil (uns 15 minutos)
-
-Você precisa de uma conta no [GitHub](https://github.com/signup) e outra na [Vercel](https://vercel.com/signup)
-(entre na Vercel com o GitHub). As duas são grátis.
-
-1. **Clique no botão:**
-
-   [![Instalar na Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas&root-directory=site&project-name=perfilup&repository-name=perfilup&env=SITE_PASSWORD&envDescription=A%20senha%20para%20entrar%20no%20seu%20site%20%2812%20caracteres%20ou%20mais%29&envLink=https%3A%2F%2Fgithub.com%2FGabrielProzin%2Fbusca_vagas%23jeito-f%C3%A1cil-uns-15-minutos&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22supabase%22%2C%22productSlug%22%3A%22supabase%22%2C%22protocol%22%3A%22storage%22%7D%5D)
-
-2. Na Vercel, ligue a sua conta do GitHub e deixe o repositório **privado** (o seu currículo vai ficar nele).
-
-   <img src="docs/tutorial/vercel.gif" alt="Na Vercel: repositório privado e Create" width="640">
-
-3. Em **Supabase**, aceite criar o banco (plano grátis, região Americas). A Vercel cria o banco e liga ao site sozinha.
-4. Em **SITE_PASSWORD**, escolha a senha do seu site (12 caracteres ou mais) e clique em **Deploy**.
-5. Abra o site, entre com a senha e siga o **assistente de instalação**. Ele pede, com o link de onde pegar cada
-   coisa, e testa antes de salvar:
-   - a chave do **Gemini** (grátis, sem cartão);
-   - o seu **Gmail** e uma **senha de app**;
-   - um **token do GitHub**: o link já vem com tudo marcado, você só escolhe o repositório. Com ele, o site guarda as
-     chaves no GitHub Actions, liga a coleta e salva o seu perfil no repositório;
-   - o seu **currículo em PDF**: a IA monta o perfil (habilidades, pontos fortes e o texto) e você confere;
-   - as **preferências** (remoto, híbrido, cidades, nível) e a **primeira coleta**.
-
-**Como criar a chave do Gemini** (passo 2 do assistente):
-
-<img src="docs/tutorial/gemini.gif" alt="Criando a chave no Google AI Studio" width="640">
-
-**Como criar o token do GitHub** (passo 4 do assistente):
-
-<img src="docs/tutorial/github.gif" alt="Criando o token no GitHub" width="640">
-
-Dentro do site, esses dois passos também têm um botão **Ver como fazer** com as mesmas animações. As chaves ficam
-cifradas no seu banco, e ninguém além de você as vê. Se preferir fazer tudo à mão, siga o jeito manual abaixo; o que estiver nas variáveis da Vercel vale mais que o que foi salvo pelo assistente.
-
----
-
-## Com a ajuda da sua IA
-
-Prefere ir com alguém do lado? Abra a IA que você usa (Claude, ChatGPT, Gemini, Codex…), cole o texto abaixo e siga
-com ela, um passo por vez. Serve para o jeito fácil e para o manual.
-
-```text
-Vou montar a minha cópia do busca_vagas (PerfilUp), um radar pessoal de vagas que roda grátis em
-GitHub Actions + Supabase + Vercel: https://github.com/GabrielProzin/busca_vagas
-O README e o docs/spec.md do repositório explicam tudo.
-
-Objetivo: terminar com o site no ar, a coleta rodando e o sistema configurado para o MEU perfil.
-
-Me guie um passo por vez. Comece pelo "Jeito fácil" do README: o botão "Instalar na Vercel" e,
-depois, o assistente de instalação dentro do próprio site (Gemini, Gmail, token do GitHub,
-currículo em PDF, preferências e primeira coleta). Só use o "Jeito manual" se o botão falhar.
-Em cada passo, diga exatamente onde clicar, espere eu confirmar que terminei e só então siga.
-Se eu travar, peça a mensagem de erro inteira (ou um print) e descubra a causa antes de sugerir
-a correção.
-
-Sobre o que eu procuro, me faça perguntas, uma por vez: área e cargos, nível (estágio, júnior,
-pleno, sênior) e quantos anos de experiência no máximo, se aceito remoto, híbrido e presencial,
-em quais cidades, CLT ou PJ, e que palavras ou empresas devo evitar. Depois me diga o que
-marcar na tela "Preferências da busca" do site. Se a minha área não for dados, os cargos que eu
-puser lá já valem: não precisa mexer em arquivo nenhum.
-
-Regras: nunca me peça para colar senhas, chaves ou tokens na conversa; eu colo direto no site,
-na Vercel ou no GitHub, onde você mandar. Não invente experiência que não está no meu currículo.
-Prefira o plano grátis de tudo e me avise antes de qualquer coisa que possa cobrar.
-
-No fim, confira comigo: entrei no site com a senha; a página Instalação mostra os passos prontos;
-a coleta rodou e as vagas apareceram; ao abrir uma vaga com email, o email já vem com o meu nome
-e a minha assinatura.
-```
-
----
-
-## Jeito manual (uns 40 minutos)
-
-> Só se o [jeito fácil](#jeito-fácil-uns-15-minutos) não der certo. Dá para fazer [com a ajuda da sua IA](#com-a-ajuda-da-sua-ia).
-
-### 1. Copie o repositório
-
-Na página deste repositório no GitHub, clique em **Use this template → Create a new repository**.
-Escolha um nome e marque **Private** (o seu currículo vai ficar nele).
-
-### 2. Coloque o seu perfil
-
-Três arquivos dizem quem você é e o que procura. Edite direto no GitHub (ícone de lápis) ou peça para a sua IA gerar
-a partir do seu currículo:
-
-| Arquivo | O que é |
-|---|---|
-| `perfil/curriculo.md` | Seu currículo em texto (sem telefone nem email). É a base da nota e dos emails. |
-| `perfil/perfil.yaml` | Nome, cargo, links, suas habilidades (com sinônimos e peso) e 4 a 6 destaques do currículo em primeira pessoa. |
-| `config/preferencias.yaml` | O que buscar e o que descartar: termos de busca, tipos de cargo, senioridade, cidades aceitas para presencial/híbrido, nota mínima. É o padrão inicial: depois, remoto/híbrido/presencial, cidades, nível, termos e palavras a evitar se ajustam no próprio site, em **Preferências da busca**. |
-
-Os arquivos que vêm no modelo são de um perfil real de dados: use como exemplo do formato e troque tudo pelo seu.
-
-### 3. Crie o banco no Supabase
-
-1. Em [supabase.com](https://supabase.com), crie um projeto (região Americas). Guarde a senha do banco no seu gerenciador de senhas.
-2. Em **SQL Editor**, cole todo o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e clique em **Run**.
-   Quando o sistema ganhar colunas novas, rode o arquivo inteiro de novo: ele não apaga nada.
-3. Em **Project Settings → API Keys**, copie a **Project URL** e a **secret key** (`sb_secret_…`). A secret key
-   dá acesso total ao banco: ela só vai para a Vercel e para os Secrets do GitHub, nunca para o código.
-
-### 4. Prepare o Gmail e o Gemini
-
-- **Gmail:** ative a verificação em duas etapas na sua conta Google e crie uma **senha de app** em
-  [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords) (16 letras). A mesma senha envia
-  (SMTP) e lê só os cabeçalhos da caixa de entrada para achar respostas (IMAP, que o Gmail deixa ligado).
-- **Gemini:** crie uma chave em [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Não ative
-  faturamento no projeto: assim nunca há cobrança.
-
-### 5. Publique o site na Vercel
-
-1. Em [vercel.com](https://vercel.com), **Add New → Project** e escolha o seu repositório.
-2. Em **Root Directory**, escolha a pasta **`site`**.
-3. Em **Environment Variables**, cadastre as variáveis da tabela [Variáveis da Vercel](#variáveis-da-vercel).
-4. **Deploy.** Abra o endereço que a Vercel der e entre com a senha que você escolheu.
-
-### 6. Ligue a coleta no GitHub
-
-1. No seu repositório: **Settings → Secrets and variables → Actions → New repository secret**, e cadastre os
-   [Secrets do GitHub](#secrets-do-github).
-2. **Actions → Coleta de vagas → Run workflow.** Em uns 5 minutos as vagas aparecem no site.
-   Daí em diante ela roda sozinha: completa por volta das 11:00 e das 18:30 (com LinkedIn e email de resumo) e
-   rápida às 8:00, 14:00 e 22:00 (só as plataformas). O workflow **Envio da fila de emails** roda de hora em hora,
-   das 7h às 21h.
-3. **Teste o envio (opcional):** Actions → Envio da fila de emails → Run workflow, marcando **teste**. Ele manda um
-   email para você mesmo, provoca uma devolução num endereço que não existe e confere se o sistema percebeu as duas
-   coisas. Nenhum recrutador recebe nada.
-
-### 7. Últimos ajustes no site
-
-- **Configurações → Currículo anexado:** envie o PDF que vai junto dos emails.
-- **Extensão do Chrome (opcional, recomendada):** veja [A extensão do Chrome](#a-extensão-do-chrome), logo abaixo.
-- **Monitor externo (opcional):** no [UptimeRobot](https://uptimerobot.com), cadastre
-  `https://SEU-SITE.vercel.app/api/saude` para receber um email se o site cair.
 
 ---
 
@@ -235,7 +149,7 @@ Para quase nunca ter conflito:
 1. No seu repositório, **Add file → Create new file**, com o nome `.github/workflows/atualizar.yml`, e cole o
    conteúdo de [`atualizar.yml`](.github/workflows/atualizar.yml). Faça o mesmo com
    [`scripts/atualizar.sh`](scripts/atualizar.sh).
-2. Crie um token como o do [assistente](#jeito-fácil-uns-15-minutos) (só o seu repositório, com **Actions**,
+2. Crie um token como o da [instalação](#como-instalar-uns-15-minutos) (só o seu repositório, com **Actions**,
    **Contents**, **Pull requests**, **Secrets** e **Workflows** em *Read and write*) e cadastre como secret
    `PERFILUP_TOKEN` (Settings → Secrets and variables → Actions).
 3. **Actions → Atualizar o PerfilUp → Run workflow.** Depois disso, o assistente e o botão aparecem no site.
@@ -280,8 +194,9 @@ do que qualquer uma sozinha, sem nenhum robô usando a sua conta.
 1. No seu repositório no GitHub: **Code → Download ZIP** e descompacte. A extensão é a pasta `extensao`.
 2. No Chrome, abra `chrome://extensions`, ligue o **Modo do desenvolvedor** (canto superior direito) e clique em
    **Carregar sem compactação**. Escolha a pasta `extensao`.
-3. Clique no ícone da extensão (fixe-a na barra pelo ícone de quebra-cabeça). Nas opções, informe o endereço do seu site e o
-   mesmo valor do `CAPTURA_TOKEN` que está na Vercel. Salvar.
+3. Clique no ícone da extensão (fixe-a na barra pelo ícone de quebra-cabeça). Nas opções, informe o endereço do
+   seu site e o token da extensão, que fica no site em **Configurações → Extensão do navegador → Mostrar o token**.
+   Salvar.
 
 ### Usar
 
@@ -322,49 +237,22 @@ resposta) mostram isso.
 
 ---
 
-## Variáveis e segredos
+## Opcionais
 
-Para gerar um segredo aleatório (senha do site, tokens), no PowerShell:
+Nada disto é preciso para começar.
 
-```powershell
-$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); -join ($b | ForEach-Object { $_.ToString("x2") })
-```
-
-No Mac/Linux: `openssl rand -hex 32`. Use um diferente para cada segredo.
-
-### Variáveis da Vercel
-
-| Nome | Obrigatória | O que colocar |
-|---|---|---|
-| `SITE_PASSWORD` | sim | A senha para entrar no seu site |
-| `SESSION_SECRET` | recomendada | Segredo aleatório (64 caracteres). Sem ela, a sessão usa uma chave tirada da secret key do Supabase |
-| `SUPABASE_URL` | sim | Project URL do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | sim | Secret key do Supabase (`sb_secret_…`) |
-| `GEMINI_API_KEY` | sim | Chave do Google AI Studio |
-| `GMAIL_USER` | sim | Seu endereço do Gmail |
-| `GMAIL_APP_PASSWORD` | sim | Senha de app do Gmail |
-| `CAPTURA_TOKEN` | para a extensão | Segredo aleatório; o mesmo vai nas opções da extensão |
-| `CONTATO_TELEFONE` | não | Telefone na assinatura dos emails |
-| `CRON_SECRET` | para o vigia | Segredo aleatório (a Vercel usa sozinha no cron) |
-| `GITHUB_DISPATCH_TOKEN` | para o vigia e o envio na hora | Token *fine-grained* do GitHub, só deste repositório, permissão **Actions: Read and write** |
-
-O **vigia** confere duas vezes por dia se a coleta rodou e, se o GitHub pular o horário, dispara a coleta
-e avisa por email. Com o mesmo token, o site começa o envio da fila assim que você coloca vagas nela
-(sem ele, a fila sai na rodada de hora em hora).
-
-### Secrets do GitHub
-
-| Nome | Obrigatório | O que colocar |
-|---|---|---|
-| `SUPABASE_URL` | sim | Project URL do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | sim | Secret key do Supabase |
-| `GMAIL_USER`, `GMAIL_APP_PASSWORD` | sim | Os mesmos da Vercel (envio da fila, respostas, resumo e alertas) |
-| `CONTATO_TELEFONE` | não | O mesmo da Vercel: telefone na assinatura dos emails do modo automático |
-| `SITE_URL` | recomendado | Endereço do seu site (para os links do email de resumo) |
-| `RESUMO_PARA` | não | Para onde mandar o resumo (padrão: o próprio Gmail) |
-| `BACKUP_SENHA` | recomendado | Senha longa do backup cifrado. **Guarde no seu gerenciador de senhas**: sem ela o backup não abre |
-| `APIFY_TOKEN` | para posts do LinkedIn | Token do [Apify](https://console.apify.com) (Settings → API & Integrations) |
-| `PERFILUP_TOKEN` | para atualizar | O mesmo token do `GITHUB_DISPATCH_TOKEN`, com **Contents**, **Pull requests**, **Secrets** e **Workflows** também em *Read and write* |
+- **Posts do LinkedIn com email (busca automática):** crie uma conta grátis no [Apify](https://console.apify.com)
+  (US$ 5/mês de crédito, sem cartão), copie o token em **Settings → API & Integrations** e cadastre no seu
+  repositório do GitHub como secret `APIFY_TOKEN` (**Settings → Secrets and variables → Actions → New repository
+  secret**). Sem ele, a coleta usa só as plataformas de vagas e a extensão.
+- **Vigia da coleta:** se o GitHub pular um horário, a Vercel dispara a coleta e avisa você. Na Vercel, em
+  **Settings → Environment Variables**, crie `CRON_SECRET` com um texto aleatório longo e faça um novo deploy.
+  Para gerar um no PowerShell:
+  `$b = New-Object byte[] 32; [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b); -join ($b | % { $_.ToString("x2") })`
+- **Teste do envio:** no GitHub, **Actions → Envio da fila de emails → Run workflow**, marcando **teste**. Ele manda
+  um email para você mesmo, provoca uma devolução e confere se o sistema percebeu as duas. Nenhum recrutador recebe nada.
+- **Aviso se o site cair:** no [UptimeRobot](https://uptimerobot.com), cadastre `https://SEU-SITE.vercel.app/api/saude`.
+- **Trocar a senha do site:** na Vercel, mude `SITE_PASSWORD` em **Settings → Environment Variables** e faça um novo deploy.
 
 ---
 
@@ -381,6 +269,12 @@ supabase/schema.sql        tabelas (RLS ligado, só o servidor acessa)
 .github/workflows/         coleta (5x/dia) com backup cifrado; envio da fila (de hora em hora); testes do site
 docs/spec.md               a planta do sistema · AGENTS.md: regras para agentes de IA
 ```
+
+**Chaves por variável de ambiente:** tudo que o assistente guarda também pode ir em variáveis da Vercel e secrets do
+GitHub com o mesmo nome (`GEMINI_API_KEY`, `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `GITHUB_DISPATCH_TOKEN`,
+`CAPTURA_TOKEN`, `CONTATO_TELEFONE`, `BACKUP_SENHA`; no GitHub também `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
+`SITE_URL`, `RESUMO_PARA` e `PERFILUP_TOKEN`). A variável vale mais que o que foi salvo pelo site.
+Sem a integração da Vercel, rode o [`supabase/schema.sql`](supabase/schema.sql) no SQL Editor do Supabase.
 
 **Rodar localmente**
 

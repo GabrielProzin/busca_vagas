@@ -73,7 +73,7 @@ export default async function PaginaInstalar() {
       </ol>
 
       <p className="dica inst-rodape">
-        Prefere configurar à mão? Tudo também funciona com variáveis de ambiente na Vercel e secrets no GitHub, como explica o README.
+        Prefere configurar à mão? Tudo também funciona com variáveis de ambiente na Vercel e secrets no GitHub (README, “Para quem programa”).
         O que estiver na Vercel vale mais que o que foi salvo aqui.
       </p>
     </Moldura>

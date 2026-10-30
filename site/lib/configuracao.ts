@@ -50,13 +50,13 @@ export async function passosConfiguracao(): Promise<Passo[]> {
       detalhe: execucoes === null
         ? "O site não conseguiu ler o Supabase: confira SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY na Vercel."
         : schema ? "Supabase respondendo, com todas as tabelas e colunas." : "Faltam tabelas ou colunas novas. O assistente cria para você.",
-      ancora: "3-crie-o-banco-no-supabase",
+      ancora: "como-instalar-uns-15-minutos",
       link: "/instalar",
     },
     {
       id: "coleta", rotulo: "Primeira coleta de vagas", essencial: true, ok: Boolean(execucoes?.length),
       detalhe: execucoes?.length ? "A coleta já rodou e roda sozinha 5 vezes por dia." : "Rode a primeira pelo assistente de instalação.",
-      ancora: "6-ligue-a-coleta-no-github",
+      ancora: "como-instalar-uns-15-minutos",
       link: "/instalar",
     },
     {
@@ -64,13 +64,13 @@ export async function passosConfiguracao(): Promise<Passo[]> {
       detalhe: perfilDoDono
         ? `Perfil de ${PERFIL.nome}.`
         : `O perfil ainda é o do modelo (${PERFIL.nome}). O assistente monta o seu a partir do currículo em PDF.`,
-      ancora: "2-coloque-o-seu-perfil",
+      ancora: "como-instalar-uns-15-minutos",
       link: "/instalar",
     },
     {
       id: "gmail", rotulo: "Gmail para enviar", essencial: true, ok: gmail,
       detalhe: gmail ? `Envia como ${seg.GMAIL_USER}.` : "Falta o Gmail e a senha de app.",
-      ancora: "4-prepare-o-gmail-e-o-gemini",
+      ancora: "como-instalar-uns-15-minutos",
       link: "/instalar",
     },
     {
@@ -80,7 +80,7 @@ export async function passosConfiguracao(): Promise<Passo[]> {
     {
       id: "ia", rotulo: "IA para escrever e resumir", essencial: false, ok: ia,
       detalhe: ia ? "Gemini pronto. Sem cota no dia, o site usa o modelo pronto." : "Falta a chave do Gemini. Sem ela, só o modelo pronto funciona.",
-      ancora: "4-prepare-o-gmail-e-o-gemini",
+      ancora: "como-instalar-uns-15-minutos",
       link: "/instalar",
     },
     {
@@ -88,18 +88,18 @@ export async function passosConfiguracao(): Promise<Passo[]> {
       detalhe: seg.GITHUB_DISPATCH_TOKEN
         ? "Ao colocar vagas na fila, o site chama o GitHub e o envio começa em 1 ou 2 minutos."
         : "Sem o token do GitHub, a fila sai na rodada de hora em hora (7h às 21h).",
-      ancora: "7-últimos-ajustes-no-site",
+      ancora: "a-extensão-do-chrome",
       link: "/instalar",
     },
     {
       id: "senha", rotulo: "Senha do site forte", essencial: false, ok: senha.length >= 12,
       detalhe: senha.length >= 12 ? "Senha com 12 caracteres ou mais." : "Use uma SITE_PASSWORD com 12 caracteres ou mais.",
-      ancora: "variáveis-da-vercel",
+      ancora: "opcionais",
     },
     {
       id: "extensao", rotulo: "Extensão do Chrome liberada", essencial: false, ok: (seg.CAPTURA_TOKEN ?? "").length >= 24,
       detalhe: (seg.CAPTURA_TOKEN ?? "").length >= 24 ? "Token da extensão criado: instale a extensão e cole o token nas opções dela." : "O assistente cria o token da extensão quando você liga o GitHub.",
-      ancora: "7-últimos-ajustes-no-site",
+      ancora: "a-extensão-do-chrome",
       link: "/instalar",
     },
     {
@@ -114,8 +114,8 @@ export async function passosConfiguracao(): Promise<Passo[]> {
       ok: Boolean(process.env.CRON_SECRET && seg.GITHUB_DISPATCH_TOKEN),
       detalhe: process.env.CRON_SECRET && seg.GITHUB_DISPATCH_TOKEN
         ? "Se o GitHub pular um horário, a Vercel dispara a coleta e avisa você."
-        : "Opcional: CRON_SECRET e GITHUB_DISPATCH_TOKEN na Vercel garantem a coleta mesmo quando o GitHub pula o horário.",
-      ancora: "variáveis-da-vercel",
+        : "Opcional: crie CRON_SECRET na Vercel (README, Opcionais) para a coleta rodar mesmo quando o GitHub pula o horário.",
+      ancora: "opcionais",
     },
   ];
 }
