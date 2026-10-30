@@ -58,7 +58,9 @@ function emDemo(): Demo | null {
       // Uso dos serviços: medições prontas; contadores do dia como "dias_atras|chave" -> n.
       servicos: ((j.uso?.servicos ?? []) as UsoServico[]).map((s) => ({ ...s, atualizado_em: agora })),
       diario: new Map(((j.uso?.diario ?? []) as { dias_atras: number; chave: string; n: number }[]).map((d) => [
-        `${new Date(Date.now() - d.dias_atras * 864e5).toISOString().slice(0, 10)}|${d.chave}`, d.n,
+        // O dia no mesmo fuso que o site conta (Gemini: Pacífico; o resto: Brasília). Com o dia em UTC, o teste
+        // falhava depois das 21h de Brasília.
+        `${diaEm(d.chave.startsWith("gemini") ? "America/Los_Angeles" : "America/Sao_Paulo", new Date(Date.now() - d.dias_atras * 864e5))}|${d.chave}`, d.n,
       ])),
       // Análises de CV prontas para ver o histórico; "dias_atras" vira a data.
       analisesCv: ((j.analises_cv ?? []) as (Omit<AnaliseCV, "id" | "criada_em"> & { dias_atras: number })[]).map(({ dias_atras, ...a }, i) => ({
