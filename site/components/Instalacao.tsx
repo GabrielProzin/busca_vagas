@@ -76,9 +76,12 @@ function VerComoFazer({ video, titulo }: { video: string; titulo: string }) {
   const [aberto, setAberto] = useState(false);
   return (
     <details className="inst-tutorial" onToggle={(e) => setAberto(e.currentTarget.open)}>
-      <summary><Icone nome="triagem" tamanho={15} /> Ver como fazer</summary>
+      <summary><span className="inst-play" aria-hidden>▶</span> Ver como fazer <small>(vídeo de 15 segundos)</small></summary>
       {aberto ? (
-        <video src={`/tutorial/${video}.mp4`} poster={`/tutorial/${video}.jpg`} autoPlay muted loop playsInline controls aria-label={titulo} />
+        <video poster={`/tutorial/${video}.jpg`} autoPlay muted loop playsInline aria-label={titulo}>
+          <source src={`/tutorial/${video}.webm`} type="video/webm" />
+          <source src={`/tutorial/${video}.mp4`} type="video/mp4" />
+        </video>
       ) : null}
     </details>
   );
@@ -112,7 +115,14 @@ export function PassoBanco({ ok, podeCriar, sql, editor }: { ok: boolean; podeCr
 // ------------------------------------------------------------------ 2. Gemini
 export function PassoGemini({ ok, fixo }: { ok: boolean; fixo: boolean }) {
   const [estado, acao, testando] = useActionState<EstadoPassoAcao, FormData>(acaoSalvarGemini, null);
-  if (fixo) return <p className="dica">A chave está nas variáveis da Vercel (GEMINI_API_KEY). Para trocar, mude por lá.</p>;
+  if (fixo) {
+    return (
+      <>
+        <p className="dica">A chave está nas variáveis da Vercel (GEMINI_API_KEY). Para trocar, mude por lá.</p>
+        <VerComoFazer video="gemini" titulo="Como criar a chave do Gemini no Google AI Studio" />
+      </>
+    );
+  }
   return (
     <>
       <ol className="inst-roteiro">

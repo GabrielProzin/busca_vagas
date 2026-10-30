@@ -82,35 +82,29 @@ Você precisa de uma conta no [GitHub](https://github.com/signup) e outra na [Ve
 
 2. Na Vercel, ligue a sua conta do GitHub e deixe o repositório **privado** (o seu currículo vai ficar nele).
 
-   <details><summary>Ver como fazer</summary>
-
-   ![Na Vercel: repositório privado e Create](docs/tutorial/vercel.gif)
-
-   </details>
+   <img src="docs/tutorial/vercel.gif" alt="Na Vercel: repositório privado e Create" width="640">
 
 3. Em **Supabase**, aceite criar o banco (plano grátis, região Americas). A Vercel cria o banco e liga ao site sozinha.
 4. Em **SITE_PASSWORD**, escolha a senha do seu site (12 caracteres ou mais) e clique em **Deploy**.
 5. Abra o site, entre com a senha e siga o **assistente de instalação**. Ele pede, com o link de onde pegar cada
    coisa, e testa antes de salvar:
-   - a chave do **Gemini** (grátis, sem cartão).
-     <details><summary>Ver como fazer</summary>
-
-     ![Criando a chave no Google AI Studio](docs/tutorial/gemini.gif)
-
-     </details>
+   - a chave do **Gemini** (grátis, sem cartão);
    - o seu **Gmail** e uma **senha de app**;
    - um **token do GitHub**: o link já vem com tudo marcado, você só escolhe o repositório. Com ele, o site guarda as
-     chaves no GitHub Actions, liga a coleta e salva o seu perfil no repositório.
-     <details><summary>Ver como fazer</summary>
-
-     ![Criando o token no GitHub](docs/tutorial/github.gif)
-
-     </details>
+     chaves no GitHub Actions, liga a coleta e salva o seu perfil no repositório;
    - o seu **currículo em PDF**: a IA monta o perfil (habilidades, pontos fortes e o texto) e você confere;
    - as **preferências** (remoto, híbrido, cidades, nível) e a **primeira coleta**.
 
-Dentro do site, os passos do Gemini e do GitHub também têm um **Ver como fazer** com essas animações. As chaves
-ficam cifradas no seu banco, e ninguém além de você as vê. Se preferir fazer tudo à mão, siga o jeito manual abaixo; o que estiver nas variáveis da Vercel vale mais que o que foi salvo pelo assistente.
+**Como criar a chave do Gemini** (passo 2 do assistente):
+
+<img src="docs/tutorial/gemini.gif" alt="Criando a chave no Google AI Studio" width="640">
+
+**Como criar o token do GitHub** (passo 4 do assistente):
+
+<img src="docs/tutorial/github.gif" alt="Criando o token no GitHub" width="640">
+
+Dentro do site, esses dois passos também têm um botão **Ver como fazer** com as mesmas animações. As chaves ficam
+cifradas no seu banco, e ninguém além de você as vê. Se preferir fazer tudo à mão, siga o jeito manual abaixo; o que estiver nas variáveis da Vercel vale mais que o que foi salvo pelo assistente.
 
 ---
 

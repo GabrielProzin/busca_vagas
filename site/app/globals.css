@@ -1222,6 +1222,10 @@ details.inst-bloco[open] summary { margin-bottom: 10px; }
   .pf-segmento span { padding: 0 12px; }
 }
 .inst-tutorial { max-width: 720px; }
-.inst-tutorial summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 550; list-style: none; padding: 4px 0; }
+.inst-tutorial summary { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--accent); font-size: 13.5px; font-weight: 600; list-style: none; padding: 7px 12px 7px 8px; border-radius: 999px; background: var(--accent-soft); }
+.inst-tutorial summary:hover { filter: brightness(0.97); }
+.inst-tutorial summary small { font-weight: 450; opacity: 0.8; }
+.inst-play { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 9px; padding-left: 2px; }
+.inst-tutorial[open] summary { margin-bottom: 2px; }
 .inst-tutorial summary::-webkit-details-marker { display: none; }
 .inst-tutorial video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; margin-top: 8px; border-radius: var(--r-m); border: 1px solid var(--line); background: #0b0f15; }
