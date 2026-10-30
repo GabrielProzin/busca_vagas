@@ -53,7 +53,7 @@ Você precisa de uma conta no [GitHub](https://github.com/signup) e outra na [Ve
 
    <img src="docs/tutorial/vercel.gif" alt="Na Vercel: repositório privado e Create" width="640">
 
-3. Em **Supabase**, aceite criar o banco (plano grátis, região Americas). A Vercel cria o banco e liga ao site sozinha.
+3. Em **Supabase**, aceite criar o banco: região **São Paulo** (a mais perto do Brasil) e plano **Free**. A Vercel cria o banco e liga ao site sozinha.
 4. Em **SITE_PASSWORD**, escolha a senha do seu site (12 caracteres ou mais) e clique em **Deploy**. Leva uns 2 minutos.
 5. Abra o endereço que a Vercel mostrar, entre com a senha e siga a tela **Instalação**. São 7 passos, e cada um
    tem o link de onde pegar o que pede e testa antes de salvar:
