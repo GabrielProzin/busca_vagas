@@ -48,6 +48,8 @@ min_mencoes_senioridade_descricao: 2
 senioridade_alvo: ['junior', 'júnior', '\bjr\.?\b', '\bi\b', 'assistente', 'entry']
 # Descarta a vaga se a descrição pedir mais que isso de experiência.
 max_anos_experiencia: 2
+# Vagas exclusivas para pessoas com deficiência (PcD). Desligado: saem. Vaga que também aceita PcD entra sempre.
+aceita_vagas_exclusivas_pcd: false
 
 # Palavras que eliminam a vaga se aparecerem no título.
 bloqueio_titulo: ['\.net', '\bjava\b', 'security', 'seguranca','desenvolvedor', 'developer', 'programador', 'front[- ]?end', 'back[- ]?end', 'full[- ]?stack', 'mobile', '\bqa\b', 'suporte', 'help ?desk']

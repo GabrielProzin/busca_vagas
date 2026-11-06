@@ -339,3 +339,36 @@ def test_backup_gera_e_verifica_com_banco_simulado(tmp_path, monkeypatch):
     import pytest
     with pytest.raises(SystemExit):
         backup.verificar(sb, arq, senha)
+
+
+def test_vaga_exclusiva_para_pcd_sai_e_a_que_tambem_aceita_fica():
+    sai = [
+        vaga("Analista de Dados Jr - PcD"),
+        vaga("Analista de Dados (PCD)"),
+        vaga("[PCD] Analista de BI Júnior"),
+        vaga("Engenheiro de Dados Júnior - Vaga exclusiva para pessoa com deficiência"),
+        vaga("Analista de Dados", "Esta vaga é exclusiva para pessoas com deficiência (PcD)."),
+        vaga("Analista de Dados", "Oportunidade destinada exclusivamente a PCDs, conforme a Lei de Cotas."),
+        vaga("Analista de Dados", "Processo seletivo voltado para profissionais com deficiência."),
+        vaga("Analista de Dados", "Vaga afirmativa para pessoas com deficiência. Requisitos: SQL."),
+        vaga("Analista de Dados", "Atenção: vaga somente para PcD."),
+        vaga("Analista de Dados", "Vaga exclusiva para pessoas com deficiência e reabilitados pelo INSS."),
+    ]
+    for v in sai:
+        assert F.filtrar_pcd(v) == "vaga exclusiva para PcD", v.titulo + " | " + v.descricao
+    fica = [
+        vaga("Analista de Dados Júnior"),
+        vaga("Analista de Dados (vaga também para PcD)"),
+        vaga("Analista de Dados - Vaga afirmativa para Mulheres e PcD"),
+        vaga("Analista de Dados", "Todas as nossas vagas são abertas a pessoas com deficiência."),
+        vaga("Analista de Dados", "PcD são bem-vindos! Valorizamos a diversidade."),
+        vaga("Analista de Dados", "Esta vaga não é exclusiva para PcD: todos podem se candidatar."),
+        vaga("Analista de Dados", "Vaga afirmativa para mulheres e pessoas com deficiência."),
+        vaga("Analista de Dados", "Caso seja PcD, envie o seu laudo. Conheça também o banco de talentos PcD."),
+        vaga("Analista de Dados", "Temos vagas exclusivas para mulheres, pessoas negras e PcD em outras áreas."),
+    ]
+    for v in fica:
+        assert F.filtrar_pcd(v) is None, v.titulo + " | " + v.descricao
+    # Quem aceita vaga exclusiva para PcD vê todas
+    aceita = Filtros.de_config({**CFG, "aceita_vagas_exclusivas_pcd": True})
+    assert all(aceita.filtrar_pcd(v) is None for v in sai)

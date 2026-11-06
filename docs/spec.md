@@ -62,7 +62,7 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 | Perfil profissional (`/perfil`) | Nível de mercado (estágio, júnior, pleno, sênior) com o motivo e o que falta para o próximo; "seu próximo passo"; evolução das notas do CV; números do perfil (nota do CV, vagas que combinam, habilidade que mais abriria vagas) | Fazer o próximo passo, nova análise de CV |
 | Análise de CV (`/perfil/cv`) | Nota atual, variação e critério mais fraco; gráfico da evolução; histórico de análises (nota, tipo, conexão com a vaga, respostas, variação, data) com filtro Todas / Geral / Para vaga | Nova análise geral ou para uma vaga (escolher da lista ou colar o texto), com perguntas do formulário opcionais |
 | Análise (`/perfil/cv/[id]`) | Nota e os 4 critérios com o motivo de cada um, pontos fortes, melhorias (com o trecho do currículo), nível; para vaga: conexão, o que destacar, lacunas e as respostas do formulário | Copiar cada resposta, excluir a análise |
-| Preferências da busca (`/preferencias`) | Resumo da busca numa frase (atualiza ao mexer); onde trabalhar (remoto, híbrido, presencial, em cartões); cidades para híbrido/presencial numa lista pesquisável dos 5.570 municípios do IBGE (várias de uma vez, com o estado); cargos (etiquetas, com sugestões); níveis e experiência máxima; contrato (CLT, PJ); palavras e empresas a evitar; vagas em inglês. Barra de salvar fixa embaixo quando há alteração | Salvar, Descartar alterações, Voltar ao padrão |
+| Preferências da busca (`/preferencias`) | Resumo da busca numa frase (atualiza ao mexer); onde trabalhar (remoto, híbrido, presencial, em cartões); cidades para híbrido/presencial numa lista pesquisável dos 5.570 municípios do IBGE (várias de uma vez, com o estado); cargos (etiquetas, com sugestões); níveis e experiência máxima; contrato (CLT, PJ); palavras e empresas a evitar; vagas em inglês; vagas exclusivas para PcD. Barra de salvar fixa embaixo quando há alteração | Salvar, Descartar alterações, Voltar ao padrão |
 | Instalação (`/instalar`) | Sete passos em ordem, cada um pronto / falta / depois (quando depende de outro): banco, Gemini, Gmail, GitHub, perfil, preferências, primeira coleta; o primeiro que falta abre sozinho | Criar as tabelas, testar e salvar cada chave, ler o currículo em PDF e revisar o perfil, rodar a primeira coleta |
 | Configurações | Primeiros passos (o que está pronto e o que falta, com link para a Instalação ou o passo no README), currículo em PDF, seus dados e backup, atualizações (versão nova e o resumo dela), extensão (com o token) | Enviar PDF, Exportar meus dados, Atualizar agora, Mostrar o token da extensão |
 
@@ -90,7 +90,15 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - Fontes: Gupy, Remotar, Sólides, issues de repositórios de vagas no GitHub, posts do LinkedIn (via Apify, sem login).
 - Fica de fora: título fora das trilhas de dados, senioridade bloqueada (pleno, sênior, estágio, trainee…), palavras
   bloqueadas, publicada há mais de `max_dias_publicacao`, presencial/híbrido fora das cidades aceitas, descrição em
-  inglês, mais anos de experiência que `max_anos_experiencia`.
+  inglês, mais anos de experiência que `max_anos_experiencia`, vaga exclusiva para pessoas com deficiência (PcD) se a
+  pessoa não marcou que aceita (`aceita_vagas_exclusivas_pcd`, desligado por padrão).
+- Vaga exclusiva para PcD: o título marca PcD ("Analista de Dados - PcD", "[PCD]", "Vaga exclusiva para pessoas com
+  deficiência") sem dizer que é também para outras pessoas, ou a descrição diz que a vaga é exclusiva, destinada,
+  reservada ou voltada a PcD, ou que é "somente/apenas para PcD". Vaga que só aceita, incentiva ou dá preferência a
+  PcD ("também para PcD", "PcD são bem-vindos", "todas as vagas são abertas a PcD"), vaga afirmativa para vários
+  grupos ("mulheres e PcD") e frase negada ("não é exclusiva para PcD") ficam.
+- A cada coleta, as vagas da lista dos últimos 3 dias sem decisão da pessoa passam de novo pelos filtros de local e de
+  PcD: a que o filtro atual reprova sai da lista ("filtro revisado").
 - Post do LinkedIn só vira vaga se for de quem contrata (não de candidato), tiver email e cargo de dados.
   Post sem local entra com aviso.
 
@@ -182,6 +190,8 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
   outra área (ex.: "analista de suporte" não é mais eliminado por "suporte") sem editar o YAML.
 - Contrato: com só CLT, sai a vaga que fala de PJ e não de CLT ("contrato PJ"); com só PJ, o contrário. Vaga que não
   diz o contrato ou oferece os dois sempre entra.
+- Vagas exclusivas para PcD: desligado por padrão (saem, "vaga exclusiva para PcD"); ligado, entram. Vaga que também
+  aceita PcD entra sempre.
 - Palavras e empresas a evitar são texto simples e somam às do YAML (palavras viram regex literal no título; empresa
   confere o nome e o domínio do email). Limites: 15 cidades, 20 cargos, 30 palavras, 30 empresas, 60 caracteres
   cada; anos de experiência de 0 a 15. Tudo validado no servidor.
@@ -280,6 +290,8 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
 - [ ] Buscar "goiania" (sem acento) na lista de cidades acha Goiânia - GO; "sao" mostra São Paulo primeiro.
 - [ ] Vaga em "goiania", "GOIÂNIA - GO", "Goiânia/GO" ou "Gyn" conta como Goiânia; Santa Luzia - PB não conta como Santa Luzia - MG.
 - [ ] Com só CLT, vaga "PJ" sai e vaga "CLT ou PJ" fica.
+- [ ] Sem aceitar PcD, "Analista de Dados - PcD" e "vaga exclusiva para pessoas com deficiência" saem; "vaga também
+  para PcD" fica. Aceitando, as duas ficam.
 - [ ] Com híbrido ligado e presencial desligado, vaga presencial na cidade aceita sai ("presencial não aceito").
 - [ ] Envio em lote: as vagas com email aparecem com o email pronto; as marcadas entram na fila e saem das listas de novas.
 - [ ] O envio da fila respeita horário, intervalo, limite diário e nunca envia duas vezes.

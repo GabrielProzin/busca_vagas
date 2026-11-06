@@ -118,3 +118,9 @@ def test_cargos_de_outra_area_viram_trilha_e_saem_do_bloqueio():
     assert f.filtrar_titulo(vaga("Desenvolvedor Python Jr")).startswith("bloqueio")  # o resto do bloqueio fica
     novo = aplicar(CFG, {"termos_busca": ["analista de dados"]})
     assert novo["trilhas"] == CFG["trilhas"]  # nada de trilha nova quando o YAML já cobre
+
+
+def test_preferencia_de_vagas_exclusivas_pcd():
+    assert Filtros.de_config(aplicar(CFG, {"niveis": ["junior"]})).aceita_pcd is False  # padrão do YAML
+    assert Filtros.de_config(aplicar(CFG, {"aceita_pcd": True})).aceita_pcd is True
+    assert Filtros.de_config(aplicar(CFG, {"aceita_pcd": False})).aceita_pcd is False

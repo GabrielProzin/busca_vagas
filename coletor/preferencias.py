@@ -51,6 +51,8 @@ def aplicar(cfg: dict, prefs: dict | None) -> dict:
     empresas = [normalizar(e) for e in prefs.get("empresas_bloqueadas") or [] if str(e).strip()]
     if empresas:
         novo["empresas_bloqueadas"] = list(novo.get("empresas_bloqueadas") or []) + empresas
+    if "aceita_pcd" in prefs:
+        novo["aceita_vagas_exclusivas_pcd"] = bool(prefs["aceita_pcd"])
     if "aceita_ingles" in prefs:
         loc["aceita_vagas_em_ingles"] = bool(prefs["aceita_ingles"])
     niveis = [n for n in prefs.get("niveis") or [] if n in NIVEIS]

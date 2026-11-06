@@ -20,6 +20,8 @@ export type Preferencias = {
   termos_busca: string[];
   palavras_bloqueadas: string[];
   aceita_ingles: boolean;
+  /** Vagas exclusivas para pessoas com deficiência. Desligado: saem (vaga que também aceita PcD entra sempre). */
+  aceita_pcd: boolean;
 };
 
 export const NIVEIS: { id: Nivel; rotulo: string }[] = [
@@ -55,6 +57,7 @@ export function preferenciasPadrao(): Preferencias {
     contratos: { clt: y.contratoClt, pj: y.contratoPj },
     empresas_bloqueadas: [],
     aceita_ingles: y.aceitaIngles,
+    aceita_pcd: y.aceitaPcd,
   };
 }
 
@@ -117,6 +120,7 @@ export function lerFormulario(form: FormData, oficial: (cidade: string) => strin
       modalidades, cidades, estado: primeira.slice(-2), regiao: primeira.replace(/ - [A-Z]{2}$/, ""), niveis, max_anos: max,
       termos_busca: termos, palavras_bloqueadas: palavras, contratos, empresas_bloqueadas: empresas,
       aceita_ingles: form.get("aceita_ingles") === "on",
+      aceita_pcd: form.get("aceita_pcd") === "on",
     },
   };
 }

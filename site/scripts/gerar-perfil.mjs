@@ -47,6 +47,7 @@ const dados = {
     presencial: preferencias?.localizacao?.aceita_presencial ?? true,
     estado: String(preferencias?.localizacao?.estado ?? "").toUpperCase(),
     aceitaIngles: Boolean(preferencias?.localizacao?.aceita_vagas_em_ingles),
+    aceitaPcd: Boolean(preferencias?.aceita_vagas_exclusivas_pcd),
     senioridadeBloqueada: preferencias?.senioridade_bloqueada ?? [],
     maxAnos: Number(preferencias?.max_anos_experiencia ?? 2),
     termosBusca: preferencias?.termos_busca ?? [],

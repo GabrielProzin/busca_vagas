@@ -37,6 +37,27 @@ _CIDADES_UF = {
 _CLT = re.compile(r"\bclt\b|carteira assinada|regime efetivo")
 _PJ = re.compile(r"\bpj\b|pessoa juridica|contrato de prestacao de servicos")
 _PRESENCIAL = re.compile(r"\bpresencia(l|is)\b|\bon[- ]?site\b")
+# Vaga exclusiva para pessoas com deficiência (texto já sem acento e minúsculo). Ver docs/spec.md, "Coleta e filtros".
+_GRUPO_PCD = (r"(?:\bpcds?\b|\bp\.c\.d\.?|\bpne\b|(?:pessoas?|profissionais|candidat[oa]s?|colaborador(?:es|as?)?)"
+              r"\s+(?:com|portador[ae]?s?\s+de)\s+deficiencias?|pessoas?\s+deficientes?)")
+# Depois do grupo não pode vir outro grupo ("mulheres e PcD", "PcD e pessoas negras"): aí não é só PcD.
+_SO_PCD = (r"(?!\s*(?:,|/|\be\b|\bou\b)\s*(?:\w+\s+)?"
+           r"(?:mulher|negr|pret[oa]|pard[oa]|lgbt|trans\b|indigen|50\s*\+|madur|idos[oa]|jovens|refugiad))")
+_PCD_NO_TITULO = re.compile(_GRUPO_PCD)
+_PCD_TAMBEM = re.compile(r"\btambem\b|\binclusive\b|\babert[ao]s?\b|bem[- ]?vind|ampla concorrencia|\bincluindo\b"
+                         r"|\bnao\s+pcd|\bpreferencia|\bpreferencialmente\b|\bincentiv|\bdiversidade\b"
+                         # vaga afirmativa para mais de um grupo ("Mulheres e PcD"): não é só PcD
+                         r"|\bmulher|\bnegr|\bpret[oa]s?\b|\bpard[oa]s?\b|lgbt|\btrans\b|indigen|50\s*\+|\bmadur")
+_PCD_EXCLUSIVA = re.compile(
+    r"exclusiv\w*\s+(?:(?:para|a|as|aos|de|ao)\s+)?(?:(?:cota|lei de cotas)\s+(?:de\s+|para\s+)?)?" + _GRUPO_PCD + _SO_PCD
+    + r"|(?:vagas?|oportunidades?|processo seletivo|posicao|posicoes|programa)\s+(?:afirmativ[ao]s?\s+)?"
+      r"(?:e\s+|sao\s+)?(?:destinad|direcionad|reservad|voltad|dedicad|restrit)\w*\s+"
+      r"(?:exclusivamente\s+|somente\s+|apenas\s+|unicamente\s+)?(?:a|as|aos|ao|para)\s+"
+      r"(?:(?:cota|lei de cotas)\s+(?:de\s+|para\s+)?)?" + _GRUPO_PCD + _SO_PCD
+    + r"|(?:somente|apenas|unicamente|so)\s+(?:para\s+)?" + _GRUPO_PCD + _SO_PCD
+    + r"|\bvagas?\s+(?:afirmativ[ao]s?\s+)?(?:(?:para|de)\s+)?(?:(?:cota|lei de cotas)\s+(?:de\s+|para\s+)?)?"
+    + _GRUPO_PCD + _SO_PCD
+)
 _EN = {"the", "and", "you", "with", "will", "our", "your", "are", "for", "this", "team", "we", "of", "to", "is",
        "experience", "skills", "work", "working", "data", "requirements", "about"}
 _PT = {"de", "que", "para", "com", "voce", "uma", "dos", "das", "nos", "experiencia", "conhecimento", "dados",
@@ -63,6 +84,7 @@ class Filtros:
     estados: frozenset[str] = frozenset()  # estados das cidades aceitas (+ "estado" do YAML)
     aceita_clt: bool = True
     aceita_pj: bool = True
+    aceita_pcd: bool = False  # vagas exclusivas para pessoas com deficiência
 
     @classmethod
     def de_config(cls, cfg: dict) -> "Filtros":
@@ -82,6 +104,7 @@ class Filtros:
             ),
             aceita_clt=bool((cfg.get("contrato") or {}).get("clt", True)),
             aceita_pj=bool((cfg.get("contrato") or {}).get("pj", True)),
+            aceita_pcd=bool(cfg.get("aceita_vagas_exclusivas_pcd", False)),
             max_anos=int(cfg.get("max_anos_experiencia", 2)),
             max_dias=int(cfg.get("max_dias_publicacao", 14)),
             aceita_ingles=bool(loc.get("aceita_vagas_em_ingles", False)),
@@ -203,6 +226,20 @@ class Filtros:
             return "contrato PJ"
         if clt and not pj and not self.aceita_clt:
             return "contrato CLT"
+        return None
+
+    def filtrar_pcd(self, v: Vaga) -> str | None:
+        """Descarta só a vaga exclusiva para PcD (a pessoa não marcou que aceita). Vaga que também aceita PcD fica."""
+        if self.aceita_pcd:
+            return None
+        titulo = normalizar(v.titulo)
+        if _PCD_NO_TITULO.search(titulo) and not _PCD_TAMBEM.search(titulo):
+            return "vaga exclusiva para PcD"
+        texto = normalizar(f"{v.titulo} {v.descricao}")
+        for m in _PCD_EXCLUSIVA.finditer(texto):
+            # "não é exclusiva para PcD", "não são vagas só para PcD"
+            if not re.search(r"\bnao\b", texto[max(0, m.start() - 20):m.start()]):
+                return "vaga exclusiva para PcD"
         return None
 
     def filtrar_experiencia(self, v: Vaga) -> str | None:

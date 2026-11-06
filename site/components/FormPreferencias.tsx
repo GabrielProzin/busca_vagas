@@ -64,6 +64,7 @@ function FormPreferencias({ inicial, salvas, estado, acao, salvando }: PropsForm
     for (const t of p.palavras_bloqueadas) d.append("palavra", t);
     for (const t of p.empresas_bloqueadas) d.append("empresa", t);
     if (p.aceita_ingles) d.set("aceita_ingles", "on");
+    if (p.aceita_pcd) d.set("aceita_pcd", "on");
     startTransition(() => acao(d));
   }
 
@@ -189,6 +190,14 @@ function FormPreferencias({ inicial, salvas, estado, acao, salvando }: PropsForm
           <input type="checkbox" role="switch" checked={p.aceita_ingles} onChange={(e) => mudar("aceita_ingles", e.target.checked)} />
           <span className="pf-chave-trilho" aria-hidden><i /></span>
           <span>Incluir vagas com a descrição em inglês</span>
+        </label>
+      </Secao>
+
+      <Secao icone="perfil" titulo="Vagas exclusivas para PcD" descricao="Vagas só para pessoas com deficiência. As que também aceitam PcD entram sempre.">
+        <label className="pf-chave">
+          <input type="checkbox" role="switch" checked={p.aceita_pcd} onChange={(e) => mudar("aceita_pcd", e.target.checked)} />
+          <span className="pf-chave-trilho" aria-hidden><i /></span>
+          <span>Incluir vagas exclusivas para pessoas com deficiência (PcD)</span>
         </label>
       </Secao>
 

@@ -119,8 +119,8 @@ def _followups_pendentes(sb: Supabase) -> list[dict]:
     return pendentes
 
 
-def _revalidar_local(sb: Supabase, filtros: Filtros) -> int:
-    """Vagas da lista (últimos 3 dias, sem decisão sua) que o filtro de local atual reprova saem da lista.
+def _revalidar_lista(sb: Supabase, filtros: Filtros) -> int:
+    """Vagas da lista (últimos 3 dias, sem decisão sua) que os filtros de local e de PcD atuais reprovam saem da lista.
     Serve para quando o filtro melhora: as que entraram antes não ficam esperando sumir sozinhas."""
     fora = []
     for d in sb.vagas_recentes(3):
@@ -132,13 +132,13 @@ def _revalidar_local(sb: Supabase, filtros: Filtros) -> int:
         v = Vaga(fonte=fonte, id_origem=origem, titulo=d.get("titulo") or "", empresa=d.get("empresa") or "",
                  url=d.get("url") or "", descricao=d.get("descricao") or "", cidade=d.get("cidade"),
                  modalidade=d.get("modalidade"))
-        motivo = filtros.filtrar_local(v)
+        motivo = filtros.filtrar_pcd(v) or filtros.filtrar_local(v)
         if motivo:
             fora.append((d["id"], motivo))
     por_motivo: dict[str, list[str]] = {}
     for i, motivo in fora:
         por_motivo.setdefault(motivo, []).append(i)
-    return sum(sb.tirar_da_lista(ids, f"Saiu da lista: {m} (filtro de local revisado)") for m, ids in por_motivo.items())
+    return sum(sb.tirar_da_lista(ids, f"Saiu da lista: {m} (filtro revisado)") for m, ids in por_motivo.items())
 
 
 def _vaga_do_banco(d: dict) -> Vaga:
@@ -254,10 +254,10 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         if v.fonte == "gupy" and len(v.descricao) < 600:
             gupy.detalhar(http, v)
 
-    # 4. Filtros de local e experiência
+    # 4. Filtros de PcD, local, idioma, contrato e experiência
     restantes = []
     for v in candidatas:
-        motivo = (filtros.filtrar_local(v) or filtros.filtrar_idioma(v) or filtros.filtrar_contrato(v)
+        motivo = (filtros.filtrar_pcd(v) or filtros.filtrar_local(v) or filtros.filtrar_idioma(v) or filtros.filtrar_contrato(v)
                   or filtros.filtrar_experiencia(v) or filtros.filtrar_senioridade_descricao(v))
         if motivo:
             v.lista, v.motivo_descarte = "descartada", motivo
@@ -351,11 +351,11 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         teste = os.getenv("RESUMO_TESTE") == "1"
         sb.upsert_vagas(aprovadas)
         try:
-            n_fora = _revalidar_local(sb, filtros)
+            n_fora = _revalidar_lista(sb, filtros)
             if n_fora:
-                _anotar(f"Local revisado: {n_fora} vaga(s) da lista eram de fora da sua região e saíram da lista")
+                _anotar(f"Filtro revisado: {n_fora} vaga(s) da lista não passam mais (local ou PcD) e saíram da lista")
         except Exception as e:
-            log.warning("local: não revalidei as vagas do banco: %s", e)
+            log.warning("revisão: não revalidei as vagas do banco: %s", e)
         _anotar(f"Vagas novas nesta coleta: {sum(v.id not in existentes for v in aprovadas)} "
                 f"({sum(v.id not in existentes and bool(v.emails) for v in aprovadas)} com email)")
         fila = _para_fila(aprovadas, existentes, (cfg.get("envio") or {}).get("automatico") or {}, excluidos)
