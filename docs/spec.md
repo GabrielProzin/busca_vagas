@@ -98,8 +98,12 @@ No celular, a barra de baixo tem Hoje, Vagas, Triagem, Perfil, Quadro e Mais; a 
   PcD ("também para PcD", "PcD são bem-vindos", "todas as vagas são abertas a PcD"), vaga afirmativa para vários
   grupos ("mulheres e PcD") e frase negada ("não é exclusiva para PcD") ficam.
 - A cada coleta, as vagas da lista dos últimos 3 dias sem decisão da pessoa passam de novo pelos filtros de local e de
-  PcD: a que o filtro atual reprova sai da lista ("filtro revisado").
+  PcD (e os posts do LinkedIn achados pela coleta, pelo cargo do começo do post; os capturados pela extensão ficam): a
+  que o filtro atual reprova sai da lista ("filtro revisado").
 - Post do LinkedIn só vira vaga se for de quem contrata (não de candidato), tiver email e cargo de dados.
+  O cargo vem do começo do post, antes de requisitos, atividades ou benefícios. Se o começo diz um cargo de outra área
+  ("Oportunidade na CWI: Analista de testes"), o post não vira vaga, mesmo que um requisito fale de dados
+  ("Conhecimento em banco de dados"); num post com várias vagas, a de dados continua sendo achada.
   Post sem local entra com aviso.
 
 **Nota** (`coletor/ranking.py`)

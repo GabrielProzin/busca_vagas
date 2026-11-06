@@ -372,3 +372,54 @@ def test_vaga_exclusiva_para_pcd_sai_e_a_que_tambem_aceita_fica():
     # Quem aceita vaga exclusiva para PcD vê todas
     aceita = Filtros.de_config({**CFG, "aceita_vagas_exclusivas_pcd": True})
     assert all(aceita.filtrar_pcd(v) is None for v in sai)
+
+
+def test_post_com_cargo_de_outra_area_nao_vira_vaga_pelo_requisito():
+    # caso real: vaga de Analista de testes; "banco de dados" só aparece nos requisitos
+    texto = ("🚀 Oportunidade na CWI Software: Analista de testes\n\n"
+             "Estamos com oportunidade aberta para um(a) Analista de testes e para atuar em um projeto estratégico.\n"
+             "✅ Vaga Remota\n✅ Contratação CLT\n\nRequisitos:\n"
+             "Experiência em análise, escrita, execução e documentação de testes funcionais;\n"
+             "Conhecimento em banco de dados não relacional (mongo DB).\n\n"
+             "Nossas oportunidades são abertas a pessoas com deficiência.\n"
+             "Candidate-se através do e-mail: ana@cwi.com.br")
+    assert linkedin_posts.post_para_vaga(_post(texto), TRILHAS, "b") == (None, "cargo fora das trilhas")
+    # sem a palavra "Requisitos", a linha de requisito também não vira título
+    sem_secao = texto.replace("Requisitos:\n", "")
+    assert linkedin_posts.post_para_vaga(_post(sem_secao), TRILHAS, "b") == (None, "cargo fora das trilhas")
+    # post com duas vagas: a de dados continua sendo achada
+    duas = ("Vagas abertas na Acme!\nAnalista de Testes Pleno\nAnalista de Dados Júnior\n"
+            "Requisitos: SQL e Python. Envie para rh@acme.com.br")
+    v, _ = linkedin_posts.post_para_vaga(_post(duas), TRILHAS, "b")
+    assert v.titulo == "Analista de Dados Júnior"
+    # quem posta se apresenta com outro cargo, mas a vaga é de dados
+    rh = "Sou analista de RH e estamos contratando Analista de BI Jr, remoto. Currículo para rh@acme.com.br"
+    v, _ = linkedin_posts.post_para_vaga(_post(rh), TRILHAS, "b")
+    assert v.titulo.lower().startswith("analista de bi")
+
+
+def test_revisao_da_lista_tira_pcd_e_post_de_outra_area_mas_nao_a_captura():
+    from coletor.pipeline import _revalidar_lista
+    testes = "Oportunidade na CWI: Analista de testes\nRequisitos:\nConhecimento em banco de dados. Email: a@cwi.com.br"
+
+    class Banco:
+        tiradas: dict = {}
+
+        def vagas_recentes(self, dias):
+            base = {"empresa": "X", "url": "", "cidade": None, "modalidade": "remoto", "lista": "principal",
+                    "candidatura": None, "trilha": "Dados (genérico)"}
+            return [
+                {**base, "id": "gupy:1", "titulo": "Analista de Dados - PcD", "descricao": "SQL"},
+                {**base, "id": "linkedin:2", "titulo": "Conhecimento em banco de dados", "descricao": testes},
+                {**base, "id": "linkedin:3", "titulo": "Analista de testes", "descricao": testes, "trilha": None},
+                {**base, "id": "gupy:4", "titulo": "Analista de Dados", "descricao": "Vaga também para PcD."},
+            ]
+
+        def tirar_da_lista(self, ids, motivo):
+            self.tiradas.update({i: motivo for i in ids})
+            return len(ids)
+
+    sb = Banco()
+    assert _revalidar_lista(sb, F) == 2
+    assert set(sb.tiradas) == {"gupy:1", "linkedin:2"}
+    assert "PcD" in sb.tiradas["gupy:1"] and "cargo do post" in sb.tiradas["linkedin:2"]

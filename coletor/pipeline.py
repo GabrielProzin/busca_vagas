@@ -120,8 +120,10 @@ def _followups_pendentes(sb: Supabase) -> list[dict]:
 
 
 def _revalidar_lista(sb: Supabase, filtros: Filtros) -> int:
-    """Vagas da lista (últimos 3 dias, sem decisão sua) que os filtros de local e de PcD atuais reprovam saem da lista.
-    Serve para quando o filtro melhora: as que entraram antes não ficam esperando sumir sozinhas."""
+    """Vagas da lista (últimos 3 dias, sem decisão sua) que os filtros atuais reprovam saem da lista: local, PcD e,
+    nos posts do LinkedIn, o cargo lido do começo do post. Serve para quando o filtro melhora: as que entraram antes
+    não ficam esperando sumir sozinhas."""
+    trilhas = [p for _, _, p in filtros.trilhas]
     fora = []
     for d in sb.vagas_recentes(3):
         c = d.get("candidatura")
@@ -133,6 +135,9 @@ def _revalidar_lista(sb: Supabase, filtros: Filtros) -> int:
                  url=d.get("url") or "", descricao=d.get("descricao") or "", cidade=d.get("cidade"),
                  modalidade=d.get("modalidade"))
         motivo = filtros.filtrar_pcd(v) or filtros.filtrar_local(v)
+        # Só o post que a coleta achou (tem trilha); o que você capturou pela extensão foi escolha sua e fica.
+        if not motivo and fonte == "linkedin" and d.get("trilha") and not linkedin_posts.titulo_do_post(v.descricao, trilhas):
+            motivo = "cargo do post fora das trilhas"
         if motivo:
             fora.append((d["id"], motivo))
     por_motivo: dict[str, list[str]] = {}
@@ -353,7 +358,7 @@ def executar(forcar_tfidf: bool = False, usar_github: bool = True, max_paginas: 
         try:
             n_fora = _revalidar_lista(sb, filtros)
             if n_fora:
-                _anotar(f"Filtro revisado: {n_fora} vaga(s) da lista não passam mais (local ou PcD) e saíram da lista")
+                _anotar(f"Filtro revisado: {n_fora} vaga(s) da lista não passam mais (local, PcD ou cargo do post) e saíram da lista")
         except Exception as e:
             log.warning("revisão: não revalidei as vagas do banco: %s", e)
         _anotar(f"Vagas novas nesta coleta: {sum(v.id not in existentes for v in aprovadas)} "

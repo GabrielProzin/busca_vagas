@@ -39,6 +39,8 @@ _EMAIL_PESSOAL = re.compile(r"@(gmail|hotmail|outlook|live|yahoo|icloud|bol|uol)
 _CARGO = re.compile(
     r"\b(analista|cientista|engenheir[oa]|especialista|assistente|desenvolvedor[a]?|arquitet[oa]|consultor[a]?|"
     r"data|business|bi\b|power bi)\b[^\n.,;:!?()|•\-–]{0,60}", re.I)
+# O mesmo, mas acha cargos que começam dentro de outro trecho ("Sou analista de RH e contratamos Analista de BI").
+_CARGO_TODOS = re.compile(r"(?=(" + _CARGO.pattern + r"))", re.I)
 _ENFEITE = re.compile(r"[#][\w-]+|[\U0001F000-\U0001FAFF☀-➿⬀-⯿️‍]+")
 _PREFIXO = re.compile(r"^(nova |novas )?(vagas?|oportunidades?|estamos contratando|contratando|hiring)\b\s*(aberta|de|para|:)?\s*", re.I)
 _EMPRESA_HEADLINE = re.compile(r"(?:\bna\b|\bno\b|\bat\b|@|\bem\b)\s+([A-Z0-9][\w&.\- ]{1,40}?)(?:\s*[|·,•]|\s+-\s|$)")
@@ -49,28 +51,50 @@ def _limpar(linha: str) -> str:
     return re.sub(r"\s+", " ", linha).strip(" -–:|*•!.")
 
 
+# Onde o post começa a listar requisitos, atividades ou benefícios: dali para baixo não é mais o cargo.
+_SECAO = re.compile(
+    r"^(requisitos?|pre[- ]?requisitos|responsabilidades|atribuicoes|atividades|principais atividades|"
+    r"o que (voce|vc) (vai|ira) fazer|o que (esperamos|buscamos|precisamos)|qualificac|conhecimentos|diferenciais|"
+    r"desejave(l|is)|necessario|competencias|habilidades|beneficios|requirements|responsibilities|skills|"
+    r"what you|nice to have)\b")
+# Começo de cargo ("Analista de testes", "Data Analyst"): o que vem depois disso no post é requisito, não cargo.
+_NOME_CARGO = re.compile(
+    r"^(analista|cientista|engenheir[oa]|especialista|assistente|auxiliar|tecnic[oa]|desenvolvedor[a]?|"
+    r"arquitet[oa]|consultor[a]?|coordenador[a]?|gerente|supervisor[a]?|estagiari[oa]|programador[a]?|"
+    r"tester|qa\b|data|business|bi\b|power ?bi|product|designer|dba\b)", re.I)
+
+
 def titulo_do_post(texto: str, trilhas: list[re.Pattern]) -> str | None:
-    """Cargo da vaga: primeiro trecho das primeiras linhas que bate com uma trilha de dados."""
+    """Cargo da vaga, tirado do começo do post (antes dos requisitos).
+
+    O post diz o cargo logo no início ("Oportunidade na CWI: Analista de testes"). Se o cargo dito ali não é da sua
+    área, a vaga é de outra área: uma linha de requisito mais abaixo ("Conhecimento em banco de dados") não vira título.
+    """
     def ok(t: str) -> bool:
         n = normalizar(t)
         return any(p.search(n) for p in trilhas)
 
+    outro_cargo = False  # já apareceu um cargo de outra área no começo do post
     for linha in (texto or "").splitlines()[:20]:
         limpa = _limpar(linha)
         if not limpa:
             continue
+        if _SECAO.match(normalizar(limpa)):
+            break
         # Cabeçalho curto ("Analista de Dados Jr | Remoto | CLT"): fica a parte que tem o cargo.
         if len(limpa) <= 90:
             for parte in re.split(r"\s+[|/–-]\s+|\s*\|\s*", limpa):
                 parte = _PREFIXO.sub("", parte).strip(" -–:|")
-                if 4 <= len(parte) <= 80 and ok(parte):
+                if 4 <= len(parte) <= 80 and ok(parte) and (not outro_cargo or _NOME_CARGO.match(parte)):
                     return parte
-        # Frase longa ("Estamos contratando Analista de Dados Júnior para atuar..."): recorta o cargo.
-        for m in _CARGO.finditer(limpa):
-            trecho = " ".join(m.group(0).split()[:7])
+        # Frase ("Estamos contratando Analista de Dados Júnior para atuar...", "Oportunidade: Analista de testes").
+        for m in _CARGO_TODOS.finditer(limpa):
+            trecho = " ".join(m.group(1).split()[:7])
             trecho = re.split(r"\s+(para|pra|que|com|em|no|na|e)\s+", trecho, maxsplit=1)[0]
             if ok(trecho):
                 return trecho.strip()
+            if _NOME_CARGO.match(trecho) and not re.match(r"(data|business|bi|power ?bi)\b", trecho, re.I):
+                outro_cargo = True
     return None
 
 
